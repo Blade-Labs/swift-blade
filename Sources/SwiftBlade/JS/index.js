@@ -8,8 +8,9 @@ export class SDK {
      * 
      * @param {string} network 
      */
-    static setNetwork(network){
+    static setNetwork(network, completionKey){
         SDK.NETWORK = network
+        SDK.#sendMessageToNative(completionKey, {status: "success"})
     }
 
     /**
@@ -105,14 +106,17 @@ export class SDK {
      */
     static #sendMessageToNative(completionKey, data, error) {
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bladeMessageHandler) {
-            window.webkit.messageHandlers.bladeMessageHandler.postMessage(JSON.stringify({
+            var responseObject = {
                 completionKey: completionKey,
-                data: data,
-                error: {
+                data: data              
+            }
+            if (error) {
+                responseObject["error"] = {
                     name: error.name,
                     reason: error.reason
-                }               
-            }));
+                } 
+            }
+            window.webkit.messageHandlers.bladeMessageHandler.postMessage(JSON.stringify(responseObject));
         }
     }
 };
