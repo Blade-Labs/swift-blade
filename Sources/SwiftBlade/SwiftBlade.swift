@@ -3,13 +3,13 @@ import os
 import Alamofire
 
 public class SwiftBlade: NSObject {
-    private let API_BASE_URL = ""
+    private let API_BASE_URL = "https://rest.ci.bladewallet.io/openapi/v7"
     
     public static let shared = SwiftBlade()
     
     private let webView = WKWebView()
     private var webViewInitialized = false    
-    private var deferCompletions: [String: (_ result: Data) -> Void] = [:]
+    private var deferCompletions: [String: (_ result: Data?, _ error: Error?) -> Void] = [:]
     private var initCompletion: (() -> Void)?
 
     private var apiKey: String? = nil
@@ -41,71 +41,74 @@ public class SwiftBlade: NSObject {
     }
     
     // MARK: - Public methods 📢
-    public func getBalance(_ id: String, completion: @escaping (_ result: BalanceDataResponse) -> Void) throws {
+    public func getBalance(_ id: String, completion: @escaping (_ result: BalanceDataResponse?, _ error: Error?) -> Void) {
         let completionKey = "getBalance"
-        deferCompletion(forKey: completionKey) { data in
+        deferCompletion(forKey: completionKey) { (data, error) in
             do {
-                let response = try JSONDecoder().decode(BalanceResponse.self, from: data)
-                completion(response.data)
+                let response = try JSONDecoder().decode(BalanceResponse.self, from: data!)
+                completion(response.data, nil)
             } catch let error as NSError {
                 print(error)
+                completion(nil, error)
             }
         }
-        try? executeJS("JSWrapper.SDK.getBalance('\(id)', '\(completionKey)')")
+        executeJS("JSWrapper.SDK.getBalance('\(id)', '\(completionKey)')")
     }
     
-    public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Int, completion: @escaping (_ result: TransferDataResponse) -> Void) throws {
+    public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Int, completion: @escaping (_ result: TransferDataResponse?, _ error: Error?) -> Void) {
         let completionKey = "transferHbars"
-        deferCompletion(forKey: completionKey) { data in
+        deferCompletion(forKey: completionKey) { (data, error) in
             do {
-                let response = try JSONDecoder().decode(TransferResponse.self, from: data)
-                completion(response.data)
+                let response = try JSONDecoder().decode(TransferResponse.self, from: data!)
+                completion(response.data, nil)
             } catch let error as NSError {
                 print(error)
+                completion(nil, error)
             }
         }
         
         let script = "JSWrapper.SDK.transferHbars('\(accountId)', '\(accountPrivateKey)', '\(receiverId)', '\(amount)', '\(completionKey)')"
-        try? executeJS(script)
+        executeJS(script)
     }
     
-    public func createHederaAccount(completion: @escaping (_ result: String) -> Void) throws {
+    public func createHederaAccount(completion: @escaping (_ result: CreatedAccountDataResponse?, _ error: Error?) -> Void) {
         // Step 1. Generate mnemonice and public / private key
         let completionKey = "generateKeys"
-        deferCompletion(forKey: completionKey) { (result) in
-            // Step 2. Confirm with server side
-//            let params: Parameters = [
-//                "publicKey": result["publicKey"]!,
-//            ]
-            
-            // TODO: implementation of API calls TBD
-//            completion("yo")
-
-            //            AF.request(self.API_BASE_URL + "url", method: .post, parameters: params).responseData { response in
-//                // Step 3. Receive confirmation send all the keys back
-//
-//                //TODO
-//                completion(result)
-//            }
-        }
-        try? executeJS("JSWrapper.SDK.generateKeys('\(completionKey)')")
-    }
-    
-    public func getPrivateKeyStringFromMnemonic (menmonic: String, completion: @escaping (_ result: PrivateKeyDataResponse) -> Void) throws {
-        let completionKey = "getPrivateKeyStringFromMnemonic"
-        deferCompletion(forKey: completionKey) { data in
+        deferCompletion(forKey: completionKey) { (data, error) in
             do {
-                let response = try JSONDecoder().decode(PrivateKeyResponse.self, from: data)
-                completion(response.data)
+                var result = try JSONDecoder().decode(CreatedAccountResponse.self, from: data!)
+                self.createAccountAPICall(account: result.data) { (apiResult, error) in
+                    guard apiResult != nil else {
+                        completion(nil, error)
+                        return
+                    }
+                    result.data.accountId = apiResult!.id
+                    completion(result.data, nil)
+                }
             } catch let error as NSError {
                 print(error)
+                completion(nil, error)
             }
         }
-        try? executeJS("JSWrapper.SDK.getPrivateKeyStringFromMnemonic('\(menmonic)', '\(completionKey)')")
+        executeJS("JSWrapper.SDK.generateKeys('\(completionKey)')")
+    }
+    
+    public func getPrivateKeyStringFromMnemonic (menmonic: String, completion: @escaping (_ result: PrivateKeyDataResponse?, _ error: Error?) -> Void) {
+        let completionKey = "getPrivateKeyStringFromMnemonic"
+        deferCompletion(forKey: completionKey) { (data, error) in
+            do {
+                let response = try JSONDecoder().decode(PrivateKeyResponse.self, from: data!)
+                completion(response.data, nil)
+            } catch let error as NSError {
+                print(error)
+                completion(nil, error)
+            }
+        }
+        executeJS("JSWrapper.SDK.getPrivateKeyStringFromMnemonic('\(menmonic)', '\(completionKey)')")
     }
     
     // MARK: - Private methods 🔒
-    private func executeJS (_ script: String) throws {
+    private func executeJS (_ script: String) {
         guard webViewInitialized else {
             print("Error while executing JS, webview not loaded")
             fatalError()
@@ -113,17 +116,38 @@ public class SwiftBlade: NSObject {
         webView.evaluateJavaScript(script)
     }
     
-    private func deferCompletion (forKey: String, completion: @escaping (_ result: Data) -> Void) {
+    private func deferCompletion (forKey: String, completion: @escaping (_ result: Data?, _ error: Error?) -> Void) {
         deferCompletions.updateValue(completion, forKey: forKey)
     }
     
     private func setNetwork(_ network: String) throws {
         let completionKey = "setNetwork"
-        deferCompletion(forKey: completionKey) { data in
+        deferCompletion(forKey: completionKey) { (data, error) in
             self.initCompletion!()
         }
-        try? executeJS("JSWrapper.SDK.setNetwork('\(network)', '\(completionKey)')")
+        executeJS("JSWrapper.SDK.setNetwork('\(network.lowercased())', '\(completionKey)')")
         
+    }
+    
+    private func createAccountAPICall(account: CreatedAccountDataResponse, completion: @escaping (_ result: AccountAPIResponse?, _ error: Error?) -> Void) {
+        let params: Parameters = [
+            "publicKey": account.publicKey,
+        ]
+        let headers: HTTPHeaders = [
+            "X-SDK-TOKEN": self.apiKey!,
+            "X-NETWORK": self.network!.rawValue,
+            "X-FINGERPRINT": self.uuid
+        ]
+        
+        AF.request(self.API_BASE_URL + "/accounts", method: .post, parameters: params, encoding: JSONEncoding.default, headers: headers).responseDecodable(of: AccountAPIResponse.self) { (response) in
+            switch response.result {
+            case let .success(data):
+                completion(data, nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+                
+        }
     }
 }
 
@@ -140,9 +164,10 @@ extension SwiftBlade: WKScriptMessageHandler {
                     throw SwiftBladeError.jsResponseError("Received error from JS: \(response.error)")
                 }
                 let deferedCompletion = deferCompletions[response.completionKey!]!
-                deferedCompletion(data)
+                deferedCompletion(data, nil)
             } catch let error as NSError {
                 print(error)
+                fatalError()
             }
         }
     }
@@ -184,11 +209,16 @@ struct TransferResponse: Codable {
     var data: TransferDataResponse
 }
 
+struct AccountAPIResponse: Codable {
+    var id: String
+    var publicKey: String
+}
+
 public struct CreatedAccountDataResponse: Codable {
     public var seedPhrase: String
     public var publicKey: String
     public var privateKey: String
-    public var accountId: String
+    public var accountId: String?
 }
 
 public struct BalanceDataResponse: Codable {
@@ -216,10 +246,11 @@ public struct TransferDataResponse: Codable {
 public enum SwiftBladeError: Error {
     case jsResponseError(String)
     case unknownJsError(String)
+    case apiError(String)
 }
 
 // MARK: - SwiftBlade enums
 public enum HederaNetwork: String {
-    case testnet
-    case mainnet
+    case TESTNET
+    case MAINNET
 }
