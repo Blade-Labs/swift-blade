@@ -57,12 +57,12 @@ export class SDK {
     static generateKeys(completionKey) {
         Mnemonic.generate12().then(seedPhrase => {
             //TODO check which type of keys to be used
-            seedPhrase.toEd25519PrivateKey().then(privateKey => {
+            seedPhrase.toEcdsaPrivateKey().then(privateKey => {
                 var publicKey = privateKey.publicKey;
                 SDK.#sendMessageToNative(completionKey, {
                     seedPhrase: seedPhrase.toString(),
-                    publicKey: publicKey.toStringRaw(),
-                    privateKey: privateKey.toStringRaw()
+                    publicKey: publicKey.toStringDer(),
+                    privateKey: privateKey.toStringDer()
                 })
             }).catch(error => {
                 SDK.#sendMessageToNative(completionKey, null, error)
@@ -78,9 +78,9 @@ export class SDK {
     static getPrivateKeyStringFromMnemonic(mnemonic, completionKey) {
         Mnemonic.fromString(mnemonic).then(function (mnemonicObj) {
             //TODO check which type of keys to be used
-            mnemonicObj.toEd25519PrivateKey().then(function (privateKey) {
+            mnemonicObj.toEcdsaPrivateKey().then(function (privateKey) {
                 SDK.#sendMessageToNative(completionKey, {
-                    privateKey: privateKey.toStringRaw()
+                    privateKey: privateKey.toStringDer()
                 })
             }).catch((error) => {
                 SDK.#sendMessageToNative(completionKey, null, error)    

@@ -15,10 +15,6 @@ public class SwiftBlade: NSObject {
     private var apiKey: String? = nil
     private let uuid = UUID().uuidString
     private var network: HederaNetwork?
-        
-    private override init () {
-        super.init()
-    }
     
     // MARK: - It's init time 🎬
     public func initialize(apiKey: String, network: HederaNetwork , completion: @escaping () -> Void = { }) {
@@ -160,11 +156,12 @@ extension SwiftBlade: WKScriptMessageHandler {
                 if (response.completionKey == nil) {
                     throw SwiftBladeError.unknownJsError("Received JS response without completionKey")
                 }
-                if (response.error != nil) {
-                    throw SwiftBladeError.jsResponseError("Received error from JS: \(response.error)")
-                }
                 let deferedCompletion = deferCompletions[response.completionKey!]!
-                deferedCompletion(data, nil)
+                if (response.error != nil) {
+                    deferedCompletion(Data("-".utf8), SwiftBladeError.jsResponseError("\(response.error)"))
+                } else {
+                    deferedCompletion(data, nil)
+                }
             } catch let error as NSError {
                 print(error)
                 fatalError()
