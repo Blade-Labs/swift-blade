@@ -17,6 +17,12 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork?
     
     // MARK: - It's init time 🎬
+    /// Initialization of Swift blade
+    ///
+    /// - Parameters:
+    ///   - apiKey: api key given by Blade tea
+    ///   - network: .TESTNET or .MAINNET
+    ///   - completion: completion closure that will be executed after webview is fully loaded and rendered.
     public func initialize(apiKey: String, network: HederaNetwork , completion: @escaping () -> Void = { }) {
         guard !webViewInitialized else {
             print("Error while doing double init of SwiftBlade")
@@ -37,6 +43,11 @@ public class SwiftBlade: NSObject {
     }
     
     // MARK: - Public methods 📢
+    /// Get balances by Hedera id (address)
+    ///
+    /// - Parameters:
+    ///   - id: Hedera id (address), example: 0.0.112233
+    ///   - completion: result with BalanceDataResponse type
     public func getBalance(_ id: String, completion: @escaping (_ result: BalanceDataResponse?, _ error: Error?) -> Void) {
         let completionKey = "getBalance"
         deferCompletion(forKey: completionKey) { (data, error) in
@@ -51,6 +62,14 @@ public class SwiftBlade: NSObject {
         executeJS("JSWrapper.SDK.getBalance('\(id)', '\(completionKey)')")
     }
     
+    /// Method to execure Hbar transfers from current account to receiver
+    ///
+    /// - Parameters:
+    ///   - accountId: sender
+    ///   - accountPrivateKey: sender's private key to sign transfer transaction
+    ///   - receiverId: receiver
+    ///   - amount: amount
+    ///   - completion: result with TransferDataResponse type
     public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Int, completion: @escaping (_ result: TransferDataResponse?, _ error: Error?) -> Void) {
         let completionKey = "transferHbars"
         deferCompletion(forKey: completionKey) { (data, error) in
@@ -67,6 +86,9 @@ public class SwiftBlade: NSObject {
         executeJS(script)
     }
     
+    /// Method to create Hedera account
+    ///
+    /// - Parameter completion: result with CreatedAccountDataResponse type
     public func createHederaAccount(completion: @escaping (_ result: CreatedAccountDataResponse?, _ error: Error?) -> Void) {
         // Step 1. Generate mnemonice and public / private key
         let completionKey = "generateKeys"
@@ -89,6 +111,11 @@ public class SwiftBlade: NSObject {
         executeJS("JSWrapper.SDK.generateKeys('\(completionKey)')")
     }
     
+    /// Restore public and private key by seed phrase
+    ///
+    /// - Parameters:
+    ///   - menmonic: seed phrase
+    ///   - completion: result with PrivateKeyDataResponse type
     public func getKeysFromMnemonic (menmonic: String, completion: @escaping (_ result: PrivateKeyDataResponse?, _ error: Error?) -> Void) {
         let completionKey = "getKeysFromMnemonic"
         deferCompletion(forKey: completionKey) { (data, error) in
@@ -103,6 +130,12 @@ public class SwiftBlade: NSObject {
         executeJS("JSWrapper.SDK.getPrivateKeyStringFromMnemonic('\(menmonic)', '\(completionKey)')")
     }
     
+    /// Sign message with private key
+    ///
+    /// - Parameters:
+    ///   - messageString: message in base64 string
+    ///   - privateKey: private key string
+    ///   - completion: resilt with SignMessageDataResponse type
     public func sign (messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageDataResponse?, _ error: Error?) -> Void) {
         let completionKey = "sign"
         deferCompletion(forKey: completionKey) { (data, error) in
