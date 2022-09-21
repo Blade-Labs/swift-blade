@@ -43,7 +43,7 @@ public class SwiftBlade: NSObject {
             do {
                 let response = try JSONDecoder().decode(BalanceResponse.self, from: data!)
                 completion(response.data, nil)
-            } catch let error as NSError {
+            } catch {
                 print(error)
                 completion(nil, error)
             }
@@ -57,7 +57,7 @@ public class SwiftBlade: NSObject {
             do {
                 let response = try JSONDecoder().decode(TransferResponse.self, from: data!)
                 completion(response.data, nil)
-            } catch let error as NSError {
+            } catch {
                 print(error)
                 completion(nil, error)
             }
@@ -81,7 +81,7 @@ public class SwiftBlade: NSObject {
                     result.data.accountId = apiResult!.id
                     completion(result.data, nil)
                 }
-            } catch let error as NSError {
+            } catch {
                 print(error)
                 completion(nil, error)
             }
@@ -89,18 +89,32 @@ public class SwiftBlade: NSObject {
         executeJS("JSWrapper.SDK.generateKeys('\(completionKey)')")
     }
     
-    public func getPrivateKeyStringFromMnemonic (menmonic: String, completion: @escaping (_ result: PrivateKeyDataResponse?, _ error: Error?) -> Void) {
-        let completionKey = "getPrivateKeyStringFromMnemonic"
+    public func getKeysFromMnemonic (menmonic: String, completion: @escaping (_ result: PrivateKeyDataResponse?, _ error: Error?) -> Void) {
+        let completionKey = "getKeysFromMnemonic"
         deferCompletion(forKey: completionKey) { (data, error) in
             do {
                 let response = try JSONDecoder().decode(PrivateKeyResponse.self, from: data!)
+                completion(response.data, nil)
+            } catch {
+                print(error)
+                completion(nil, error)
+            }
+        }
+        executeJS("JSWrapper.SDK.getPrivateKeyStringFromMnemonic('\(menmonic)', '\(completionKey)')")
+    }
+    
+    public func sign (messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageDataResponse?, _ error: Error?) -> Void) {
+        let completionKey = "sign"
+        deferCompletion(forKey: completionKey) { (data, error) in
+            do {
+                let response = try JSONDecoder().decode(SignMessageResponse.self, from: data!)
                 completion(response.data, nil)
             } catch let error as NSError {
                 print(error)
                 completion(nil, error)
             }
         }
-        executeJS("JSWrapper.SDK.getPrivateKeyStringFromMnemonic('\(menmonic)', '\(completionKey)')")
+        executeJS("JSWrapper.SDK.sign('\(messageString)', '\(privateKey)', '\(completionKey)')")
     }
     
     // MARK: - Private methods 🔒
@@ -157,12 +171,14 @@ extension SwiftBlade: WKScriptMessageHandler {
                     throw SwiftBladeError.unknownJsError("Received JS response without completionKey")
                 }
                 let deferedCompletion = deferCompletions[response.completionKey!]!
+
+                // TODO: fix this hacky way of throwing error on data parse
                 if (response.error != nil) {
                     deferedCompletion(Data("-".utf8), SwiftBladeError.jsResponseError("\(response.error)"))
                 } else {
                     deferedCompletion(data, nil)
                 }
-            } catch let error as NSError {
+            } catch let error {
                 print(error)
                 fatalError()
             }
@@ -211,6 +227,11 @@ struct AccountAPIResponse: Codable {
     var publicKey: String
 }
 
+struct SignMessageResponse: Codable {
+    var completionKey: String
+    var data: SignMessageDataResponse
+}
+
 public struct CreatedAccountDataResponse: Codable {
     public var seedPhrase: String
     public var publicKey: String
@@ -231,12 +252,17 @@ public struct BalanceDataResponseToken: Codable {
 
 public struct PrivateKeyDataResponse: Codable {
     public var privateKey: String
+    public var publicKey: String
 }
 
 public struct TransferDataResponse: Codable {
     public var nodeId: String
     public var transactionHash: String
     public var transactionId: String
+}
+
+public struct SignMessageDataResponse: Codable {
+    public var signedMessage: String
 }
 
 // MARK: - SwiftBlade errors

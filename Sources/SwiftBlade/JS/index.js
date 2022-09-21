@@ -1,10 +1,12 @@
 import { Client, AccountBalanceQuery, TransferTransaction, Mnemonic, PrivateKey } from "@hashgraph/sdk";
+import { Buffer } from "buffer";
 
 export class SDK {
 
     static NETWORK = 'testnet'
 
     /**
+     * Set network for Hedera operations
      * 
      * @param {string} network 
      */
@@ -14,6 +16,7 @@ export class SDK {
     }
 
     /**
+     * Get balances by Hedera accountId (address)
      * 
      * @param {string} accountId 
      */
@@ -30,6 +33,7 @@ export class SDK {
     }
 
     /**
+     * Transfer Hbars from current account to a receiver
      * 
      * @param {string} accountId 
      * @param {string} accountPrivateKey 
@@ -51,7 +55,8 @@ export class SDK {
     }
     
     /**
-     * 
+     * Method that generates set of keys and seed phrase
+     *  
      * @param {string} completionKey 
      */
     static generateKeys(completionKey) {
@@ -71,16 +76,20 @@ export class SDK {
     }
 
     /**
+     * Get public/private keys by seed phrase
      * 
      * @param {string} mnemonic 
      * @param {string} completionKey 
      */
-    static getPrivateKeyStringFromMnemonic(mnemonic, completionKey) {
+    static getKeysFromMnemonic(mnemonic, completionKey) {
+        //TODO support all the different type of private keys
         Mnemonic.fromString(mnemonic).then(function (mnemonicObj) {
             //TODO check which type of keys to be used
             mnemonicObj.toEcdsaPrivateKey().then(function (privateKey) {
+                var publicKey = privateKey.publicKey;
                 SDK.#sendMessageToNative(completionKey, {
-                    privateKey: privateKey.toStringDer()
+                    privateKey: privateKey.toStringDer(),
+                    publicKey: publicKey.toBytesDer()
                 })
             }).catch((error) => {
                 SDK.#sendMessageToNative(completionKey, null, error)    
@@ -91,6 +100,28 @@ export class SDK {
     }
 
     /**
+     * Sign message by private key
+     * 
+     * @param {string} messageString 
+     * @param {string} privateKey 
+     * @param {string} completionKey 
+     */
+    static sign(messageString, privateKey, completionKey) {
+        debugger
+        try {
+            const key = PrivateKey.fromString(privateKey)
+            const signed = key.sign(Buffer.from(messageString, 'base64'))
+    
+            SDK.#sendMessageToNative(completionKey, {
+                signedMessage: Buffer.from(signed).toString("base64")
+            })
+        } catch (error) {
+            SDK.#sendMessageToNative(completionKey, null, error)
+        }
+    }
+
+    /**
+     * Get client based on network
      * 
      * @returns {string}
      */
@@ -99,6 +130,7 @@ export class SDK {
     }
 
     /**
+     * Message that sends response back to native handler 
      * 
      * @param {string} completionKey 
      * @param {*} data 

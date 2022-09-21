@@ -15,7 +15,8 @@
   "author": "Blade",
   "license": "ISC",
   "dependencies": {
-    "@hashgraph/sdk": "^2.18.1"
+    "@hashgraph/sdk": "^2.18.1",
+    "buffer": "^6.0.3"
   },
   "devDependencies": {
     "webpack": "^5.74.0",
