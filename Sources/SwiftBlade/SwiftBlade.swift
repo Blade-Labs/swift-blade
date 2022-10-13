@@ -87,6 +87,31 @@ public class SwiftBlade: NSObject {
         executeJS(script)
     }
     
+    /// Method to execure Hbar transfers from current account to receiver
+    ///
+    /// - Parameters:
+    ///   - tokenId: token
+    ///   - accountId: sender
+    ///   - accountPrivateKey: sender's private key to sign transfer transaction
+    ///   - receiverId: receiver
+    ///   - amount: amount
+    ///   - completion: result with TransferDataResponse type
+    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Int, completion: @escaping (_ result: TransferDataResponse?, _ error: Error?) -> Void) {
+        let completionKey = getCompletionKey(tag: "transferTokens");
+        deferCompletion(forKey: completionKey) { (data, error) in
+            do {
+                let response = try JSONDecoder().decode(TransferResponse.self, from: data!)
+                completion(response.data, nil)
+            } catch {
+                print(error)
+                completion(nil, error)
+            }
+        }
+        
+        let script = "JSWrapper.SDK.transferTokens('\(tokenId)', '\(accountId)', '\(accountPrivateKey)', '\(receiverId)', '\(amount)', '\(completionKey)')"
+        executeJS(script)
+    }
+    
     /// Method to create Hedera account
     ///
     /// - Parameter completion: result with CreatedAccountDataResponse type
@@ -259,6 +284,11 @@ struct PrivateKeyResponse: Codable {
 struct TransferResponse: Codable {
     var completionKey: String
     var data: TransferDataResponse
+}
+
+struct TestResponse: Codable {
+    var completionKey: String
+    var data: String
 }
 
 struct AccountAPIResponse: Codable {
