@@ -15,6 +15,7 @@ public class SwiftBlade: NSObject {
     private var apiKey: String? = nil
     private let uuid = UUID().uuidString
     private var network: HederaNetwork?
+    private var completionId: Int = 0
     
     // MARK: - It's init time 🎬
     /// Initialization of Swift blade
@@ -49,7 +50,7 @@ public class SwiftBlade: NSObject {
     ///   - id: Hedera id (address), example: 0.0.112233
     ///   - completion: result with BalanceDataResponse type
     public func getBalance(_ id: String, completion: @escaping (_ result: BalanceDataResponse?, _ error: Error?) -> Void) {
-        let completionKey = "getBalance"
+        let completionKey = getCompletionKey(tag: "getBalance");
         deferCompletion(forKey: completionKey) { (data, error) in
             do {
                 let response = try JSONDecoder().decode(BalanceResponse.self, from: data!)
@@ -71,7 +72,7 @@ public class SwiftBlade: NSObject {
     ///   - amount: amount
     ///   - completion: result with TransferDataResponse type
     public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Int, completion: @escaping (_ result: TransferDataResponse?, _ error: Error?) -> Void) {
-        let completionKey = "transferHbars"
+        let completionKey = getCompletionKey(tag: "transferHbars");
         deferCompletion(forKey: completionKey) { (data, error) in
             do {
                 let response = try JSONDecoder().decode(TransferResponse.self, from: data!)
@@ -91,7 +92,7 @@ public class SwiftBlade: NSObject {
     /// - Parameter completion: result with CreatedAccountDataResponse type
     public func createHederaAccount(completion: @escaping (_ result: CreatedAccountDataResponse?, _ error: Error?) -> Void) {
         // Step 1. Generate mnemonice and public / private key
-        let completionKey = "generateKeys"
+        let completionKey = getCompletionKey(tag: "generateKeys");
         deferCompletion(forKey: completionKey) { (data, error) in
             do {
                 var result = try JSONDecoder().decode(CreatedAccountResponse.self, from: data!)
@@ -117,7 +118,7 @@ public class SwiftBlade: NSObject {
     ///   - menmonic: seed phrase
     ///   - completion: result with PrivateKeyDataResponse type
     public func getKeysFromMnemonic (menmonic: String, completion: @escaping (_ result: PrivateKeyDataResponse?, _ error: Error?) -> Void) {
-        let completionKey = "getKeysFromMnemonic"
+        let completionKey = getCompletionKey(tag: "getKeysFromMnemonic");
         deferCompletion(forKey: completionKey) { (data, error) in
             do {
                 let response = try JSONDecoder().decode(PrivateKeyResponse.self, from: data!)
@@ -137,7 +138,7 @@ public class SwiftBlade: NSObject {
     ///   - privateKey: private key string
     ///   - completion: resilt with SignMessageDataResponse type
     public func sign (messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageDataResponse?, _ error: Error?) -> Void) {
-        let completionKey = "sign"
+        let completionKey = getCompletionKey(tag: "sign");
         deferCompletion(forKey: completionKey) { (data, error) in
             do {
                 let response = try JSONDecoder().decode(SignMessageResponse.self, from: data!)
@@ -164,7 +165,7 @@ public class SwiftBlade: NSObject {
     }
     
     private func setNetwork(_ network: String) throws {
-        let completionKey = "setNetwork"
+        let completionKey = getCompletionKey(tag: "setNetwork");
         deferCompletion(forKey: completionKey) { (data, error) in
             self.initCompletion!()
         }
@@ -191,6 +192,11 @@ public class SwiftBlade: NSObject {
             }
                 
         }
+    }
+    
+    private func getCompletionKey(tag: String = "") -> String {
+        completionId += 1;
+        return tag + String(completionId);
     }
 }
 
