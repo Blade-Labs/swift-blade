@@ -1,7 +1,7 @@
 import {
     AccountBalanceQuery,
     AccountId,
-    Client, ContractFunctionSelector,
+    Client, ContractCallQuery, ContractFunctionResult, ContractFunctionSelector,
     Mnemonic,
     PrivateKey,
     PublicKey,
@@ -13,6 +13,7 @@ import {hethers} from "@hashgraph/hethers";
 import {createAccount, getAccountsFromPublicKey, requestTokenInfo, signContractCallTx} from "./ApiService";
 import {Network} from "./models/Networks";
 import StringHelpers from "./helpers/StringHelpers";
+import {parseContractFunctionParams} from "./helpers/ContractHelpers";
 import {CustomError} from "./models/Errors";
 
 export class SDK {
@@ -87,79 +88,7 @@ export class SDK {
             const client = this.getClient();
             client.setOperator(accountId, accountPrivateKey);
 
-            const parseContractFunctionParams = (paramsEncoded) => {
-                const types: string[] = [];
-                const values: any[] = [];
-                const paramsData = JSON.parse(paramsEncoded);
 
-                paramsData.forEach(param => {
-                    switch (param?.type) {
-                        case "address": {
-                            // ["0.0.48619523"]
-                            const solidityAddress = AccountId.fromString(param.value[0]).toSolidityAddress()
-
-                            types.push(param.type);
-                            values.push(solidityAddress);
-                        } break;
-
-                        case "address[]": {
-                            // ["0.0.48619523", "0.0.4861934333"]
-
-                            const solidityAddresses = param.value.map(address => {
-                                return AccountId.fromString(address).toSolidityAddress()
-                            })
-
-                            types.push(param.type);
-                            values.push(solidityAddresses);
-                        } break;
-
-                        case "bytes32": {
-                            // "WzAsMSwyLDMsNCw1LDYsNyw4LDksMTAsMTEsMTIsMTMsMTQsMTUsMTYsMTcsMTgsMTksMjAsMjEsMjIsMjMsMjQsMjUsMjYsMjcsMjgsMjksMzAsMzFd"
-                            // base64 decode -> json parse -> data
-                            types.push(param.type);
-                            values.push(Uint8Array.from(JSON.parse(atob(param.value[0]))));
-                        } break;
-                        case "uint8":
-                        case "int64":
-                        case "uint64":
-                        case "uint256": {
-                            types.push(param.type);
-                            values.push(param.value[0]);
-                        } break;
-                        case "uint64[]":
-                        case "uint256[]": {
-                            types.push(param.type);
-                            values.push(param.value);
-                        } break;
-
-                        case "tuple": {
-                            const result = parseContractFunctionParams(param.value[0]);
-
-                            types.push(`tuple(${result.types})`);
-                            values.push(result.values);
-                        } break;
-
-                        case "tuple[]": {
-                            const result = param.value.map(value => {
-                                return parseContractFunctionParams(value)
-                            });
-
-                            types.push(`tuple[](${result[0].types})`);
-                            values.push(result.map(({values}) => values));
-                        } break;
-                        default: {
-                            const error = {
-                                name: "SwiftBlade JS",
-                                reason: `Type "${param?.type}" not implemented on JS`
-                            };
-                            this.sendMessageToNative(completionKey, null, error);
-                            throw error;
-                        } break;
-                    }
-                });
-
-                return {types, values};
-            }
 
             const {types, values} = parseContractFunctionParams(paramsEncoded);
             // console.log(types, values);
@@ -215,6 +144,55 @@ export class SDK {
                 .catch(error => {
                     this.sendMessageToNative(completionKey, null, error)
                 });
+        } catch (error) {
+            this.sendMessageToNative(completionKey, null, error)
+        }
+    }
+
+    /**
+     * Contract function call query
+     *
+     * @param {string} contractId
+     * @param {string} functionName
+     * @param {string} paramsEncoded
+     * @param {string} accountId
+     * @param {string} accountPrivateKey
+     * @param {string} completionKey
+     */
+    async contractCallFunctionQuery(contractId: string, functionName: string, paramsEncoded: string, accountId: string, accountPrivateKey: string, completionKey: string) {
+        try {
+            const client = this.getClient();
+            client.setOperator(accountId, accountPrivateKey);
+
+            //Query the contract for the contract message
+            const contractCallQuery = new ContractCallQuery()
+                    //Set the ID of the contract to query
+                    .setContractId(contractId)
+                    //Set the gas to execute the contract call
+                    .setGas(100000)
+                    //Set the contract function to call
+                    .setFunction(functionName)
+                //Set the query payment for the node returning the request
+                //This value must cover the cost of the request otherwise will fail
+                // .setQueryPayment(new Hbar(10))
+            ;
+
+            //Submit the transaction to a Hedera network
+            const contractUpdateResult = await contractCallQuery.execute(client);
+
+            //Get the updated message at index 0
+            const message = contractUpdateResult.getString(0);
+            const address = contractUpdateResult.getAddress(1);
+
+            //Log the updated message to the console
+            // console.log("The updated contract message: " + message);
+
+            const result = {
+                message,
+                address
+            }
+            this.sendMessageToNative(completionKey, result);
+
         } catch (error) {
             this.sendMessageToNative(completionKey, null, error)
         }

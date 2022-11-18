@@ -216,6 +216,33 @@ public class SwiftBlade: NSObject {
         executeJS("bladeSdk.contractCallFunction('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', '\(completionKey)')")
     }
     
+    /// Method to call smart-contract function and query result from current account
+    ///
+    /// - Parameters:
+    ///   - contractId: contract
+    ///   - functionName: function name
+    ///   - params: function arguments
+    ///   - accountId: sender
+    ///   - accountPrivateKey: sender's private key to sign transfer transaction
+    ///   - completion: result with ContractCallQuery type
+    public func contractCallFunctionQuery(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, completion: @escaping (_ result: ContractCallQuery?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("contractCallFunctionQuery");
+        deferCompletion(forKey: completionKey) { (data, error) in
+            if (error != nil) {
+                return completion(nil, error)
+            }
+            do {
+                let response = try JSONDecoder().decode(ContractCallQueryResponse.self, from: data!)
+                completion(response.data, nil)
+            } catch let error as NSError {
+                print(error)
+                completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
+            }
+        }
+        let paramsEncoded = params.encode();
+        executeJS("bladeSdk.contractCallFunctionQuery('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', '\(completionKey)')")
+    }
+    
     /// Sign message with private key
     ///
     /// - Parameters:
@@ -329,6 +356,16 @@ public class ContractFunctionParameters: NSObject {
         return self;
     }
 
+    public func addString(value: String) -> ContractFunctionParameters {
+        params.append(ContractFunctionParameter(type: "string", value: [value]));
+        return self;
+    }
+    
+    public func addStringArray(value: [String]) -> ContractFunctionParameters {
+        params.append(ContractFunctionParameter(type: "string[]", value: value));
+        return self;
+    }
+    
     public func encode() -> String {
         do {
             let jsonData = try JSONEncoder().encode(params)
@@ -465,6 +502,17 @@ public struct TransactionReceipt: Codable {
     public var totalSupply: String?
     public var serials: [String]?
 }
+
+struct ContractCallQueryResponse: Codable {
+    var completionKey: String
+    var data: ContractCallQuery
+}
+
+public struct ContractCallQuery: Codable {
+    public var message: String
+    public var address: String
+}
+
 
 // MARK: - SwiftBlade errors
 public enum SwiftBladeError: Error {
