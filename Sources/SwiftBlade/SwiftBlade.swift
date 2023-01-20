@@ -50,7 +50,7 @@ public class SwiftBlade: NSObject {
     /// - Parameters:
     ///   - id: Hedera id (address), example: 0.0.112233
     ///   - completion: result with BalanceDataResponse type
-    public func getBalance(_ id: String, completion: @escaping (_ result: BalanceDataResponse?, _ error: BladeJSError?) -> Void) {
+    public func getBalance(_ id: String, completion: @escaping (_ result: BalanceData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getBalance");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -75,7 +75,7 @@ public class SwiftBlade: NSObject {
     ///   - receiverId: receiver
     ///   - amount: amount
     ///   - completion: result with TransferDataResponse type
-    public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, completion: @escaping (_ result: TransferDataResponse?, _ error: BladeJSError?) -> Void) {
+    public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferHbars");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -101,7 +101,7 @@ public class SwiftBlade: NSObject {
     ///   - receiverId: receiver
     ///   - amount: amount
     ///   - completion: result with TransferDataResponse type
-    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, completion: @escaping (_ result: TransferDataResponse?, _ error: BladeJSError?) -> Void) {
+    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferTokens");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -121,8 +121,7 @@ public class SwiftBlade: NSObject {
     /// Method to create Hedera account
     ///
     /// - Parameter completion: result with CreatedAccountDataResponse type
-    public func createHederaAccount(completion: @escaping (_ result: CreatedAccountDataResponse?, _ error: BladeJSError?) -> Void) {
-        // Step 1. Generate mnemonice and public / private key
+    public func createHederaAccount(completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("createAccount");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -139,6 +138,28 @@ public class SwiftBlade: NSObject {
         executeJS("bladeSdk.createAccount('\(completionKey)')")
     }
 
+
+    /// Method to get pending Hedera account
+    ///
+    /// - Parameter completion: result with CreatedAccountDataResponse type
+    public func getPendingAccount(transactionId: String, seedPhrase: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
+
+        let completionKey = getCompletionKey("getPendingAccount");
+        deferCompletion(forKey: completionKey) { (data, error) in
+            if (error != nil) {
+                return completion(nil, error)
+            }
+            do {
+                let response = try JSONDecoder().decode(CreatedAccountResponse.self, from: data!)
+                completion(response.data, nil)
+            } catch let error as NSError {
+                print(error)
+                completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
+            }
+        }
+        executeJS("bladeSdk.getPendingAccount('\(transactionId)', '\(seedPhrase)', '\(completionKey)')")
+    }
+
     /// Method to delete Hedera account
     ///
     /// - Parameters:
@@ -148,7 +169,7 @@ public class SwiftBlade: NSObject {
     ///   - operatorAccountId: operator account Id
     ///   - operatorPrivateKey: operator account private key
     ///   - completion: result with TransactionReceipt type
-    public func deleteHederaAccount(deleteAccountId: String, deletePrivateKey: String, transferAccountId: String, operatorAccountId: String, operatorPrivateKey: String, completion: @escaping (_ result: TransactionReceipt?, _ error: BladeJSError?) -> Void) {
+    public func deleteHederaAccount(deleteAccountId: String, deletePrivateKey: String, transferAccountId: String, operatorAccountId: String, operatorPrivateKey: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("deleteHederaAccount");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -171,7 +192,7 @@ public class SwiftBlade: NSObject {
     ///   - menmonic: seed phrase
     ///   - lookupNames: lookup for accounts
     ///   - completion: result with PrivateKeyDataResponse type
-    public func getKeysFromMnemonic (menmonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyDataResponse?, _ error: BladeJSError?) -> Void) {
+    public func getKeysFromMnemonic (menmonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getKeysFromMnemonic");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -194,7 +215,7 @@ public class SwiftBlade: NSObject {
     ///   - messageString: message in base64 string
     ///   - privateKey: private key string
     ///   - completion: result with SignMessageDataResponse type
-    public func sign (messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageDataResponse?, _ error: BladeJSError?) -> Void) {
+    public func sign (messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("sign");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -218,7 +239,7 @@ public class SwiftBlade: NSObject {
     ///   - signature: hex-encoded signature string
     ///   - publicKey: public key string
     ///   - completion: result with SignMessageDataResponse type
-    public func signVerify(messageString: String, signature: String, publicKey: String, completion: @escaping (_ result: SignVerifyMessageDataResponse?, _ error: BladeJSError?) -> Void) {
+    public func signVerify(messageString: String, signature: String, publicKey: String, completion: @escaping (_ result: SignVerifyMessageData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("signVerify");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -250,7 +271,7 @@ public class SwiftBlade: NSObject {
     ///   - accountPrivateKey: sender's private key to sign transfer transaction
     ///   - gas: gas amount for transaction (default 100000)
     ///   - completion: result with TransactionReceipt type
-    public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, completion: @escaping (_ result: TransactionReceipt?, _ error: BladeJSError?) -> Void) {
+    public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("contractCallFunction");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -274,7 +295,7 @@ public class SwiftBlade: NSObject {
     ///   - messageString: message in base64 string
     ///   - privateKey: private key string
     ///   - completion: result with SignMessageDataResponse type
-    public func hethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageDataResponse?, _ error: BladeJSError?) -> Void) {
+    public func hethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("hethersSign");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -296,14 +317,14 @@ public class SwiftBlade: NSObject {
     /// - Parameters:
     ///   - signature: signature string "0x21fbf0696......"
     ///   - completion: result with SplitedSignature type
-    public func splitSignature(signature: String, completion: @escaping (_ result: SplitedSignature?, _ error: BladeJSError?) -> Void ) {
+    public func splitSignature(signature: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void ) {
         let completionKey = getCompletionKey("splitSignature");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
                 return completion(nil, error)
             }
             do {
-                let response = try JSONDecoder().decode(SplitedSignatureResponse.self, from: data!)
+                let response = try JSONDecoder().decode(SplitSignatureResponse.self, from: data!)
                 completion(response.data, nil)
             } catch let error as NSError {
                 print(error)
@@ -319,14 +340,14 @@ public class SwiftBlade: NSObject {
     ///   - params: params generated with ContractFunctionParameters
     ///   - accountPrivateKey: account private key string
     ///   - completion: result with SplitedSignature type
-    public func getParamsSignature(params: ContractFunctionParameters, accountPrivateKey: String, completion: @escaping (_ result: SplitedSignature?, _ error: BladeJSError?) -> Void ) {
+    public func getParamsSignature(params: ContractFunctionParameters, accountPrivateKey: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void ) {
         let completionKey = getCompletionKey("getParamsSignature");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
                 return completion(nil, error)
             }
             do {
-                let response = try JSONDecoder().decode(SplitedSignatureResponse.self, from: data!)
+                let response = try JSONDecoder().decode(SplitSignatureResponse.self, from: data!)
                 completion(response.data, nil)
             } catch let error as NSError {
                 print(error)
@@ -343,7 +364,7 @@ public class SwiftBlade: NSObject {
     ///   - accountId: accountId of history
     ///   - nextPage: link from response to load next page of history
     ///   - completion: result with TransactionsHistory type
-    public func getTransactions(accountId: String, transactionType: String, nextPage: String = "", completion: @escaping (_ result: TransactionsHistory?, _ error: BladeJSError?) -> Void) {
+    public func getTransactions(accountId: String, transactionType: String, nextPage: String = "", completion: @escaping (_ result: TransactionsHistoryData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getTransactions");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -516,22 +537,22 @@ struct Response: Codable {
 
 struct CreatedAccountResponse: Codable {
     var completionKey: String
-    var data: CreatedAccountDataResponse
+    var data: CreatedAccountData
 }
 
 struct BalanceResponse: Codable {
     var completionKey: String
-    var data: BalanceDataResponse
+    var data: BalanceData
 }
 
 struct PrivateKeyResponse: Codable {
     var completionKey: String
-    var data: PrivateKeyDataResponse
+    var data: PrivateKeyData
 }
 
 struct TransferResponse: Codable {
     var completionKey: String
-    var data: TransferDataResponse
+    var data: TransferData
 }
 
 struct AccountAPIResponse: Codable {
@@ -543,50 +564,52 @@ struct AccountAPIResponse: Codable {
 
 struct SignMessageResponse: Codable {
     var completionKey: String
-    var data: SignMessageDataResponse
+    var data: SignMessageData
 }
 
 struct SignVerifyMessageResponse: Codable {
     var completionKey: String
-    var data: SignVerifyMessageDataResponse
+    var data: SignVerifyMessageData
 }
 
-public struct CreatedAccountDataResponse: Codable {
+public struct CreatedAccountData: Codable {
     public var seedPhrase: String
     public var publicKey: String
     public var privateKey: String
-    public var accountId: String
+    public var accountId: String?
     public var evmAddress: String
+    public var transactionId: String?
+    public var status: String
 }
 
-public struct BalanceDataResponse: Codable {
+public struct BalanceData: Codable {
     public var hbars: Double
-    public var tokens: [BalanceDataResponseToken]
+    public var tokens: [BalanceDataToken]
 }
 
-public struct BalanceDataResponseToken: Codable {
+public struct BalanceDataToken: Codable {
     public var balance: Double
     public var tokenId: String
 }
 
-public struct PrivateKeyDataResponse: Codable {
+public struct PrivateKeyData: Codable {
     public var privateKey: String
     public var publicKey: String
     public var accounts: [String]
     public var evmAddress: String
 }
 
-public struct TransferDataResponse: Codable {
+public struct TransferData: Codable {
     public var nodeId: String
     public var transactionHash: String
     public var transactionId: String
 }
 
-public struct SignMessageDataResponse: Codable {
+public struct SignMessageData: Codable {
     public var signedMessage: String
 }
 
-public struct SignVerifyMessageDataResponse: Codable {
+public struct SignVerifyMessageData: Codable {
     public var valid: Bool
 }
 
@@ -597,10 +620,10 @@ public struct ContractFunctionParameter: Encodable {
 
 struct TransactionReceiptResponse: Codable {
     var completionKey: String
-    var data: TransactionReceipt
+    var data: TransactionReceiptData
 }
 
-public struct TransactionReceipt: Codable {
+public struct TransactionReceiptData: Codable {
     public var status: String
     public var contractId: String?
     public var topicSequenceNumber: String?
@@ -608,12 +631,12 @@ public struct TransactionReceipt: Codable {
     public var serials: [String]?
 }
 
-struct SplitedSignatureResponse: Codable {
+struct SplitSignatureResponse: Codable {
     var completionKey: String
-    var data: SplitedSignature
+    var data: SplitSignatureData
 }
 
-public struct SplitedSignature: Codable {
+public struct SplitSignatureData: Codable {
     public var v: Int
     public var r: String
     public var s: String
@@ -621,10 +644,10 @@ public struct SplitedSignature: Codable {
 
 struct TransactionsHistoryResponse: Codable {
     var completionKey: String
-    var data: TransactionsHistory
+    var data: TransactionsHistoryData
 }
 
-public struct TransactionsHistory: Codable {
+public struct TransactionsHistoryData: Codable {
     public var nextPage: String?
     public var transactions: [TransactionHistoryDetail]
 }
