@@ -364,7 +364,7 @@ public class SwiftBlade: NSObject {
     ///   - accountId: accountId of history
     ///   - nextPage: link from response to load next page of history
     ///   - completion: result with TransactionsHistory type
-    public func getTransactions(accountId: String, transactionType: String, nextPage: String = "", completion: @escaping (_ result: TransactionsHistoryData?, _ error: BladeJSError?) -> Void) {
+    public func getTransactions(accountId: String, transactionType: String, nextPage: String = "", transactionsLimit: Int = 10, completion: @escaping (_ result: TransactionsHistoryData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getTransactions");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -378,7 +378,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.getTransactions('\(accountId)', '\(transactionType)', '\(nextPage)', '\(completionKey)')")
+        executeJS("bladeSdk.getTransactions('\(accountId)', '\(transactionType)', '\(nextPage)', '\(transactionsLimit)', '\(completionKey)')")
     }
 
     // MARK: - Private methods 🔒
@@ -661,6 +661,7 @@ public struct TransactionHistoryDetail: Codable {
     public var transfers: [TransactionHistoryTransfer]
     public var type: String
     public var plainData: TransactionHistoryPlainData?
+    public var consensusTimestamp: String
 }
 
 public struct TransactionHistoryPlainData: Codable {
