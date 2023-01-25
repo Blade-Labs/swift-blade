@@ -101,7 +101,7 @@ public class SwiftBlade: NSObject {
     ///   - receiverId: receiver
     ///   - amount: amount
     ///   - completion: result with TransferDataResponse type
-    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
+    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, freeTransfer: Bool = true, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferTokens");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -115,7 +115,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.transferTokens('\(tokenId)', '\(accountId)', '\(accountPrivateKey)', '\(receiverId)', '\(amount)', '\(completionKey)')")
+        executeJS("bladeSdk.transferTokens('\(tokenId)', '\(accountId)', '\(accountPrivateKey)', '\(receiverId)', '\(amount)', \(freeTransfer), '\(completionKey)')")
     }
 
     /// Method to create Hedera account
@@ -580,6 +580,7 @@ public struct CreatedAccountData: Codable {
     public var evmAddress: String
     public var transactionId: String?
     public var status: String
+    public var queueNumber: Int?
 }
 
 public struct BalanceData: Codable {
