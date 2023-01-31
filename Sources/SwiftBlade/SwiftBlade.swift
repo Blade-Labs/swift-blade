@@ -270,8 +270,9 @@ public class SwiftBlade: NSObject {
     ///   - accountId: sender
     ///   - accountPrivateKey: sender's private key to sign transfer transaction
     ///   - gas: gas amount for transaction (default 100000)
+    ///   - bladePayFee: blade pay fee, otherwise fee will be payed from sender accountId
     ///   - completion: result with TransactionReceipt type
-    public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
+    public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, bladePayFee: Bool, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("contractCallFunction");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -286,7 +287,7 @@ public class SwiftBlade: NSObject {
             }
         }
         let paramsEncoded = params.encode();
-        executeJS("bladeSdk.contractCallFunction('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', \(gas), '\(completionKey)')")
+        executeJS("bladeSdk.contractCallFunction('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', \(gas), \(bladePayFee), '\(completionKey)')")
     }
 
     /// Sign message with private key
