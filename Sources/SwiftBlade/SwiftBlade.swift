@@ -186,6 +186,28 @@ public class SwiftBlade: NSObject {
         executeJS("bladeSdk.deleteAccount('\(deleteAccountId)', '\(deletePrivateKey)', '\(transferAccountId)', '\(operatorAccountId)', '\(operatorPrivateKey)',  '\(completionKey)')")
     }
 
+    /// Get acccont evmAddress and calculated evmAddress from public key
+    ///
+    /// - Parameters:
+    ///   - accountId: accountId
+    ///   - completion: result with PrivateKeyDataResponse type
+    public func getAccountInfo (accountId: String, completion: @escaping (_ result: AccountInfoData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("getAccountInfo");
+        deferCompletion(forKey: completionKey) { (data, error) in
+            if (error != nil) {
+                return completion(nil, error)
+            }
+            do {
+                let response = try JSONDecoder().decode(AccountInfoResponse.self, from: data!)
+                completion(response.data, nil)
+            } catch let error as NSError {
+                print(error)
+                completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
+            }
+        }
+        executeJS("bladeSdk.getAccountInfo('\(accountId)', '\(completionKey)')")
+    }
+    
     /// Restore public and private key by seed phrase
     ///
     /// - Parameters:
@@ -582,6 +604,17 @@ public struct CreatedAccountData: Codable {
     public var transactionId: String?
     public var status: String
     public var queueNumber: Int?
+}
+
+struct AccountInfoResponse: Codable {
+    var completionKey: String
+    var data: AccountInfoData
+}
+
+public struct AccountInfoData: Codable {
+    public var accountId: String
+    public var evmAddress: String
+    public var calculatedEvmAddress: String
 }
 
 public struct BalanceData: Codable {
