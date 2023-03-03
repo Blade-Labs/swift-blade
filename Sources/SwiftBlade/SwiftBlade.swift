@@ -207,7 +207,7 @@ public class SwiftBlade: NSObject {
         }
         executeJS("bladeSdk.getAccountInfo('\(accountId)', '\(completionKey)')")
     }
-    
+
     /// Restore public and private key by seed phrase
     ///
     /// - Parameters:
@@ -310,6 +310,24 @@ public class SwiftBlade: NSObject {
         }
         let paramsEncoded = params.encode();
         executeJS("bladeSdk.contractCallFunction('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', \(gas), \(bladePayFee), '\(completionKey)')")
+    }
+
+    public func contractCallQueryFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, bladePayFee: Bool, returnTypes: [String], completion: @escaping (_ result: ContractQueryData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("contractCallQueryFunction");
+        deferCompletion(forKey: completionKey) { (data, error) in
+            if (error != nil) {
+                return completion(nil, error)
+            }
+            do {
+                let response = try JSONDecoder().decode(ContractQueryResponse.self, from: data!)
+                completion(response.data, nil)
+            } catch let error as NSError {
+                print(error)
+                completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
+            }
+        }
+        let paramsEncoded = params.encode();
+        executeJS("bladeSdk.contractCallQueryFunction('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', \(gas), \(bladePayFee), [\(returnTypes.map({"'\($0)'"}).joined(separator: ","))], '\(completionKey)')")
     }
 
     /// Sign message with private key
@@ -656,6 +674,21 @@ public struct ContractFunctionParameter: Encodable {
 struct TransactionReceiptResponse: Codable {
     var completionKey: String
     var data: TransactionReceiptData
+}
+
+struct ContractQueryResponse: Codable {
+    var completionKey: String
+    var data: ContractQueryData
+}
+
+public struct ContractQueryData: Codable {
+    public var gasUsed: Int
+    public var values: [ContractQueryRecord]
+}
+
+public struct ContractQueryRecord: Codable {
+    public var type: String
+    public var value: String
 }
 
 public struct TransactionReceiptData: Codable {
