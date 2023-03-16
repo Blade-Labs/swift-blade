@@ -13,7 +13,7 @@ public class SwiftBlade: NSObject {
     private var completionId: Int = 0
 
     private var apiKey: String? = nil
-    private let uuid = UUID().uuidString
+    private let uuid: String? = UIDevice.current.identifierForVendor?.uuidString
     private var network: HederaNetwork = .TESTNET
     private var dAppCode: String?
 
