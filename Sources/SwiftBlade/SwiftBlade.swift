@@ -421,6 +421,31 @@ public class SwiftBlade: NSObject {
         }
         executeJS("bladeSdk.getTransactions('\(accountId)', '\(transactionType)', '\(nextPage)', '\(transactionsLimit)', '\(completionKey)')")
     }
+    
+    /// Method to get transactions history
+    ///
+    /// - Parameters:
+    ///   - asset: USDC or HBAR
+    ///   - account: reciever account
+    ///   - amount: amount
+    ///   - completion: result with TransactionsHistory type
+    public func getC14url(asset: String, account: String, amount: String, completion: @escaping (_ result: IntegrationUrlData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("getC14url");
+        deferCompletion(forKey: completionKey) { (data, error) in
+            if (error != nil) {
+                return completion(nil, error)
+            }
+            do {
+                let response = try JSONDecoder().decode(IntegrationUrlResponse.self, from: data!)
+                completion(response.data, nil)
+            } catch let error as NSError {
+                print(error)
+                completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
+            }
+        }
+        executeJS("bladeSdk.getC14url('\(asset)', '\(account)', '\(amount)', '\(completionKey)')")
+    }
+    
 
     // MARK: - Private methods 🔒
     private func executeJS (_ script: String) {
@@ -751,6 +776,15 @@ public struct TransactionHistoryNftTransfer: Codable {
     public var sender_account_id: String
     public var serial_number: Int
     public var token_id: String
+}
+
+struct IntegrationUrlResponse: Codable {
+    var completionKey: String
+    var data: IntegrationUrlData
+}
+
+public struct IntegrationUrlData: Codable {
+    public var url: String
 }
 
 // MARK: - SwiftBlade errors
