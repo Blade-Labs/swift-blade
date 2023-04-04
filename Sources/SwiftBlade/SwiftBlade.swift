@@ -421,7 +421,7 @@ public class SwiftBlade: NSObject {
         }
         executeJS("bladeSdk.getTransactions('\(accountId)', '\(transactionType)', '\(nextPage)', '\(transactionsLimit)', '\(completionKey)')")
     }
-    
+
     /// Method to get transactions history
     ///
     /// - Parameters:
@@ -445,7 +445,7 @@ public class SwiftBlade: NSObject {
         }
         executeJS("bladeSdk.getC14url('\(asset)', '\(account)', '\(amount)', '\(completionKey)')")
     }
-    
+
 
     // MARK: - Private methods 🔒
     private func executeJS (_ script: String) {
@@ -549,10 +549,8 @@ public class ContractFunctionParameters: NSObject {
 
     public func encode() -> String {
         do {
-            let jsonData = try JSONEncoder().encode(params)
-            if let res = String(data: jsonData, encoding: .utf8)?.replacingOccurrences(of: "\\", with: "\\\\") {
-                return res;
-            }
+            let encodedValue = try JSONEncoder().encode(params).base64EncodedString();
+            return encodedValue;
         } catch let error {
             print(error)
         }
