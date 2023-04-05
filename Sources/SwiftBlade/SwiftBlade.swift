@@ -591,6 +591,15 @@ extension SwiftBlade: WKNavigationDelegate {
         // Call initBladeSdkJS and initCompletion after that
         try? self.initBladeSdkJS()
     }
+    
+    public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        // if webview process killed - reload it. Init triggers at WKNavigationDelegate{webView}. Nice 👌
+        webView.reload()
+        /**
+         //to test on simulator run in cli: kill child process of simulator with 'com.apple.WebKit.WebContent' in title
+         `kill $(pgrep -P $(pgrep launchd_sim) 'com.apple.WebKit.WebContent')`
+        */
+    }
 }
 
 // MARK: - JS wrapper response types
