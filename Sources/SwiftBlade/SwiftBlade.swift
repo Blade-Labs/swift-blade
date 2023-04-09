@@ -1,7 +1,4 @@
 import WebKit
-import os
-import Alamofire
-import BigInt
 
 public class SwiftBlade: NSObject {
     public static let shared = SwiftBlade()
@@ -35,16 +32,31 @@ public class SwiftBlade: NSObject {
         self.dAppCode = dAppCode
         self.network = network
 
-        // Setting up and loading webview
-        self.webView.navigationDelegate = self
-        if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
-            self.webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
-        }
-        let contentController = self.webView.configuration.userContentController
-        contentController.add(self, name: "bladeMessageHandler")
+        self.initWebView()
     }
 
     // MARK: - Public methods 📢
+    /// Get SDK info
+    ///
+    /// - Parameters:
+    ///   - completion: result with BalanceDataResponse type
+    public func getInfo(completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("getInfo");
+        deferCompletion(forKey: completionKey) { (data, error) in
+            if (error != nil) {
+                return completion(nil, error)
+            }
+            do {
+                let response = try JSONDecoder().decode(InfoResponse.self, from: data!)
+                completion(response.data, nil)
+            } catch let error as NSError {
+                print(error)
+                completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
+            }
+        }
+        executeJS("bladeSdk.getInfo('\(completionKey)')")
+    }
+
     /// Get balances by Hedera id (address)
     ///
     /// - Parameters:
@@ -460,6 +472,17 @@ public class SwiftBlade: NSObject {
         deferCompletions.updateValue(completion, forKey: forKey)
     }
 
+    private func initWebView() {
+        // Setting up and loading webview
+        self.webView.navigationDelegate = self
+        if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
+            self.webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        }
+        var contentController = self.webView.configuration.userContentController
+        contentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
+        contentController.add(self, name: "bladeMessageHandler")
+    }
+
     private func initBladeSdkJS() throws {
         let completionKey = getCompletionKey("initBladeSdkJS");
         deferCompletion(forKey: completionKey) { (data, error) in
@@ -471,90 +494,6 @@ public class SwiftBlade: NSObject {
     private func getCompletionKey(_ tag: String = "") -> String {
         completionId += 1;
         return tag + String(completionId);
-    }
-}
-
-public class ContractFunctionParameters: NSObject {
-    private var params: [ContractFunctionParameter] = []
-
-    public func addAddress(value: String) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "address", value: [value]));
-        return self;
-    }
-
-    public func addAddressArray(value: [String]) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "address[]", value: value));
-        return self;
-    }
-
-    public func addBytes32(value: [UInt8]) -> ContractFunctionParameters {
-        do {
-            let encodedValue = try JSONEncoder().encode(value).base64EncodedString();
-            params.append(ContractFunctionParameter(type: "bytes32", value: [encodedValue]));
-        } catch let error {
-            print(error)
-        }
-        return self
-    }
-
-    public func addUInt8(value: UInt8) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "uint8", value: [String(value)]));
-        return self
-    }
-
-    public func addUInt64(value: UInt64) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "uint64", value: [String(value)]));
-        return self
-    }
-
-    public func addUInt64Array(value: [UInt64]) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "uint64[]", value: value.map{ String($0)} ));
-        return self
-    }
-
-    public func addInt64(value: Int64) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "int64", value: [String(value)]));
-        return self
-    }
-
-    public func addUInt256(value: BigUInt) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "uint256", value: [String(value)]));
-        return self;
-    }
-
-    public func addUInt256Array(value: [BigUInt]) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "uint256[]", value: value.map{ String($0)} ));
-        return self;
-    }
-
-    public func addTuple(value: ContractFunctionParameters) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "tuple", value: [value.encode()]));
-        return self;
-    }
-
-    public func addTupleArray(value: [ContractFunctionParameters]) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "tuple[]", value: value.map{$0.encode()}));
-        return self;
-    }
-
-    public func addString(value: String) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "string", value: [value]));
-        return self;
-    }
-
-    public func addStringArray(value: [String]) -> ContractFunctionParameters {
-        params.append(ContractFunctionParameter(type: "string[]", value: value));
-        return self;
-    }
-
-    public func encode() -> String {
-        do {
-            let encodedValue = try JSONEncoder().encode(params).base64EncodedString();
-            return encodedValue;
-        } catch let error {
-            print(error)
-        }
-        return "";
     }
 }
 
@@ -591,228 +530,14 @@ extension SwiftBlade: WKNavigationDelegate {
         // Call initBladeSdkJS and initCompletion after that
         try? self.initBladeSdkJS()
     }
-    
+
     public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         // if webview process killed - reload it. Init triggers at WKNavigationDelegate{webView}. Nice 👌
         webView.reload()
+        self.initWebView()
         /**
          //to test on simulator run in cli: kill child process of simulator with 'com.apple.WebKit.WebContent' in title
          `kill $(pgrep -P $(pgrep launchd_sim) 'com.apple.WebKit.WebContent')`
         */
     }
-}
-
-// MARK: - JS wrapper response types
-struct Response: Codable {
-    var completionKey: String?
-    var error: BladeJSError?
-}
-
-struct CreatedAccountResponse: Codable {
-    var completionKey: String
-    var data: CreatedAccountData
-}
-
-struct BalanceResponse: Codable {
-    var completionKey: String
-    var data: BalanceData
-}
-
-struct PrivateKeyResponse: Codable {
-    var completionKey: String
-    var data: PrivateKeyData
-}
-
-struct TransferResponse: Codable {
-    var completionKey: String
-    var data: TransferData
-}
-
-struct AccountAPIResponse: Codable {
-    var id: String
-    var network: String
-    var associationPresetTokenStatus: String
-    var transactionBytes: String
-}
-
-struct SignMessageResponse: Codable {
-    var completionKey: String
-    var data: SignMessageData
-}
-
-struct SignVerifyMessageResponse: Codable {
-    var completionKey: String
-    var data: SignVerifyMessageData
-}
-
-public struct CreatedAccountData: Codable {
-    public var seedPhrase: String
-    public var publicKey: String
-    public var privateKey: String
-    public var accountId: String?
-    public var evmAddress: String
-    public var transactionId: String?
-    public var status: String
-    public var queueNumber: Int?
-}
-
-struct AccountInfoResponse: Codable {
-    var completionKey: String
-    var data: AccountInfoData
-}
-
-public struct AccountInfoData: Codable {
-    public var accountId: String
-    public var evmAddress: String
-    public var calculatedEvmAddress: String
-}
-
-public struct BalanceData: Codable {
-    public var hbars: Double
-    public var tokens: [BalanceDataToken]
-}
-
-public struct BalanceDataToken: Codable {
-    public var balance: Double
-    public var tokenId: String
-}
-
-public struct PrivateKeyData: Codable {
-    public var privateKey: String
-    public var publicKey: String
-    public var accounts: [String]
-    public var evmAddress: String
-}
-
-public struct TransferData: Codable {
-    public var nodeId: String
-    public var transactionHash: String
-    public var transactionId: String
-}
-
-public struct SignMessageData: Codable {
-    public var signedMessage: String
-}
-
-public struct SignVerifyMessageData: Codable {
-    public var valid: Bool
-}
-
-public struct ContractFunctionParameter: Encodable {
-    public var type: String
-    public var value: [String] = []
-}
-
-struct TransactionReceiptResponse: Codable {
-    var completionKey: String
-    var data: TransactionReceiptData
-}
-
-struct ContractQueryResponse: Codable {
-    var completionKey: String
-    var data: ContractQueryData
-}
-
-public struct ContractQueryData: Codable {
-    public var gasUsed: Int
-    public var values: [ContractQueryRecord]
-}
-
-public struct ContractQueryRecord: Codable {
-    public var type: String
-    public var value: String
-}
-
-public struct TransactionReceiptData: Codable {
-    public var status: String
-    public var contractId: String?
-    public var topicSequenceNumber: String?
-    public var totalSupply: String?
-    public var serials: [String]?
-}
-
-struct SplitSignatureResponse: Codable {
-    var completionKey: String
-    var data: SplitSignatureData
-}
-
-public struct SplitSignatureData: Codable {
-    public var v: Int
-    public var r: String
-    public var s: String
-}
-
-struct TransactionsHistoryResponse: Codable {
-    var completionKey: String
-    var data: TransactionsHistoryData
-}
-
-public struct TransactionsHistoryData: Codable {
-    public var nextPage: String?
-    public var transactions: [TransactionHistoryDetail]
-}
-
-public struct TransactionHistoryDetail: Codable {
-    public var fee: Int
-    public var memo: String
-    public var nftTransfers: [TransactionHistoryNftTransfer]?
-    public var time: String
-    public var transactionId: String
-    public var transfers: [TransactionHistoryTransfer]
-    public var type: String
-    public var plainData: TransactionHistoryPlainData?
-    public var consensusTimestamp: String
-}
-
-public struct TransactionHistoryPlainData: Codable {
-    public var type: String
-    public var token_id: String
-    public var account: String
-    public var amount: Decimal
-}
-
-public struct TransactionHistoryTransfer: Codable {
-    public var account: String
-    public var amount: Decimal
-    public var is_approval: Bool
-}
-
-public struct TransactionHistoryNftTransfer: Codable {
-    public var is_approval: Bool
-    public var receiver_account_id: String
-    public var sender_account_id: String
-    public var serial_number: Int
-    public var token_id: String
-}
-
-struct IntegrationUrlResponse: Codable {
-    var completionKey: String
-    var data: IntegrationUrlData
-}
-
-public struct IntegrationUrlData: Codable {
-    public var url: String
-}
-
-// MARK: - SwiftBlade errors
-public enum SwiftBladeError: Error {
-    case unknownJsError(String)
-    case apiError(String)
-}
-
-public struct BladeJSError: Error, Codable {
-    public var name: String
-    public var reason: String
-}
-
-extension BladeJSError: LocalizedError {
-    public var errorDescription: String? {
-        return NSLocalizedString("\(self.name): \(self.reason)", comment: self.reason);
-    }
-}
-
-// MARK: - SwiftBlade enums
-public enum HederaNetwork: String {
-    case TESTNET
-    case MAINNET
 }

@@ -30,8 +30,7 @@ let package = Package(
             exclude: ["JS/JSWrapper.bundle.js.LICENSE.txt"],
             resources: [
               .process("JS/index.html"),
-              .process("JS/JSWrapper.bundle.js"),
-              .process("JS/JSWrapper.bundle.js.map")
+              .process("JS/JSWrapper.bundle.js")
             ]
         ),
         .testTarget(
