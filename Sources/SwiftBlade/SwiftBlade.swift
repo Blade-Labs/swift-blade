@@ -3,7 +3,7 @@ import WebKit
 public class SwiftBlade: NSObject {
     public static let shared = SwiftBlade()
 
-    private let webView = WKWebView()
+    private var webView: WKWebView?
     private var webViewInitialized = false
     private var deferCompletions: [String: (_ result: Data?, _ error: BladeJSError?) -> Void] = [:]
     private var initCompletion: (() -> Void)?
@@ -21,8 +21,8 @@ public class SwiftBlade: NSObject {
     ///   - apiKey: api key given by Blade tea
     ///   - network: .TESTNET or .MAINNET
     ///   - completion: completion closure that will be executed after webview is fully loaded and rendered.
-    public func initialize(apiKey: String, dAppCode: String, network: HederaNetwork , completion: @escaping () -> Void = { }) {
-        guard !webViewInitialized else {
+    public func initialize(apiKey: String, dAppCode: String, network: HederaNetwork, force: Bool = false, completion: @escaping () -> Void = { }) {
+        guard !webViewInitialized || force else {
             print("Error while doing double init of SwiftBlade")
             fatalError()
         }
@@ -465,7 +465,7 @@ public class SwiftBlade: NSObject {
             print("Error while executing JS, webview not loaded")
             fatalError()
         }
-        webView.evaluateJavaScript(script)
+        webView!.evaluateJavaScript(script)
     }
 
     private func deferCompletion (forKey: String, completion: @escaping (_ result: Data?, _ error: BladeJSError?) -> Void) {
@@ -473,12 +473,23 @@ public class SwiftBlade: NSObject {
     }
 
     private func initWebView() {
-        // Setting up and loading webview
-        self.webView.navigationDelegate = self
-        if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
-            self.webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        // removing old webView if exist
+        if (self.webView != nil) {
+            self.webView!.removeFromSuperview()
+            self.webView!.navigationDelegate = nil
+            self.webView!.uiDelegate = nil
+
+            // Set webView to nil
+            self.webView = nil
         }
-        var contentController = self.webView.configuration.userContentController
+
+        // Setting up and loading webview
+        self.webView = WKWebView();
+        self.webView!.navigationDelegate = self
+        if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
+            self.webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        }
+        var contentController = self.webView!.configuration.userContentController
         contentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
         contentController.add(self, name: "bladeMessageHandler")
     }
