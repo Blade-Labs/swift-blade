@@ -459,6 +459,24 @@ public class SwiftBlade: NSObject {
     }
 
 
+    public func cleanup() {
+        if (self.webView != nil) {
+            self.webView!.configuration.userContentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
+            self.webView!.removeFromSuperview()
+            self.webView!.navigationDelegate = nil
+            self.webView!.uiDelegate = nil
+
+            // Set webView to nil
+            self.webView = nil
+        }
+
+        webViewInitialized = false
+        deferCompletions = [:]
+        initCompletion = nil
+        apiKey = nil
+        dAppCode = nil
+    }
+    
     // MARK: - Private methods 🔒
     private func executeJS (_ script: String) {
         guard webViewInitialized else {
@@ -475,6 +493,7 @@ public class SwiftBlade: NSObject {
     private func initWebView() {
         // removing old webView if exist
         if (self.webView != nil) {
+            self.webView!.configuration.userContentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
             self.webView!.removeFromSuperview()
             self.webView!.navigationDelegate = nil
             self.webView!.uiDelegate = nil
@@ -489,9 +508,7 @@ public class SwiftBlade: NSObject {
         if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
             self.webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }
-        var contentController = self.webView!.configuration.userContentController
-        contentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
-        contentController.add(self, name: "bladeMessageHandler")
+        self.webView!.configuration.userContentController.add(self, name: "bladeMessageHandler")
     }
 
     private func initBladeSdkJS() throws {
