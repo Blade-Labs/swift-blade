@@ -133,7 +133,7 @@ public class SwiftBlade: NSObject {
     /// Method to create Hedera account
     ///
     /// - Parameter completion: result with CreatedAccountDataResponse type
-    public func createHederaAccount(completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
+    public func createHederaAccount(deviceId: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("createAccount");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -147,7 +147,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.createAccount('\(completionKey)')")
+        executeJS("bladeSdk.createAccount('\(deviceId)', '\(completionKey)')")
     }
 
 
