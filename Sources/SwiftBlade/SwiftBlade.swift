@@ -1,4 +1,5 @@
 import WebKit
+import FingerprintPro
 
 public class SwiftBlade: NSObject {
     public static let shared = SwiftBlade()
@@ -10,9 +11,10 @@ public class SwiftBlade: NSObject {
     private var completionId: Int = 0
 
     private var apiKey: String? = nil
-    private let uuid: String? = UIDevice.current.identifierForVendor?.uuidString
+    private var visitorId: String = ""
     private var network: HederaNetwork = .TESTNET
     private var dAppCode: String?
+    private let sdkVersion: String = "Swift@0.5.9"
 
     // MARK: - It's init time 🎬
     /// Initialization of Swift blade
@@ -32,7 +34,21 @@ public class SwiftBlade: NSObject {
         self.dAppCode = dAppCode
         self.network = network
 
-        self.initWebView()
+        Task {
+            do {
+                // TODO: get values from config service (BE)
+                let customDomain: Region = .custom(domain: "https://identity.bladewallet.io")
+                let configuration = Configuration(apiKey: "Li4RsMbgPldpOVfWjnaF", region: customDomain)
+                let client = FingerprintProFactory.getInstance(configuration)
+                self.visitorId = try await client.getVisitorId()
+            } catch {
+                self.visitorId = await UIDevice.current.identifierForVendor?.uuidString ?? "Failed to get visitorId and device uuid";
+            }
+
+            DispatchQueue.main.async {
+                self.initWebView()
+            }
+        }
     }
 
     // MARK: - Public methods 📢
@@ -476,7 +492,7 @@ public class SwiftBlade: NSObject {
         apiKey = nil
         dAppCode = nil
     }
-    
+
     // MARK: - Private methods 🔒
     private func executeJS (_ script: String) {
         guard webViewInitialized else {
@@ -516,7 +532,7 @@ public class SwiftBlade: NSObject {
         deferCompletion(forKey: completionKey) { (data, error) in
             self.initCompletion!()
         }
-        executeJS("bladeSdk.init('\(apiKey!)', '\(network.rawValue.lowercased())', '\(dAppCode!)', '\(uuid)', '\(completionKey)')");
+        executeJS("bladeSdk.init('\(apiKey!)', '\(network.rawValue.lowercased())', '\(dAppCode!)', '\(visitorId)', '\(sdkVersion)', '\(completionKey)')");
     }
 
     private func getCompletionKey(_ tag: String = "") -> String {
