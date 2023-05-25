@@ -7,12 +7,14 @@ public class SwiftBlade: NSObject {
     private var webView: WKWebView?
     private var webViewInitialized = false
     private var deferCompletions: [String: (_ result: Data?, _ error: BladeJSError?) -> Void] = [:]
-    private var initCompletion: (() -> Void)?
+    private var initCompletion: ((_ result: InfoData?, _ error: BladeJSError?) -> Void)?
     private var completionId: Int = 0
 
     private var apiKey: String? = nil
+    private var deviceUuid: String? = UIDevice.current.identifierForVendor?.uuidString
     private var visitorId: String = ""
     private var network: HederaNetwork = .TESTNET
+    private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
     private let sdkVersion: String = "Swift@0.5.9"
 
@@ -23,7 +25,7 @@ public class SwiftBlade: NSObject {
     ///   - apiKey: api key given by Blade tea
     ///   - network: .TESTNET or .MAINNET
     ///   - completion: completion closure that will be executed after webview is fully loaded and rendered.
-    public func initialize(apiKey: String, dAppCode: String, network: HederaNetwork, force: Bool = false, completion: @escaping () -> Void = { }) {
+    public func initialize(apiKey: String, dAppCode: String, network: HederaNetwork, bladeEnv: BladeEnv, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
         guard !webViewInitialized || force else {
             print("Error while doing double init of SwiftBlade")
             fatalError()
@@ -33,6 +35,7 @@ public class SwiftBlade: NSObject {
         self.apiKey = apiKey
         self.dAppCode = dAppCode
         self.network = network
+        self.bladeEnv = bladeEnv
 
         Task {
             do {
@@ -41,12 +44,12 @@ public class SwiftBlade: NSObject {
                 let configuration = Configuration(apiKey: "Li4RsMbgPldpOVfWjnaF", region: customDomain)
                 let client = FingerprintProFactory.getInstance(configuration)
                 self.visitorId = try await client.getVisitorId()
-            } catch {
-                self.visitorId = await UIDevice.current.identifierForVendor?.uuidString ?? "Failed to get visitorId and device uuid";
-            }
 
-            DispatchQueue.main.async {
-                self.initWebView()
+                DispatchQueue.main.async {
+                    self.initWebView()
+                }
+            } catch let error {
+                completion(nil, BladeJSError.init(name: "Init failed: Failed to get visitorId", reason: "\(error)"));
             }
         }
     }
@@ -92,7 +95,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.getBalance('\(id)', '\(completionKey)')")
+        executeJS("bladeSdk.getBalance('\(esc(id))', '\(completionKey)')")
     }
 
     /// Method to execure Hbar transfers from current account to receiver
@@ -102,8 +105,9 @@ public class SwiftBlade: NSObject {
     ///   - accountPrivateKey: sender's private key to sign transfer transaction
     ///   - receiverId: receiver
     ///   - amount: amount
+    ///   - memo: transaction memo
     ///   - completion: result with TransferDataResponse type
-    public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
+    public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferHbars");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -117,7 +121,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.transferHbars('\(accountId)', '\(accountPrivateKey)', '\(receiverId)', '\(amount)', '\(completionKey)')")
+        executeJS("bladeSdk.transferHbars('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', '\(completionKey)')")
     }
 
     /// Method to execure token transfers from current account to receiver
@@ -128,8 +132,9 @@ public class SwiftBlade: NSObject {
     ///   - accountPrivateKey: sender's private key to sign transfer transaction
     ///   - receiverId: receiver
     ///   - amount: amount
+    ///   - memo: transaction memo
     ///   - completion: result with TransferDataResponse type
-    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, freeTransfer: Bool = true, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
+    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, freeTransfer: Bool = true, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferTokens");
         deferCompletion(forKey: completionKey) { (data, error) in
             if (error != nil) {
@@ -143,7 +148,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.transferTokens('\(tokenId)', '\(accountId)', '\(accountPrivateKey)', '\(receiverId)', '\(amount)', \(freeTransfer), '\(completionKey)')")
+        executeJS("bladeSdk.transferTokens('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', \(freeTransfer), '\(completionKey)')")
     }
 
     /// Method to create Hedera account
@@ -163,7 +168,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.createAccount('\(deviceId)', '\(completionKey)')")
+        executeJS("bladeSdk.createAccount('\(esc(deviceId))', '\(completionKey)')")
     }
 
 
@@ -185,7 +190,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.getPendingAccount('\(transactionId)', '\(seedPhrase)', '\(completionKey)')")
+        executeJS("bladeSdk.getPendingAccount('\(esc(transactionId))', '\(esc(seedPhrase))', '\(completionKey)')")
     }
 
     /// Method to delete Hedera account
@@ -211,7 +216,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.deleteAccount('\(deleteAccountId)', '\(deletePrivateKey)', '\(transferAccountId)', '\(operatorAccountId)', '\(operatorPrivateKey)',  '\(completionKey)')")
+        executeJS("bladeSdk.deleteAccount('\(esc(deleteAccountId))', '\(esc(deletePrivateKey))', '\(esc(transferAccountId))', '\(esc(operatorAccountId))', '\(esc(operatorPrivateKey))',  '\(completionKey)')")
     }
 
     /// Get acccont evmAddress and calculated evmAddress from public key
@@ -233,7 +238,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.getAccountInfo('\(accountId)', '\(completionKey)')")
+        executeJS("bladeSdk.getAccountInfo('\(esc(accountId))', '\(completionKey)')")
     }
 
     /// Restore public and private key by seed phrase
@@ -256,7 +261,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.getKeysFromMnemonic('\(menmonic)', \(lookupNames), '\(completionKey)')")
+        executeJS("bladeSdk.getKeysFromMnemonic('\(esc(menmonic))', \(lookupNames), '\(completionKey)')")
     }
 
     /// Sign message with private key
@@ -279,7 +284,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.sign('\(messageString)', '\(privateKey)', '\(completionKey)')")
+        executeJS("bladeSdk.sign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')")
     }
 
     /// Verify message signature with public key
@@ -303,7 +308,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.signVerify('\(messageString)', '\(signature)', '\(publicKey)', '\(completionKey)')")
+        executeJS("bladeSdk.signVerify('\(esc(messageString))', '\(esc(signature))', '\(esc(publicKey))', '\(completionKey)')")
     }
 
 
@@ -337,7 +342,8 @@ public class SwiftBlade: NSObject {
             }
         }
         let paramsEncoded = params.encode();
-        executeJS("bladeSdk.contractCallFunction('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', \(gas), \(bladePayFee), '\(completionKey)')")
+        // TODO check if ContractFunctionParameters.encode() returns string with escaped \'
+        executeJS("bladeSdk.contractCallFunction('\(esc(contractId))', '\(esc(functionName))', '\(paramsEncoded)', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), '\(completionKey)')")
     }
 
     public func contractCallQueryFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, bladePayFee: Bool, returnTypes: [String], completion: @escaping (_ result: ContractQueryData?, _ error: BladeJSError?) -> Void) {
@@ -355,7 +361,8 @@ public class SwiftBlade: NSObject {
             }
         }
         let paramsEncoded = params.encode();
-        executeJS("bladeSdk.contractCallQueryFunction('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', \(gas), \(bladePayFee), [\(returnTypes.map({"'\($0)'"}).joined(separator: ","))], '\(completionKey)')")
+        // TODO check if ContractFunctionParameters.encode() returns string with escaped \'
+        executeJS("bladeSdk.contractCallQueryFunction('\(esc(contractId))', '\(esc(functionName))', '\(paramsEncoded)', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), [\(returnTypes.map({"'\(esc($0))'"}).joined(separator: ","))], '\(completionKey)')")
     }
 
     /// Sign message with private key
@@ -378,7 +385,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.hethersSign('\(messageString)', '\(privateKey)', '\(completionKey)')")
+        executeJS("bladeSdk.hethersSign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')")
     }
 
     /// Method to split signature into v-r-s
@@ -400,7 +407,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.splitSignature('\(signature)', '\(completionKey)')")
+        executeJS("bladeSdk.splitSignature('\(esc(signature))', '\(completionKey)')")
     }
 
     /// Method to split signature into v-r-s
@@ -424,7 +431,7 @@ public class SwiftBlade: NSObject {
             }
         }
         let paramsEncoded = params.encode();
-        executeJS("bladeSdk.getParamsSignature('\(paramsEncoded)', '\(accountPrivateKey)', '\(completionKey)')")
+        executeJS("bladeSdk.getParamsSignature('\(paramsEncoded)', '\(esc(accountPrivateKey))', '\(completionKey)')")
     }
 
     /// Method to get transactions history
@@ -447,7 +454,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.getTransactions('\(accountId)', '\(transactionType)', '\(nextPage)', '\(transactionsLimit)', '\(completionKey)')")
+        executeJS("bladeSdk.getTransactions('\(esc(accountId))', '\(esc(transactionType))', '\(esc(nextPage))', '\(transactionsLimit)', '\(completionKey)')")
     }
 
     /// Method to get transactions history
@@ -471,7 +478,7 @@ public class SwiftBlade: NSObject {
                 completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.getC14url('\(asset)', '\(account)', '\(amount)', '\(completionKey)')")
+        executeJS("bladeSdk.getC14url('\(esc(asset))', '\(esc(account))', '\(esc(amount))', '\(completionKey)')")
     }
 
 
@@ -506,6 +513,11 @@ public class SwiftBlade: NSObject {
         deferCompletions.updateValue(completion, forKey: forKey)
     }
 
+    // method to escape single quotes. Shortname for inline use and readability
+    private func esc(_ string: String) -> String {
+        return string.replacingOccurrences(of: "'", with: "\\'")
+    }
+
     private func initWebView() {
         // removing old webView if exist
         if (self.webView != nil) {
@@ -530,9 +542,17 @@ public class SwiftBlade: NSObject {
     private func initBladeSdkJS() throws {
         let completionKey = getCompletionKey("initBladeSdkJS");
         deferCompletion(forKey: completionKey) { (data, error) in
-            self.initCompletion!()
+            if (error != nil) {
+                return self.initCompletion!(nil, error)
+            }
+            do {
+                let response = try JSONDecoder().decode(InfoResponse.self, from: data!)
+                self.initCompletion!(response.data, nil)
+            } catch let error as NSError {
+                self.initCompletion!(nil, BladeJSError(name: "Error", reason: "\(error)"))
+            }
         }
-        executeJS("bladeSdk.init('\(apiKey!)', '\(network.rawValue.lowercased())', '\(dAppCode!)', '\(visitorId)', '\(sdkVersion)', '\(completionKey)')");
+        executeJS("bladeSdk.init('\(esc(apiKey!))', '\(esc(network.rawValue.lowercased()))', '\(esc(dAppCode!))', '\(deviceUuid)', '\(visitorId)', '\(bladeEnv)', '\(esc(sdkVersion))', '\(completionKey)')");
     }
 
     private func getCompletionKey(_ tag: String = "") -> String {
