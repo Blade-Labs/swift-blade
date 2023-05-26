@@ -20,7 +20,10 @@ public struct InfoData: Codable {
     public var apiKey: String
     public var dAppCode: String
     public var network: String
-    public var fingerprint: String
+    public var visitorId: String
+    public var deviceUuid: String
+    public var sdkEnvironment: String
+    public var sdkVersion: String
     public var nonce: Int
 }
 
@@ -221,4 +224,9 @@ extension BladeJSError: LocalizedError {
 public enum HederaNetwork: String {
     case TESTNET
     case MAINNET
+}
+
+public enum BladeEnv: String {
+    case Prod = "Prod"
+    case CI = "CI"
 }
