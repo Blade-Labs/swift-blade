@@ -203,6 +203,10 @@ public struct IntegrationUrlData: Codable {
     public var url: String
 }
 
+public struct RemoteConfig: Codable {
+    public var fpApiKey: String
+}
+
 // MARK: - SwiftBlade errors
 public enum SwiftBladeError: Error {
     case unknownJsError(String)
