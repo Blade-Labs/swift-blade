@@ -1,5 +1,4 @@
 import WebKit
-import FingerprintPro
 
 public class SwiftBlade: NSObject {
     public static let shared = SwiftBlade()
@@ -9,6 +8,7 @@ public class SwiftBlade: NSObject {
     private var deferCompletions: [String: (_ result: Data?, _ error: BladeJSError?) -> Void] = [:]
     private var initCompletion: ((_ result: InfoData?, _ error: BladeJSError?) -> Void)?
     private var completionId: Int = 0
+    private var remoteConfig: RemoteConfig? = nil
 
     private var apiKey: String? = nil
     private var deviceUuid: String? = UIDevice.current.identifierForVendor?.uuidString
@@ -16,7 +16,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.5.9"
+    private let sdkVersion: String = "Swift@0.5.10"
 
     // MARK: - It's init time 🎬
     /// Initialization of Swift blade
@@ -39,17 +39,13 @@ public class SwiftBlade: NSObject {
 
         Task {
             do {
-                // TODO: get values from config service (BE)
-                let customDomain: Region = .custom(domain: "https://identity.bladewallet.io")
-                let configuration = Configuration(apiKey: "Li4RsMbgPldpOVfWjnaF", region: customDomain)
-                let client = FingerprintProFactory.getInstance(configuration)
-                self.visitorId = try await client.getVisitorId()
-
+                self.remoteConfig = try await getRemoteConfig(apiKey: apiKey, network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
+                self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
                 DispatchQueue.main.async {
                     self.initWebView()
                 }
-            } catch let error {
-                completion(nil, BladeJSError.init(name: "Init failed: Failed to get visitorId", reason: "\(error)"));
+            } catch {
+                completion(nil, BladeJSError.init(name: "Init failed", reason: "\(error)"));
             }
         }
     }
