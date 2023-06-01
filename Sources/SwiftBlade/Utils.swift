@@ -5,9 +5,9 @@ func getRemoteConfig(apiKey: String, network: HederaNetwork, dAppCode: String, s
     var url: URL? = nil;
     switch bladeEnv {
     case .Prod:
-        url = URL(string: "https://rest.prod.bladewallet.io/openapi/v7/init/sdk/config")!
+        url = URL(string: "https://rest.prod.bladewallet.io/openapi/v7/sdk/config")!
     case .CI:
-        url = URL(string: "https://rest.ci.bladewallet.io/openapi/v7/init/sdk/config")!
+        url = URL(string: "https://rest.ci.bladewallet.io/openapi/v7/sdk/config")!
     }
 
     var request = URLRequest(url: url!)
