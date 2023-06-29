@@ -1,7 +1,7 @@
 import FingerprintPro
 import Foundation
 
-func getRemoteConfig(apiKey: String, network: HederaNetwork, dAppCode: String, sdkVersion: String, bladeEnv: BladeEnv) async throws -> RemoteConfig {
+func getRemoteConfig(network: HederaNetwork, dAppCode: String, sdkVersion: String, bladeEnv: BladeEnv) async throws -> RemoteConfig {
     var url: URL? = nil;
     switch bladeEnv {
     case .Prod:
@@ -12,7 +12,6 @@ func getRemoteConfig(apiKey: String, network: HederaNetwork, dAppCode: String, s
 
     var request = URLRequest(url: url!)
     request.httpMethod = "GET"
-    request.setValue(apiKey, forHTTPHeaderField: "X-SDK-TOKEN")
     request.setValue(network.rawValue.uppercased(), forHTTPHeaderField: "X-NETWORK")
     request.setValue(dAppCode, forHTTPHeaderField: "X-DAPP-CODE")
     request.setValue(sdkVersion, forHTTPHeaderField: "X-SDK-VERSION")

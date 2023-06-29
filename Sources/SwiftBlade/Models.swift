@@ -21,7 +21,6 @@ public struct InfoData: Codable {
     public var dAppCode: String
     public var network: String
     public var visitorId: String
-    public var deviceUuid: String
     public var sdkEnvironment: String
     public var sdkVersion: String
     public var nonce: Int

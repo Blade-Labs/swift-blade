@@ -11,12 +11,11 @@ public class SwiftBlade: NSObject {
     private var remoteConfig: RemoteConfig? = nil
 
     private var apiKey: String? = nil
-    private var deviceUuid: String? = UIDevice.current.identifierForVendor?.uuidString
     private var visitorId: String = ""
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.5.10"
+    private let sdkVersion: String = "Swift@0.6.0"
 
     // MARK: - It's init time 🎬
     /// Initialization of Swift blade
@@ -39,7 +38,7 @@ public class SwiftBlade: NSObject {
 
         Task {
             do {
-                self.remoteConfig = try await getRemoteConfig(apiKey: apiKey, network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
+                self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
                 self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
                 DispatchQueue.main.async {
                     self.initWebView()
@@ -548,7 +547,7 @@ public class SwiftBlade: NSObject {
                 self.initCompletion!(nil, BladeJSError(name: "Error", reason: "\(error)"))
             }
         }
-        executeJS("bladeSdk.init('\(esc(apiKey!))', '\(esc(network.rawValue.lowercased()))', '\(esc(dAppCode!))', '\(deviceUuid)', '\(visitorId)', '\(bladeEnv)', '\(esc(sdkVersion))', '\(completionKey)')");
+        executeJS("bladeSdk.init('\(esc(apiKey!))', '\(esc(network.rawValue.lowercased()))', '\(esc(dAppCode!))',  '\(visitorId)', '\(bladeEnv)', '\(esc(sdkVersion))', '\(completionKey)')");
     }
 
     private func getCompletionKey(_ tag: String = "") -> String {
