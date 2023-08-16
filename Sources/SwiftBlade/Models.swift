@@ -175,8 +175,9 @@ public struct TransactionHistoryDetail: Codable {
 public struct TransactionHistoryPlainData: Codable {
     public var type: String
     public var token_id: String
-    public var account: String
     public var amount: Decimal
+    public var senders: [String]
+    public var receivers: [String]
 }
 
 public struct TransactionHistoryTransfer: Codable {
