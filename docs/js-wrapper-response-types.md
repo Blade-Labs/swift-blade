@@ -1,6 +1,168 @@
 # JS wrapper response types
 
 ```swift
+struct Response: Codable {
+    var completionKey: String?
+    var error: BladeJSError?
+}
+```
+
+```swift
+struct CreatedAccountResponse: Codable {
+    var completionKey: String
+    var data: CreatedAccountData
+}
+```
+
+```swift
+struct InfoResponse: Codable {
+    var completionKey: String
+    var data: InfoData
+}
+```
+
+```swift
+public struct InfoData: Codable {
+    public var apiKey: String
+    public var dAppCode: String
+    public var network: String
+    public var visitorId: String
+    public var sdkEnvironment: String
+    public var sdkVersion: String
+    public var nonce: Int
+}
+```
+
+```swift
+struct BalanceResponse: Codable {
+    var completionKey: String
+    var data: BalanceData
+}
+```
+
+```swift
+struct PrivateKeyResponse: Codable {
+    var completionKey: String
+    var data: PrivateKeyData
+}
+```
+
+```swift
+struct TransferResponse: Codable {
+    var completionKey: String
+    var data: TransferData
+}
+```
+
+```swift
+struct AccountAPIResponse: Codable {
+    var id: String
+    var network: String
+    var associationPresetTokenStatus: String
+    var transactionBytes: String
+}
+```
+
+```swift
+struct SignMessageResponse: Codable {
+    var completionKey: String
+    var data: SignMessageData
+}
+```
+
+```swift
+struct SignVerifyMessageResponse: Codable {
+    var completionKey: String
+    var data: SignVerifyMessageData
+}
+```
+
+```swift
+public struct CreatedAccountData: Codable {
+    public var seedPhrase: String
+    public var publicKey: String
+    public var privateKey: String
+    public var accountId: String?
+    public var evmAddress: String
+    public var transactionId: String?
+    public var status: String
+    public var queueNumber: Int?
+}
+```
+
+```swift
+struct AccountInfoResponse: Codable {
+    var completionKey: String
+    var data: AccountInfoData
+}
+```
+
+```swift
+public struct AccountInfoData: Codable {
+    public var accountId: String
+    public var evmAddress: String
+    public var calculatedEvmAddress: String
+}
+```
+
+```swift
+public struct BalanceData: Codable {
+    public var hbars: Double
+    public var tokens: [BalanceDataToken]
+}
+```
+
+```swift
+public struct BalanceDataToken: Codable {
+    public var balance: Double
+    public var tokenId: String
+}
+```
+
+```swift
+public struct PrivateKeyData: Codable {
+    public var privateKey: String
+    public var publicKey: String
+    public var accounts: [String]
+    public var evmAddress: String
+}
+```
+
+```swift
+public struct TransferData: Codable {
+    public var nodeId: String
+    public var transactionHash: String
+    public var transactionId: String
+}
+```
+
+```swift
+public struct SignMessageData: Codable {
+    public var signedMessage: String
+}
+```
+
+```swift
+public struct SignVerifyMessageData: Codable {
+    public var valid: Bool
+}
+```
+
+```swift
+struct TransactionReceiptResponse: Codable {
+    var completionKey: String
+    var data: TransactionReceiptData
+}
+```
+
+```swift
+struct ContractQueryResponse: Codable {
+    var completionKey: String
+    var data: ContractQueryData
+}
+```
+
+```swift
 public struct ContractQueryData: Codable {
     public var gasUsed: Int
     public var values: [ContractQueryRecord]
@@ -71,8 +233,9 @@ public struct TransactionHistoryDetail: Codable {
 public struct TransactionHistoryPlainData: Codable {
     public var type: String
     public var token_id: String
-    public var account: String
     public var amount: Decimal
+    public var senders: [String]
+    public var receivers: [String]
 }
 ```
 
@@ -95,11 +258,34 @@ public struct TransactionHistoryNftTransfer: Codable {
 ```
 
 ```swift
-public struct TransactionHistoryNftTransfer: Codable {
-    public var is_approval: Bool
-    public var receiver_account_id: String
-    public var sender_account_id: String
-    public var serial_number: Int
-    public var token_id: String
+struct IntegrationUrlResponse: Codable {
+    var completionKey: String
+    var data: IntegrationUrlData
+}
+```
+
+```swift
+public struct IntegrationUrlData: Codable {
+    public var url: String
+}
+```
+
+```swift
+public struct RemoteConfig: Codable {
+    public var fpApiKey: String
+}
+```
+
+```swift
+public enum SwiftBladeError: Error {
+    case unknownJsError(String)
+    case apiError(String)
+}
+```
+
+```swift
+public struct BladeJSError: Error, Codable {
+    public var name: String
+    public var reason: String
 }
 ```

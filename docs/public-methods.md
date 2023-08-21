@@ -1,10 +1,37 @@
 # Public methods 📢
 
+## Get SDK-instance info
+
+### Parameters:
+
+* `completion`: result with `InfoData` type
+
+```swift
+public func getInfo(completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
+    let completionKey = getCompletionKey("getInfo");
+    deferCompletion(forKey: completionKey) { (data, error) in
+        if (error != nil) {
+            return completion(nil, error)
+        }
+        do {
+            let response = try JSONDecoder().decode(InfoResponse.self, from: data!)
+            completion(response.data, nil)
+        } catch let error as NSError {
+            print(error)
+            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
+        }
+    }
+    executeJS("bladeSdk.getInfo('\(completionKey)')")
+}
+```
+
+
 ## Get balances by Hedera id (address)
 
-* Parameters:
+### Parameters:
+
 * `id`: Hedera id (address), example: 0.0.112233
-* completion: result with `BalanceDataResponse` type
+* `completion`: result with `BalanceData` type
 
 ```swift
 public func getBalance(_ id: String, completion: @escaping (_ result: BalanceData?, _ error: BladeJSError?) -> Void) {
@@ -25,17 +52,19 @@ public func getBalance(_ id: String, completion: @escaping (_ result: BalanceDat
 }
 ```
 
-## Method to execure Hbar transfers from current account to receiver
+## Method to execute Hbar transfers from current account to receiver
 
-* Parameters:
-* accountId: sender
+### Parameters:
+
+* `accountId`: sender
 * `accountPrivateKey`: sender's private key to sign transfer transaction
 * `receiverId`: receiver
 * `amount`: amount
-* completion: result with `TransferDataResponse` type
+* `memo`: memo (limited to 100 characters)
+* `completion`: result with `TransferData` type
 
 ```swift
-public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
+public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("transferHbars");
     deferCompletion(forKey: completionKey) { (data, error) in
         if (error != nil) {
@@ -49,23 +78,25 @@ public func transferHbars(accountId: String, accountPrivateKey: String, receiver
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.transferHbars('\(accountId)', '\(accountPrivateKey)', '\(receiverId)', '\(amount)', '\(completionKey)')")
+    executeJS("bladeSdk.transferHbars('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', '\(completionKey)')")
 }
 ```
 
-## Method to execure token transfers from current account to receiver
+## Method to execute token transfers from current account to receiver
 
-* Parameters:
+### Parameters:
+
 * `tokenId`: token
 * `accountId`: sender
 * `accountPrivateKey`: sender's private key to sign transfer transaction
 * `receiverId`: receiver
 * `amount`: amount
+* `memo`: memo (limited to 100 characters)
 * `freeTransfer`: for tokens configured for this dAppCode on Blade backend
-* completion: result with `TransferDataResponse` type
+* `completion`: result with `TransferData` type
 
 ```swift
-public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, freeTransfer: Bool = true, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
+public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, freeTransfer: Bool = true, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("transferTokens");
     deferCompletion(forKey: completionKey) { (data, error) in
         if (error != nil) {
@@ -79,16 +110,19 @@ public func transferTokens(tokenId: String, accountId: String, accountPrivateKey
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.transferTokens('\(tokenId)', '\(accountId)', '\(accountPrivateKey)', '\(receiverId)', '\(amount)', \(freeTransfer), '\(completionKey)')")
+    executeJS("bladeSdk.transferTokens('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', \(freeTransfer), '\(completionKey)')")
 }
 ```
 
 ## Method to create Hedera account
 
-* Parameter completion: result with `CreatedAccountDataResponse` type
+### Parameters
+
+* `deviceId`: unique device id (advanced security feature, required only for some dApps)
+* `completion`: result with `CreatedAccountData` type
 
 ```swift
-public func createHederaAccount(completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
+public func createHederaAccount(deviceId: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("createAccount");
     deferCompletion(forKey: completionKey) { (data, error) in
         if (error != nil) {
@@ -102,19 +136,20 @@ public func createHederaAccount(completion: @escaping (_ result: CreatedAccountD
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.createAccount('\(completionKey)')")
+    executeJS("bladeSdk.createAccount('\(esc(deviceId))', '\(completionKey)')")
 }
 ```
 
 ## Method to get pending Hedera account
 
+### Parameters
+
 * `transactionId`: can be received on createHederaAccount method, when busy network is busy, and account creation added to queue
 * `seedPhrase`: returned from createHederaAccount method, required for updating keys and proper response &#x20;
-* Parameter `completion`: result with `CreatedAccountDataResponse` type
+* `completion`: result with `CreatedAccountData` type
 
 ```swift
 public func getPendingAccount(transactionId: String, seedPhrase: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
-
     let completionKey = getCompletionKey("getPendingAccount");
     deferCompletion(forKey: completionKey) { (data, error) in
         if (error != nil) {
@@ -128,19 +163,20 @@ public func getPendingAccount(transactionId: String, seedPhrase: String, complet
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.getPendingAccount('\(transactionId)', '\(seedPhrase)', '\(completionKey)')")
+    executeJS("bladeSdk.getPendingAccount('\(esc(transactionId))', '\(esc(seedPhrase))', '\(completionKey)')")
 }
 ```
 
 ## Method to delete Hedera account
 
-* Parameters:
+### Parameters:
+
 * `deleteAccountId`: account to delete - id
 * `deletePrivateKey`: account to delete - private key
 * `transferAccountId`: The ID of the account to transfer the remaining funds to.
 * `operatorAccountId`: operator account Id
 * `operatorPrivateKey`: operator account private key
-* `completion`: result with TransactionReceipt type
+* `completion`: result with TransactionReceiptData type
 
 ```swift
 public func deleteHederaAccount(deleteAccountId: String, deletePrivateKey: String, transferAccountId: String, operatorAccountId: String, operatorPrivateKey: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
@@ -157,15 +193,16 @@ public func deleteHederaAccount(deleteAccountId: String, deletePrivateKey: Strin
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.deleteAccount('\(deleteAccountId)', '\(deletePrivateKey)', '\(transferAccountId)', '\(operatorAccountId)', '\(operatorPrivateKey)',  '\(completionKey)')")
+    executeJS("bladeSdk.deleteAccount('\(esc(deleteAccountId))', '\(esc(deletePrivateKey))', '\(esc(transferAccountId))', '\(esc(operatorAccountId))', '\(esc(operatorPrivateKey))',  '\(completionKey)')")
 }
 ```
 
-## Get acccont evmAddress and calculated evmAddress from public key
+## Get account evmAddress and calculated evmAddress from public key
 
-* Parameters:
+### Parameters:
+
 * `accountId`: accountId
-* `completion`: result with PrivateKeyDataResponse type
+* `completion`: result with AccountInfoData type
 
 ```swift
 public func getAccountInfo (accountId: String, completion: @escaping (_ result: AccountInfoData?, _ error: BladeJSError?) -> Void) {
@@ -182,16 +219,17 @@ public func getAccountInfo (accountId: String, completion: @escaping (_ result: 
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.getAccountInfo('\(accountId)', '\(completionKey)')")
+    executeJS("bladeSdk.getAccountInfo('\(esc(accountId))', '\(completionKey)')")
 }
 ```
 
 ## Restore public and private key by seed phrase
 
-* Parameters:
+### Parameters:
+
 * `menmonic`: seed phrase
 * `lookupNames`: lookup for accounts
-* `completion`: result with `PrivateKeyDataResponse` type
+* `completion`: result with `PrivateKeyData` type
 
 ```swift
 public func getKeysFromMnemonic (menmonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyData?, _ error: BladeJSError?) -> Void) {
@@ -208,16 +246,17 @@ public func getKeysFromMnemonic (menmonic: String, lookupNames: Bool = false, co
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.getKeysFromMnemonic('\(menmonic)', \(lookupNames), '\(completionKey)')")
+    executeJS("bladeSdk.getKeysFromMnemonic('\(esc(menmonic))', \(lookupNames), '\(completionKey)')")
 }
 ```
 
 ## Sign message with private key
 
-* Parameters:
+### Parameters:
+
 * `messageString`: message in base64 string
 * `privateKey`: private key string
-* `completion`: result with `SignMessageDataResponse` type
+* `completion`: result with `SignMessageData` type
 
 ```swift
 public func sign (messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
@@ -234,17 +273,18 @@ public func sign (messageString: String, privateKey: String, completion: @escapi
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.sign('\(messageString)', '\(privateKey)', '\(completionKey)')")
+    executeJS("bladeSdk.sign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')")
 }
 ```
 
 ## Verify message signature with public key
 
-* Parameters:
+### Parameters:
+
 * `messageString`: message in base64 string
 * `signature`: hex-encoded signature string
 * `publicKey`: public key string
-* `completion`: result with `SignMessageDataResponse` type
+* `completion`: result with `SignVerifyMessageData` type
 
 ```swift
 public func signVerify(messageString: String, signature: String, publicKey: String, completion: @escaping (_ result: SignVerifyMessageData?, _ error: BladeJSError?) -> Void) {
@@ -261,26 +301,24 @@ public func signVerify(messageString: String, signature: String, publicKey: Stri
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.signVerify('\(messageString)', '\(signature)', '\(publicKey)', '\(completionKey)')")
-}
-
-
-public func createContractFunctionParameters() -> ContractFunctionParameters {
-    return ContractFunctionParameters();
+    executeJS("bladeSdk.signVerify('\(esc(messageString))', '\(esc(signature))', '\(esc(publicKey))', '\(completionKey)')")
 }
 ```
 
-## Method to call smart-contract function from current account
 
-* Parameters:
-* `contractId`: contract
-* `functionName`: function name
-* `params`: function arguments
-* `accountId`: sender
+
+## Method to call smart-contract function
+
+### Parameters:
+
+* `contractId`: contract id
+* `functionName`: contract function name
+* `params`: function arguments (instance of ContractFunctionParameters)
+* `accountId`: sender account id
 * `accountPrivateKey`: sender's private key to sign transfer transaction
 * `gas`: gas amount for transaction (default 100000)
-* `bladePayFee`: blade pay fee, otherwise fee will be payed from sender accountId
-* `completion`: result with TransactionReceipt type
+* `bladePayFee`: blade pay fee, otherwise fee will be pay from sender accountId
+* `completion`: result with TransactionReceiptData type
 
 ```swift
 public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, bladePayFee: Bool, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
@@ -298,9 +336,25 @@ public func contractCallFunction(contractId: String, functionName: String, param
         }
     }
     let paramsEncoded = params.encode();
-    executeJS("bladeSdk.contractCallFunction('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', \(gas), \(bladePayFee), '\(completionKey)')")
+    executeJS("bladeSdk.contractCallFunction('\(esc(contractId))', '\(esc(functionName))', '\(paramsEncoded)', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), '\(completionKey)')")
 }
+```
 
+## Method to call smart-contract query
+
+### Parameters:
+
+* `contractId`: contract id
+* `functionName`: contract function name
+* `params`: function arguments (instance of ContractFunctionParameters)
+* `accountId`: sender account id
+* `accountPrivateKey`: sender's private key to sign transfer transaction
+* `gas`: gas amount for transaction (default 100000)
+* `bladePayFee`: blade pay fee, otherwise fee will be pay from sender accountId
+* `returnTypes`: array of return types, e.g. ["string", "int32"]
+* `completion`: result with ContractQueryData type
+
+```swift
 public func contractCallQueryFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, bladePayFee: Bool, returnTypes: [String], completion: @escaping (_ result: ContractQueryData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("contractCallQueryFunction");
     deferCompletion(forKey: completionKey) { (data, error) in
@@ -316,16 +370,17 @@ public func contractCallQueryFunction(contractId: String, functionName: String, 
         }
     }
     let paramsEncoded = params.encode();
-    executeJS("bladeSdk.contractCallQueryFunction('\(contractId)', '\(functionName)', '\(paramsEncoded)', '\(accountId)', '\(accountPrivateKey)', \(gas), \(bladePayFee), [\(returnTypes.map({"'\($0)'"}).joined(separator: ","))], '\(completionKey)')")
+    executeJS("bladeSdk.contractCallQueryFunction('\(esc(contractId))', '\(esc(functionName))', '\(paramsEncoded)', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), [\(returnTypes.map({"'\(esc($0))'"}).joined(separator: ","))], '\(completionKey)')")
 }
 ```
 
 ## Sign message with private key (hethers lib)
 
-* Parameters:
+### Parameters:
+
 * `messageString`: message in base64 string
 * `privateKey`: private key string
-* `completion`: result with SignMessageDataResponse type
+* `completion`: result with SignMessageData type
 
 ```swift
 public func hethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
@@ -342,15 +397,16 @@ public func hethersSign(messageString: String, privateKey: String, completion: @
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.hethersSign('\(messageString)', '\(privateKey)', '\(completionKey)')")
+    executeJS("bladeSdk.hethersSign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')")
 }
 ```
 
 ## Method to split signature into v-r-s
 
-* Parameters:
+### Parameters:
+
 * `signature`: signature string "0x21fbf0696......"
-* `completion`: result with SplitedSignature type
+* `completion`: result with SplitSignatureData type
 
 ```swift
 public func splitSignature(signature: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void ) {
@@ -367,16 +423,17 @@ public func splitSignature(signature: String, completion: @escaping (_ result: S
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.splitSignature('\(signature)', '\(completionKey)')")
+    executeJS("bladeSdk.splitSignature('\(esc(signature))', '\(completionKey)')")
 }
 ```
 
 ## Get signature for contract params into v-r-s
 
-* Parameters:
-* `params`: params generated with ContractFunctionParameters
+### Parameters:
+
+* `params`: function arguments (instance of ContractFunctionParameters)
 * `accountPrivateKey`: account private key string
-* `completion`: result with SplitedSignature type
+* `completion`: result with SplitSignatureData type
 
 ```swift
 public func getParamsSignature(params: ContractFunctionParameters, accountPrivateKey: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void ) {
@@ -394,16 +451,18 @@ public func getParamsSignature(params: ContractFunctionParameters, accountPrivat
         }
     }
     let paramsEncoded = params.encode();
-    executeJS("bladeSdk.getParamsSignature('\(paramsEncoded)', '\(accountPrivateKey)', '\(completionKey)')")
+    executeJS("bladeSdk.getParamsSignature('\(paramsEncoded)', '\(esc(accountPrivateKey))', '\(completionKey)')")
 }
 ```
 
 ## Method to get transactions history
 
-* Parameters:
+### Parameters:
 * `accountId`: accountId of history
+* `transactionType`: filter by type of transaction 
 * `nextPage`: link from response to load next page of history
-* `completion`: result with TransactionsHistory type
+* `transactionsLimit`: limit of transactions to load
+* `completion`: result with TransactionsHistoryData type
 
 ```swift
 public func getTransactions(accountId: String, transactionType: String, nextPage: String = "", transactionsLimit: Int = 10, completion: @escaping (_ result: TransactionsHistoryData?, _ error: BladeJSError?) -> Void) {
@@ -420,6 +479,56 @@ public func getTransactions(accountId: String, transactionType: String, nextPage
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.getTransactions('\(accountId)', '\(transactionType)', '\(nextPage)', '\(transactionsLimit)', '\(completionKey)')")
+    executeJS("bladeSdk.getTransactions('\(esc(accountId))', '\(esc(transactionType))', '\(esc(nextPage))', '\(transactionsLimit)', '\(completionKey)')")
+}
+```
+
+## Method to get C14 url for payment
+
+### Parameters:
+
+* `asset`: USDC, HBAR, KARATE or C14 asset uuid
+* `account`: receiver account id
+* `amount`: amount to buy
+* `completion`: result with IntegrationUrlData type
+
+```swift
+public func getC14url(asset: String, account: String, amount: String, completion: @escaping (_ result: IntegrationUrlData?, _ error: BladeJSError?) -> Void) {
+    let completionKey = getCompletionKey("getC14url");
+    deferCompletion(forKey: completionKey) { (data, error) in
+        if (error != nil) {
+            return completion(nil, error)
+        }
+        do {
+            let response = try JSONDecoder().decode(IntegrationUrlResponse.self, from: data!)
+            completion(response.data, nil)
+        } catch let error as NSError {
+            print(error)
+            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
+        }
+    }
+    executeJS("bladeSdk.getC14url('\(esc(asset))', '\(esc(account))', '\(esc(amount))', '\(completionKey)')")
+}
+```
+
+## Method to clean-up webView
+
+```swift
+public func cleanup() {
+    if (self.webView != nil) {
+        self.webView!.configuration.userContentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
+        self.webView!.removeFromSuperview()
+        self.webView!.navigationDelegate = nil
+        self.webView!.uiDelegate = nil
+
+        // Set webView to nil
+        self.webView = nil
+    }
+
+    webViewInitialized = false
+    deferCompletions = [:]
+    initCompletion = nil
+    apiKey = nil
+    dAppCode = nil
 }
 ```
