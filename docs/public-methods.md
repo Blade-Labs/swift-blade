@@ -227,12 +227,12 @@ public func getAccountInfo (accountId: String, completion: @escaping (_ result: 
 
 ### Parameters:
 
-* `menmonic`: seed phrase
+* `mnemonic`: seed phrase
 * `lookupNames`: lookup for accounts
 * `completion`: result with `PrivateKeyData` type
 
 ```swift
-public func getKeysFromMnemonic (menmonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyData?, _ error: BladeJSError?) -> Void) {
+public func getKeysFromMnemonic (mnemonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("getKeysFromMnemonic");
     deferCompletion(forKey: completionKey) { (data, error) in
         if (error != nil) {
@@ -246,7 +246,7 @@ public func getKeysFromMnemonic (menmonic: String, lookupNames: Bool = false, co
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.getKeysFromMnemonic('\(esc(menmonic))', \(lookupNames), '\(completionKey)')")
+    executeJS("bladeSdk.getKeysFromMnemonic('\(esc(mnemonic))', \(lookupNames), '\(completionKey)')")
 }
 ```
 
@@ -305,7 +305,7 @@ public func signVerify(messageString: String, signature: String, publicKey: Stri
 }
 ```
 
-# Method to create smart-contract function parameters (instance of ContractFunctionParameters)
+## Method to create smart-contract function parameters (instance of ContractFunctionParameters)
 
 ```swift
 public func createContractFunctionParameters() -> ContractFunctionParameters {
