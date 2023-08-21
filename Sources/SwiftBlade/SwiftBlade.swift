@@ -315,13 +315,18 @@ public class SwiftBlade: NSObject {
         executeJS("bladeSdk.signVerify('\(esc(messageString))', '\(esc(signature))', '\(esc(publicKey))', '\(completionKey)')")
     }
 
+    /// Method to create smart-contract function parameters (instance of ContractFunctionParameters)
+    public func createContractFunctionParameters() -> ContractFunctionParameters {
+        return ContractFunctionParameters();
+    }
+
     /// Method to call smart-contract function
     ///
     /// - Parameters:
-    ///   - contractId: contract
-    ///   - functionName: function name
-    ///   - params: function arguments
-    ///   - accountId: sender
+    ///   - contractId: contract id
+    ///   - functionName: contract function name
+    ///   - params: function arguments (instance of ContractFunctionParameters)
+    ///   - accountId: sender account id
     ///   - accountPrivateKey: sender's private key to sign transfer transaction
     ///   - gas: gas amount for transaction (default 100000)
     ///   - bladePayFee: blade pay fee, otherwise fee will be payed from sender accountId

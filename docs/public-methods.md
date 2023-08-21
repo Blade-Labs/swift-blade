@@ -305,7 +305,13 @@ public func signVerify(messageString: String, signature: String, publicKey: Stri
 }
 ```
 
+# Method to create smart-contract function parameters (instance of ContractFunctionParameters)
 
+```swift
+public func createContractFunctionParameters() -> ContractFunctionParameters {
+    return ContractFunctionParameters();
+}
+```
 
 ## Method to call smart-contract function
 
