@@ -12,3 +12,12 @@ public enum HederaNetwork: String {
     case MAINNET
 }
 ```
+
+BladeEnv has two possible values: `Prod` and `CI`. Indicating BladeApi environment. `Prod` for production use and `CI` for testing and development purposes.
+
+```swift
+public enum BladeEnv: String {
+    case Prod = "Prod"
+    case CI = "CI"
+}
+```

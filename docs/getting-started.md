@@ -10,7 +10,7 @@
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/Blade-Labs/swift-blade.git", from: "0.1.0")
+    .package(url: "https://github.com/Blade-Labs/swift-blade.git", from: "0.6.2")
 ]
 ```
 
@@ -23,9 +23,9 @@ dependencies: [
 ```swift
 import SwiftBlade
 
-SwiftBlade.shared.initialize(apiKey: "API_KEY", dAppCode: "dAppCode", network: .TESTNET) {
+SwiftBlade.shared.initialize(apiKey: "API_KEY", dAppCode: "dAppCode", network: .TESTNET) { (result, error) in
   // ready to use SwiftBlade
-  print("init complete")
+  print(result)
 }
 
 // Get balance by hedera id
