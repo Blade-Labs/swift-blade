@@ -76,7 +76,9 @@ public class ContractFunctionParameters: NSObject {
 
     public func encode() -> String {
         do {
-            let encodedValue = try JSONEncoder().encode(params).base64EncodedString();
+            let encoder = JSONEncoder();
+            encoder.outputFormatting = [.sortedKeys]
+            let encodedValue = try encoder.encode(params).base64EncodedString();
             return encodedValue;
         } catch let error {
             print(error)

@@ -30,7 +30,7 @@ public class SwiftBlade: NSObject {
     public func initialize(apiKey: String, dAppCode: String, network: HederaNetwork, bladeEnv: BladeEnv, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
         guard !webViewInitialized || force else {
             print("Error while doing double init of SwiftBlade")
-            fatalError()
+            return completion(nil, BladeJSError.init(name: "Error", reason: "Error while doing double init of SwiftBlade"))
         }
         // Setting up all required properties
         self.initCompletion = completion
