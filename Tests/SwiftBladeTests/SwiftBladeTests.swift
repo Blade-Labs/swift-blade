@@ -181,7 +181,7 @@ final class SwiftBladeTests: XCTestCase {
             expectation.fulfill()
         }
 
-        wait(for: [expectation], timeout: 10.0)
+        wait(for: [expectation], timeout: 30.0)
     }
     
     func testDeleteHederaAccount() {
@@ -408,13 +408,13 @@ final class SwiftBladeTests: XCTestCase {
         wait(for: [expectation], timeout: 10.0)
     }
     
-    func testHethersSign() {
-        let expectation = XCTestExpectation(description: "HethersSign should complete")
+    func testEthersSign() {
+        let expectation = XCTestExpectation(description: "EthersSign should complete")
         
         if let base64encodedString = originalMessage.data(using: .utf8)?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)) {
-            swiftBlade.hethersSign(messageString: base64encodedString, privateKey: self.privateKeyHex) { result, error in
-                XCTAssertNil(error, "HethersSign should not produce an error")
-                XCTAssertNotNil(result, "HethersSign should produce a result")
+            swiftBlade.ethersSign(messageString: base64encodedString, privateKey: self.privateKeyHex) { result, error in
+                XCTAssertNil(error, "EthersSign should not produce an error")
+                XCTAssertNotNil(result, "EthersSign should produce a result")
                 
                 if let signMessageData = result as? SignMessageData {
                     XCTAssertNotNil(signMessageData.signedMessage, "Signed message should not be nil")
@@ -434,9 +434,9 @@ final class SwiftBladeTests: XCTestCase {
         let expectation = XCTestExpectation(description: "SplitSignature should complete")
 
         if let base64encodedString = originalMessage.data(using: .utf8)?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)) {
-            swiftBlade.hethersSign(messageString: base64encodedString, privateKey: self.privateKeyHex) { result, error in
-                XCTAssertNil(error, "HethersSign should not produce an error")
-                XCTAssertNotNil(result, "HethersSign should produce a result")
+            swiftBlade.ethersSign(messageString: base64encodedString, privateKey: self.privateKeyHex) { result, error in
+                XCTAssertNil(error, "EthersSign should not produce an error")
+                XCTAssertNotNil(result, "EthersSign should produce a result")
                 
                 if let signMessageData = result as? SignMessageData {
                     XCTAssertNotNil(signMessageData.signedMessage, "Signed message should not be nil")

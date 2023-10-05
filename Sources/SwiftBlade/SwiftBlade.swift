@@ -286,17 +286,17 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Sign message with private key (hethers lib)
+    /// Sign message with private key (ethers lib)
     ///
     /// - Parameters:
     ///   - messageString: message in base64 string
     ///   - privateKey: private key string
     ///   - completion: result with SignMessageData type
-    public func hethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("hethersSign");
+    public func ethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("ethersSign");
         performRequest(
             completionKey: completionKey,
-            js: "hethersSign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')",
+            js: "ethersSign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')",
             decodeType: SignMessageResponse.self,
             completion: completion
         )
