@@ -1,18 +1,17 @@
 import WebKit
 
 // MARK: - JS wrapper response types
-struct Response: Codable {
+struct ResultRaw: Codable {
     var completionKey: String?
     var error: BladeJSError?
 }
 
-struct CreatedAccountResponse: Codable {
-    var completionKey: String
-    var data: CreatedAccountData
+protocol Response: Codable {
+    associatedtype DataType
+    var data: DataType { get }
 }
 
-struct InfoResponse: Codable {
-    var completionKey: String
+struct InfoResponse: Response, Codable {
     var data: InfoData
 }
 
@@ -26,19 +25,40 @@ public struct InfoData: Codable {
     public var nonce: Int
 }
 
-struct BalanceResponse: Codable {
-    var completionKey: String
+struct BalanceResponse: Response, Codable {
     var data: BalanceData
 }
 
-struct PrivateKeyResponse: Codable {
-    var completionKey: String
+public struct BalanceData: Codable {
+    public var hbars: Double
+    public var tokens: [BalanceDataToken]
+}
+
+public struct BalanceDataToken: Codable {
+    public var balance: Double
+    public var tokenId: String
+}
+
+struct PrivateKeyResponse: Response, Codable {
     var data: PrivateKeyData
 }
 
-struct TransferResponse: Codable {
-    var completionKey: String
+public struct PrivateKeyData: Codable {
+    public var privateKey: String
+    public var publicKey: String
+    public var accounts: [String]
+    public var evmAddress: String
+}
+
+
+struct TransferResponse: Response, Codable {
     var data: TransferData
+}
+
+public struct TransferData: Codable {
+    public var nodeId: String
+    public var transactionHash: String
+    public var transactionId: String
 }
 
 struct AccountAPIResponse: Codable {
@@ -48,14 +68,24 @@ struct AccountAPIResponse: Codable {
     var transactionBytes: String
 }
 
-struct SignMessageResponse: Codable {
-    var completionKey: String
+struct SignMessageResponse: Response, Codable {
     var data: SignMessageData
 }
 
-struct SignVerifyMessageResponse: Codable {
-    var completionKey: String
+public struct SignMessageData: Codable {
+    public var signedMessage: String
+}
+
+struct SignVerifyMessageResponse: Response, Codable {
     var data: SignVerifyMessageData
+}
+
+public struct SignVerifyMessageData: Codable {
+    public var valid: Bool
+}
+
+struct CreatedAccountResponse: Response, Codable {
+    var data: CreatedAccountData
 }
 
 public struct CreatedAccountData: Codable {
@@ -69,8 +99,7 @@ public struct CreatedAccountData: Codable {
     public var queueNumber: Int?
 }
 
-struct AccountInfoResponse: Codable {
-    var completionKey: String
+struct AccountInfoResponse: Response, Codable {
     var data: AccountInfoData
 }
 
@@ -80,44 +109,20 @@ public struct AccountInfoData: Codable {
     public var calculatedEvmAddress: String
 }
 
-public struct BalanceData: Codable {
-    public var hbars: Double
-    public var tokens: [BalanceDataToken]
-}
-
-public struct BalanceDataToken: Codable {
-    public var balance: Double
-    public var tokenId: String
-}
-
-public struct PrivateKeyData: Codable {
-    public var privateKey: String
-    public var publicKey: String
-    public var accounts: [String]
-    public var evmAddress: String
-}
-
-public struct TransferData: Codable {
-    public var nodeId: String
-    public var transactionHash: String
-    public var transactionId: String
-}
-
-public struct SignMessageData: Codable {
-    public var signedMessage: String
-}
-
-public struct SignVerifyMessageData: Codable {
-    public var valid: Bool
-}
-
-struct TransactionReceiptResponse: Codable {
-    var completionKey: String
+struct TransactionReceiptResponse: Response, Codable {
     var data: TransactionReceiptData
 }
 
-struct ContractQueryResponse: Codable {
-    var completionKey: String
+public struct TransactionReceiptData: Codable {
+    public var status: String
+    public var contractId: String?
+    public var topicSequenceNumber: String?
+    public var totalSupply: String?
+    public var serials: [String]?
+}
+
+
+struct ContractQueryResponse: Response, Codable {
     var data: ContractQueryData
 }
 
@@ -131,16 +136,8 @@ public struct ContractQueryRecord: Codable {
     public var value: String
 }
 
-public struct TransactionReceiptData: Codable {
-    public var status: String
-    public var contractId: String?
-    public var topicSequenceNumber: String?
-    public var totalSupply: String?
-    public var serials: [String]?
-}
 
-struct SplitSignatureResponse: Codable {
-    var completionKey: String
+struct SplitSignatureResponse: Response, Codable {
     var data: SplitSignatureData
 }
 
@@ -150,8 +147,7 @@ public struct SplitSignatureData: Codable {
     public var s: String
 }
 
-struct TransactionsHistoryResponse: Codable {
-    var completionKey: String
+struct TransactionsHistoryResponse: Response, Codable {
     var data: TransactionsHistoryData
 }
 
@@ -194,8 +190,7 @@ public struct TransactionHistoryNftTransfer: Codable {
     public var token_id: String
 }
 
-struct IntegrationUrlResponse: Codable {
-    var completionKey: String
+struct IntegrationUrlResponse: Response, Codable {
     var data: IntegrationUrlData
 }
 
@@ -211,6 +206,7 @@ public struct RemoteConfig: Codable {
 public enum SwiftBladeError: Error {
     case unknownJsError(String)
     case apiError(String)
+    case initError(String)
 }
 
 public struct BladeJSError: Error, Codable {

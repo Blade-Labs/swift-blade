@@ -3,11 +3,14 @@ import Foundation
 
 func getRemoteConfig(network: HederaNetwork, dAppCode: String, sdkVersion: String, bladeEnv: BladeEnv) async throws -> RemoteConfig {
     var url: URL? = nil;
+    var fallbackConfig = RemoteConfig(fpApiKey: "")
     switch bladeEnv {
     case .Prod:
         url = URL(string: "https://rest.prod.bladewallet.io/openapi/v7/sdk/config")!
+        fallbackConfig.fpApiKey = "Li4RsMbgPldpOVfWjnaF";
     case .CI:
         url = URL(string: "https://api.bld-dev.bladewallet.io/openapi/v7/sdk/config")!
+        fallbackConfig.fpApiKey = "0fScXqpS7MzpCl9HgEsI";
     }
 
     var request = URLRequest(url: url!)
@@ -21,7 +24,8 @@ func getRemoteConfig(network: HederaNetwork, dAppCode: String, sdkVersion: Strin
     do {
         return try JSONDecoder().decode(RemoteConfig.self, from: data)
     } catch let error {
-        throw error
+        print(error)
+        return fallbackConfig
     }
 }
 
