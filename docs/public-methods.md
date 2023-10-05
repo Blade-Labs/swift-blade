@@ -380,7 +380,7 @@ public func contractCallQueryFunction(contractId: String, functionName: String, 
 }
 ```
 
-## Sign message with private key (hethers lib)
+## Sign message with private key (ethers lib)
 
 ### Parameters:
 
@@ -389,8 +389,8 @@ public func contractCallQueryFunction(contractId: String, functionName: String, 
 * `completion`: result with SignMessageData type
 
 ```swift
-public func hethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
-    let completionKey = getCompletionKey("hethersSign");
+public func ethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
+    let completionKey = getCompletionKey("ethersSign");
     deferCompletion(forKey: completionKey) { (data, error) in
         if (error != nil) {
             return completion(nil, error)
@@ -403,7 +403,7 @@ public func hethersSign(messageString: String, privateKey: String, completion: @
             completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
         }
     }
-    executeJS("bladeSdk.hethersSign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')")
+    executeJS("bladeSdk.ethersSign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')")
 }
 ```
 
