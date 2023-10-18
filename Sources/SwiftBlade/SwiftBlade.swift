@@ -367,6 +367,94 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
+    
+    /// Get swap quotes from different services
+    ///
+    /// - Parameters:
+    ///   - sourceCode: name (HBAR, KARATE, other token code)
+    ///   - sourceAmount: amount to swap, buy or sell
+    ///   - targetCode: name (HBAR, KARATE, USDC, other token code)
+    ///   - strategy: one of enum CryptoFlowServiceStrategy (Buy, Sell, Swap)
+    ///   - completionKey: result with SwapQuotesData type
+    public func exchangeGetQuotes(
+        sourceCode: String,
+        sourceAmount: Double,
+        targetCode: String,
+        strategy: CryptoFlowServiceStrategy,
+        completion: @escaping (_ result: SwapQuotesData?, _ error: BladeJSError?) -> Void
+    ) {
+        let completionKey = getCompletionKey("exchangeGetQuotes");
+        performRequest(
+            completionKey: completionKey,
+            js: "exchangeGetQuotes('\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', '\(esc(strategy.rawValue))', '\(completionKey)')",
+            decodeType: SwapQuotesResponse.self,
+            completion: completion
+        )
+    }
+    
+    /// Get configured url to buy or sell tokens or fiat
+    ///
+    /// - Parameters:
+    ///   - strategy: Buy / Sell
+    ///   - accountId: account id
+    ///   - sourceCode: name (HBAR, KARATE, USDC, other token code)
+    ///   - sourceAmount: amount to buy/sell
+    ///   - targetCode: name (HBAR, KARATE, USDC, other token code)
+    ///   - slippage: slippage in percents. Transaction will revert if the price changes unfavorably by more than this percentage.
+    ///   - serviceId: service id to use for swap (saucerswap, onmeta, etc)
+    ///   - completionKey: result with IntegrationUrlData type
+    public func getTradeUrl(
+        strategy: CryptoFlowServiceStrategy,
+        accountId: String,
+        sourceCode: String,
+        sourceAmount: Double,
+        targetCode: String,
+        slippage: Double,
+        serviceId: String,
+        completion: @escaping (_ result: IntegrationUrlData?, _ error: BladeJSError?) -> Void
+    ) {
+        let completionKey = getCompletionKey("getTradeUrl");
+        performRequest(
+            completionKey: completionKey,
+            js: "getTradeUrl('\(strategy.rawValue)', '\(esc(accountId))', '\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', \(slippage), '\(esc(serviceId))', '\(completionKey)')",
+            decodeType: IntegrationUrlResponse.self,
+            completion: completion
+        )
+    }
+    
+    /// Swap tokens
+    ///
+    /// - Parameters:
+    ///   - accountId: account id
+    ///   - accountPrivateKey: account private key
+    ///   - sourceCode: name (HBAR, KARATE, other token code)
+    ///   - sourceAmount: amount to swap
+    ///   - targetCode: name (HBAR, KARATE, other token code)
+    ///   - slippage: slippage in percents. Transaction will revert if the price changes unfavorably by more than this percentage.
+    ///   - serviceId: service id to use for swap (saucerswap, etc)
+    ///   - completionKey result with ResultData type
+    public func swapTokens(
+        accountId: String,
+        accountPrivateKey: String,
+        sourceCode: String,
+        sourceAmount: Double,
+        targetCode: String,
+        slippage: Double,
+        serviceId: String,
+        completion: @escaping (_ result: ResultData?, _ error: BladeJSError?) -> Void
+    ) {
+        let completionKey = getCompletionKey("swapTokens");
+        performRequest(
+            completionKey: completionKey,
+            js: "swapTokens('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', \(slippage), '\(esc(serviceId))', '\(completionKey)')",
+            decodeType: ResultResponse.self,
+            completion: completion
+        )
+    }
+    
+    
+    
+    
 
     /// Method to clean-up webView
     public func cleanup() {
@@ -446,6 +534,12 @@ public class SwiftBlade: NSObject {
 
         // Setting up and loading webview
         self.webView = WKWebView();
+        
+        if (self.bladeEnv == .CI && self.network == .TESTNET) {
+            if #available(iOS 16.4, *) {
+                // self.webView!.isInspectable = true
+            };
+        }
         self.webView!.navigationDelegate = self
         if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
             self.webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())

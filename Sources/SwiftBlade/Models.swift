@@ -198,6 +198,60 @@ public struct IntegrationUrlData: Codable {
     public var url: String
 }
 
+struct SwapQuotesResponse: Response, Codable {
+    var data: SwapQuotesData
+}
+
+public struct SwapQuotesData: Codable {
+    public var quotes: [ICryptoFlowQuote]
+}
+
+public struct ICryptoFlowQuote: Codable {
+    public struct Service: Codable {
+        public var id: String
+        public var name: String
+        public var logo: String
+        public var description: String?
+    }
+    
+    public var service: Service
+    public var source: IAssetQuote
+    public var target: IAssetQuote
+    public var rate: Double?
+    public var widgetUrl: String?
+    public var paymentMethods: [String]?
+}
+
+public struct IAssetQuote: Codable {
+    public var asset: ICryptoFlowAsset
+    public var amountExpected: Double
+    public var totalFee: Double?
+}
+
+public struct ICryptoFlowAsset: Codable {
+    public var name: String
+    public var code: String
+    public var type: String
+    // crypto only
+    public var address: String?
+    public var chainId: Int?
+    public var decimals: Int?
+    public var minAmount: Double?
+    public var maxAmount: Double?
+    // fiat only
+    public var symbol: String?
+    // both
+    public var imageUrl: String?
+}
+
+struct ResultResponse: Response, Codable {
+    var data: ResultData
+}
+
+public struct ResultData: Codable {
+    public var success: Bool
+}
+
 public struct RemoteConfig: Codable {
     public var fpApiKey: String
 }
@@ -229,4 +283,10 @@ public enum HederaNetwork: String {
 public enum BladeEnv: String {
     case Prod = "Prod"
     case CI = "CI"
+}
+
+public enum CryptoFlowServiceStrategy: String {
+    case BUY = "Buy"
+    case SELL = "Sell"
+    case SWAP = "Swap"
 }
