@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.5"
+    private let sdkVersion: String = "Swift@0.6.6"
 
     // MARK: - It's init time 🎬
     /// Initialization of Swift blade
@@ -375,7 +375,7 @@ public class SwiftBlade: NSObject {
     ///   - sourceAmount: amount to swap, buy or sell
     ///   - targetCode: name (HBAR, KARATE, USDC, other token code)
     ///   - strategy: one of enum CryptoFlowServiceStrategy (Buy, Sell, Swap)
-    ///   - completionKey: result with SwapQuotesData type
+    ///   - completion: result with SwapQuotesData type
     public func exchangeGetQuotes(
         sourceCode: String,
         sourceAmount: Double,
@@ -402,7 +402,7 @@ public class SwiftBlade: NSObject {
     ///   - targetCode: name (HBAR, KARATE, USDC, other token code)
     ///   - slippage: slippage in percents. Transaction will revert if the price changes unfavorably by more than this percentage.
     ///   - serviceId: service id to use for swap (saucerswap, onmeta, etc)
-    ///   - completionKey: result with IntegrationUrlData type
+    ///   - completion: result with IntegrationUrlData type
     public func getTradeUrl(
         strategy: CryptoFlowServiceStrategy,
         accountId: String,
@@ -432,7 +432,7 @@ public class SwiftBlade: NSObject {
     ///   - targetCode: name (HBAR, KARATE, other token code)
     ///   - slippage: slippage in percents. Transaction will revert if the price changes unfavorably by more than this percentage.
     ///   - serviceId: service id to use for swap (saucerswap, etc)
-    ///   - completionKey result with ResultData type
+    ///   - completion: result with ResultData type
     public func swapTokens(
         accountId: String,
         accountPrivateKey: String,
@@ -451,10 +451,6 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-    
-    
-    
-    
 
     /// Method to clean-up webView
     public func cleanup() {
