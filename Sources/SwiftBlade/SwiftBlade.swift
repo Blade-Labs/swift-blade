@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.8"
+    private let sdkVersion: String = "Swift@0.6.9"
 
     // MARK: - It's init time 🎬
     /// Initialization of Swift blade
@@ -78,6 +78,35 @@ public class SwiftBlade: NSObject {
             completionKey: completionKey,
             js: "getBalance('\(esc(id))', '\(completionKey)')",
             decodeType: BalanceResponse.self,
+            completion: completion
+        )
+    }
+
+    /// Get list of all available coins on CoinGecko.
+    ///
+    /// - Parameters:
+    ///   - completion: result with CoinListData type
+    public func getCoinList(completion: @escaping (_ result: CoinListData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("getCoinList");
+        performRequest(
+            completionKey: completionKey,
+            js: "getCoinList('\(completionKey)')",
+            decodeType: CoinListResponse.self,
+            completion: completion
+        )
+    }
+
+    /// Get coin price and coin info from CoinGecko. Search can be coin id or address in one of the coin platforms.
+    ///
+    /// - Parameters:
+    ///   - search: CoinGecko coinId, or address in one of the coin platforms or `hbar` (default, alias for `hedera-hashgraph`)
+    ///   - completion: result with CoinInfoData type
+    public func getCoinPrice(_ search: String, completion: @escaping (_ result: CoinInfoData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("getCoinPrice");
+        performRequest(
+            completionKey: completionKey,
+            js: "getCoinPrice('\(esc(search))', '\(completionKey)')",
+            decodeType: CoinInfoResponse.self,
             completion: completion
         )
     }

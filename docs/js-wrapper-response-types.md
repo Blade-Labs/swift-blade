@@ -277,6 +277,80 @@ public struct RemoteConfig: Codable {
 ```
 
 ```swift
+struct CoinListResponse: Response, Codable {
+    var data: CoinListData
+}
+```
+
+```swift
+public struct CoinListData: Codable {
+    public var coins: [CoinItem]
+}
+```
+
+```swift
+public struct CoinItem: Codable {
+    public var id: String
+    public var symbol: String
+    public var name: String
+    public var platforms: [CoinGeckoPlatform]
+}
+```
+
+```swift
+public struct CoinGeckoPlatform: Codable {
+    public var name: String
+    public var address: String
+}
+```
+
+```swift
+struct CoinInfoResponse: Response, Codable {
+    var data: CoinInfoData
+}
+```
+
+```swift
+public struct CoinInfoData: Codable {
+    public var coin: CoinData
+    public var priceUsd: Double
+}
+```
+
+```swift
+public struct CoinData: Codable {
+    public var id: String
+    public var symbol: String
+    public var name: String
+    public var web_slug: String
+    public var description: CoinDataDescription
+    public var image: CoinDataImage
+    public var market_data: CoinDataMarket
+    public var platforms: [CoinGeckoPlatform]
+}
+```
+
+```swift
+public struct CoinDataDescription: Codable {
+    public var en: String
+}
+```
+
+```swift
+public struct CoinDataImage: Codable {
+    public var thumb: String
+    public var small: String
+    public var large: String
+}
+```
+
+```swift
+public struct CoinDataMarket: Codable {
+    public var current_price: [String: Double]
+}
+```
+
+```swift
 public enum SwiftBladeError: Error {
     case unknownJsError(String)
     case apiError(String)

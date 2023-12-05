@@ -118,7 +118,6 @@ public struct TransactionReceiptData: Codable {
     public var contractId: String?
     public var topicSequenceNumber: String?
     public var totalSupply: String?
-    public var serials: [String]?
 }
 
 
@@ -254,6 +253,60 @@ public struct ResultData: Codable {
 
 public struct RemoteConfig: Codable {
     public var fpApiKey: String
+}
+
+struct CoinListResponse: Response, Codable {
+    var data: CoinListData
+}
+
+public struct CoinListData: Codable {
+    public var coins: [CoinItem]
+}
+
+public struct CoinItem: Codable {
+    public var id: String
+    public var symbol: String
+    public var name: String
+    public var platforms: [CoinGeckoPlatform]
+}
+
+public struct CoinGeckoPlatform: Codable {
+    public var name: String
+    public var address: String
+}
+
+struct CoinInfoResponse: Response, Codable {
+    var data: CoinInfoData
+}
+
+public struct CoinInfoData: Codable {
+    public var coin: CoinData
+    public var priceUsd: Double
+}
+
+public struct CoinData: Codable {
+    public var id: String
+    public var symbol: String
+    public var name: String
+    public var web_slug: String
+    public var description: CoinDataDescription
+    public var image: CoinDataImage
+    public var market_data: CoinDataMarket
+    public var platforms: [CoinGeckoPlatform]
+}
+
+public struct CoinDataDescription: Codable {
+    public var en: String
+}
+
+public struct CoinDataImage: Codable {
+    public var thumb: String
+    public var small: String
+    public var large: String
+}
+
+public struct CoinDataMarket: Codable {
+    public var current_price: [String: Double]
 }
 
 // MARK: - SwiftBlade errors
