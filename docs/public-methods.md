@@ -9,22 +9,14 @@
 ```swift
 public func getInfo(completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("getInfo");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(InfoResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.getInfo('\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "getInfo('\(completionKey)')",
+        decodeType: InfoResponse.self,
+        completion: completion
+    )
 }
 ```
-
 
 ## Get balances by Hedera id (address)
 
@@ -36,19 +28,49 @@ public func getInfo(completion: @escaping (_ result: InfoData?, _ error: BladeJS
 ```swift
 public func getBalance(_ id: String, completion: @escaping (_ result: BalanceData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("getBalance");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(BalanceResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.getBalance('\(id)', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "getBalance('\(esc(id))', '\(completionKey)')",
+        decodeType: BalanceResponse.self,
+        completion: completion
+    )
+}
+```
+
+## Get list of all available coins on CoinGecko
+
+### Parameters:
+
+* `completion`: result with `CoinListData` type
+
+```swift
+public func getCoinList(completion: @escaping (_ result: CoinListData?, _ error: BladeJSError?) -> Void) {
+    let completionKey = getCompletionKey("getCoinList");
+    performRequest(
+        completionKey: completionKey,
+        js: "getCoinList('\(completionKey)')",
+        decodeType: CoinListResponse.self,
+        completion: completion
+    )
+}
+```
+
+## Get coin price and coin info from CoinGecko. Search can be coin id or address in one of the coin platforms.
+
+### Parameters:
+
+* `search`: CoinGecko coinId, or address in one of the coin platforms or `hbar` (default, alias for `hedera-hashgraph`)
+* `completion`: result with `CoinInfoData` type
+
+```swift
+public func getCoinPrice(_ search: String, completion: @escaping (_ result: CoinInfoData?, _ error: BladeJSError?) -> Void) {
+    let completionKey = getCompletionKey("getCoinPrice");
+    performRequest(
+        completionKey: completionKey,
+        js: "getCoinPrice('\(esc(search))', '\(completionKey)')",
+        decodeType: CoinInfoResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -66,19 +88,12 @@ public func getBalance(_ id: String, completion: @escaping (_ result: BalanceDat
 ```swift
 public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("transferHbars");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(TransferResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.transferHbars('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "transferHbars('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', '\(completionKey)')",
+        decodeType: TransferResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -98,19 +113,12 @@ public func transferHbars(accountId: String, accountPrivateKey: String, receiver
 ```swift
 public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, freeTransfer: Bool = true, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("transferTokens");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(TransferResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.transferTokens('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', \(freeTransfer), '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "transferTokens('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', \(freeTransfer), '\(completionKey)')",
+        decodeType: TransferResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -124,19 +132,12 @@ public func transferTokens(tokenId: String, accountId: String, accountPrivateKey
 ```swift
 public func createHederaAccount(deviceId: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("createAccount");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(CreatedAccountResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.createAccount('\(esc(deviceId))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "createAccount('\(esc(deviceId))', '\(completionKey)')",
+        decodeType: CreatedAccountResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -151,19 +152,12 @@ public func createHederaAccount(deviceId: String, completion: @escaping (_ resul
 ```swift
 public func getPendingAccount(transactionId: String, seedPhrase: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("getPendingAccount");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(CreatedAccountResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.getPendingAccount('\(esc(transactionId))', '\(esc(seedPhrase))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "getPendingAccount('\(esc(transactionId))', '\(esc(seedPhrase))', '\(completionKey)')",
+        decodeType: CreatedAccountResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -181,19 +175,12 @@ public func getPendingAccount(transactionId: String, seedPhrase: String, complet
 ```swift
 public func deleteHederaAccount(deleteAccountId: String, deletePrivateKey: String, transferAccountId: String, operatorAccountId: String, operatorPrivateKey: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("deleteHederaAccount");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(TransactionReceiptResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.deleteAccount('\(esc(deleteAccountId))', '\(esc(deletePrivateKey))', '\(esc(transferAccountId))', '\(esc(operatorAccountId))', '\(esc(operatorPrivateKey))',  '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "deleteAccount('\(esc(deleteAccountId))', '\(esc(deletePrivateKey))', '\(esc(transferAccountId))', '\(esc(operatorAccountId))', '\(esc(operatorPrivateKey))',  '\(completionKey)')",
+        decodeType: TransactionReceiptResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -207,19 +194,12 @@ public func deleteHederaAccount(deleteAccountId: String, deletePrivateKey: Strin
 ```swift
 public func getAccountInfo (accountId: String, completion: @escaping (_ result: AccountInfoData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("getAccountInfo");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(AccountInfoResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.getAccountInfo('\(esc(accountId))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "getAccountInfo('\(esc(accountId))', '\(completionKey)')",
+        decodeType: AccountInfoResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -234,19 +214,12 @@ public func getAccountInfo (accountId: String, completion: @escaping (_ result: 
 ```swift
 public func getKeysFromMnemonic (mnemonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("getKeysFromMnemonic");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(PrivateKeyResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.getKeysFromMnemonic('\(esc(mnemonic))', \(lookupNames), '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "getKeysFromMnemonic('\(esc(mnemonic))', \(lookupNames), '\(completionKey)')",
+        decodeType: PrivateKeyResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -261,19 +234,12 @@ public func getKeysFromMnemonic (mnemonic: String, lookupNames: Bool = false, co
 ```swift
 public func sign (messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("sign");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(SignMessageResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.sign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "sign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')",
+        decodeType: SignMessageResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -289,19 +255,12 @@ public func sign (messageString: String, privateKey: String, completion: @escapi
 ```swift
 public func signVerify(messageString: String, signature: String, publicKey: String, completion: @escaping (_ result: SignVerifyMessageData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("signVerify");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(SignVerifyMessageResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.signVerify('\(esc(messageString))', '\(esc(signature))', '\(esc(publicKey))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "signVerify('\(esc(messageString))', '\(esc(signature))', '\(esc(publicKey))', '\(completionKey)')",
+        decodeType: SignVerifyMessageResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -329,20 +288,12 @@ public func createContractFunctionParameters() -> ContractFunctionParameters {
 ```swift
 public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, bladePayFee: Bool, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("contractCallFunction");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(TransactionReceiptResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    let paramsEncoded = params.encode();
-    executeJS("bladeSdk.contractCallFunction('\(esc(contractId))', '\(esc(functionName))', '\(paramsEncoded)', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "contractCallFunction('\(esc(contractId))', '\(esc(functionName))', '\(params.encode())', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), '\(completionKey)')",
+        decodeType: TransactionReceiptResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -363,20 +314,12 @@ public func contractCallFunction(contractId: String, functionName: String, param
 ```swift
 public func contractCallQueryFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, bladePayFee: Bool, returnTypes: [String], completion: @escaping (_ result: ContractQueryData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("contractCallQueryFunction");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(ContractQueryResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    let paramsEncoded = params.encode();
-    executeJS("bladeSdk.contractCallQueryFunction('\(esc(contractId))', '\(esc(functionName))', '\(paramsEncoded)', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), [\(returnTypes.map({"'\(esc($0))'"}).joined(separator: ","))], '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "contractCallQueryFunction('\(esc(contractId))', '\(esc(functionName))', '\(params.encode())', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), [\(returnTypes.map({"'\(esc($0))'"}).joined(separator: ","))], '\(completionKey)')",
+        decodeType: ContractQueryResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -391,19 +334,12 @@ public func contractCallQueryFunction(contractId: String, functionName: String, 
 ```swift
 public func ethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("ethersSign");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(SignMessageResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.ethersSign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "ethersSign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')",
+        decodeType: SignMessageResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -417,19 +353,12 @@ public func ethersSign(messageString: String, privateKey: String, completion: @e
 ```swift
 public func splitSignature(signature: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void ) {
     let completionKey = getCompletionKey("splitSignature");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(SplitSignatureResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.splitSignature('\(esc(signature))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "splitSignature('\(esc(signature))', '\(completionKey)')",
+        decodeType: SplitSignatureResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -444,20 +373,12 @@ public func splitSignature(signature: String, completion: @escaping (_ result: S
 ```swift
 public func getParamsSignature(params: ContractFunctionParameters, accountPrivateKey: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void ) {
     let completionKey = getCompletionKey("getParamsSignature");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(SplitSignatureResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    let paramsEncoded = params.encode();
-    executeJS("bladeSdk.getParamsSignature('\(paramsEncoded)', '\(esc(accountPrivateKey))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "getParamsSignature('\(params.encode())', '\(esc(accountPrivateKey))', '\(completionKey)')",
+        decodeType: SplitSignatureResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -473,19 +394,12 @@ public func getParamsSignature(params: ContractFunctionParameters, accountPrivat
 ```swift
 public func getTransactions(accountId: String, transactionType: String, nextPage: String = "", transactionsLimit: Int = 10, completion: @escaping (_ result: TransactionsHistoryData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("getTransactions");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(TransactionsHistoryResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.getTransactions('\(esc(accountId))', '\(esc(transactionType))', '\(esc(nextPage))', '\(transactionsLimit)', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "getTransactions('\(esc(accountId))', '\(esc(transactionType))', '\(esc(nextPage))', '\(transactionsLimit)', '\(completionKey)')",
+        decodeType: TransactionsHistoryResponse.self,
+        completion: completion
+    )
 }
 ```
 
@@ -501,19 +415,12 @@ public func getTransactions(accountId: String, transactionType: String, nextPage
 ```swift
 public func getC14url(asset: String, account: String, amount: String, completion: @escaping (_ result: IntegrationUrlData?, _ error: BladeJSError?) -> Void) {
     let completionKey = getCompletionKey("getC14url");
-    deferCompletion(forKey: completionKey) { (data, error) in
-        if (error != nil) {
-            return completion(nil, error)
-        }
-        do {
-            let response = try JSONDecoder().decode(IntegrationUrlResponse.self, from: data!)
-            completion(response.data, nil)
-        } catch let error as NSError {
-            print(error)
-            completion(nil, BladeJSError(name: "Error", reason: "\(error)"))
-        }
-    }
-    executeJS("bladeSdk.getC14url('\(esc(asset))', '\(esc(account))', '\(esc(amount))', '\(completionKey)')")
+    performRequest(
+        completionKey: completionKey,
+        js: "getC14url('\(esc(asset))', '\(esc(account))', '\(esc(amount))', '\(completionKey)')",
+        decodeType: IntegrationUrlResponse.self,
+        completion: completion
+    )
 }
 ```
 

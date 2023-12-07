@@ -4,14 +4,17 @@ import XCTest
 final class SwiftBladeTests: XCTestCase {
     var swiftBlade: SwiftBlade!
     var apiKey = "ygUgCzRrsvhWmb3dsLcDpGnJpSZ4tk8hACmZqg9WngpuQYKdnD5m8FjfPV3XVUeB"
+    var apiKeyMainnet = "IYyE75dUez7fMxfXzIP8Hw4CvhTURhbte3QNVhFDTSbV97ycfq5NrqEGrzAThVeg"
     var dAppCode = "unitysdktest"
     var network = HederaNetwork.TESTNET
     var env = BladeEnv.CI
     var accountId = "0.0.346533";
+    var accountIdEd25519 = "0.0.346532";
     var accountId2 = "0.0.346530";
     var contractId = "0.0.416245";
     var tokenId = "0.0.433870";
     var privateKeyHex = "3030020100300706052b8104000a04220420ebccecef769bb5597d0009123a0fd96d2cdbe041c2a2da937aaf8bdc8731799b";
+    var privateKeyHexEd25519 = "302e020100300506032b6570042204201c1fc6ab4f5937bf9261cd3d1f1609cb5f30838d018207b476ff50d97ef8e2a5";
     var publicKeyHex = "302d300706052b8104000a032200029dc73991b0d9cdbb59b2cd0a97a0eaff6de801726cb39804ea9461df6be2dd30";
     let originalMessage = "hello"
     
@@ -52,7 +55,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.8", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.9", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
@@ -80,6 +83,55 @@ final class SwiftBladeTests: XCTestCase {
 
         wait(for: [expectation], timeout: 10.0)
     }
+    
+    func testGetCoinList() {
+            let expectation = XCTestExpectation(description: "getCoinList should complete")
+
+            swiftBlade.getCoinList { result, error in
+                XCTAssertNil(error, "getCoinList should not produce an error")
+                XCTAssertNotNil(result, "getCoinList should produce a result")
+
+                if let coinListData = result {
+                    XCTAssertTrue(coinListData.coins.count > 0, "Coin list should not be empty")
+                    let coin = coinListData.coins[0]
+                    XCTAssertNotNil(coin.id, "Coin should have an id")
+                    XCTAssertNotNil(coin.symbol, "Coin should have a symbol")
+                    XCTAssertNotNil(coin.name, "Coin should have a name")
+                    XCTAssertTrue(coin.platforms.count >= 0, "Coin should have platforms")
+                } else {
+                    XCTFail("Result should be of type YourResponseType")
+                }
+
+                expectation.fulfill()
+            }
+
+            wait(for: [expectation], timeout: 10.0)
+        }
+
+        func testGetCoinPrice() {
+            let expectation = XCTestExpectation(description: "getCoinPrice should complete")
+
+            swiftBlade.getCoinPrice("Hbar") { result, error in
+                XCTAssertNil(error, "getCoinPrice should not produce an error")
+                XCTAssertNotNil(result, "getCoinPrice should produce a result")
+
+                if let coinPriceData = result {
+                    XCTAssertNotNil(coinPriceData.priceUsd, "Coin price should have a USD value")
+                    XCTAssertNotNil(coinPriceData.coin, "Coin price should have a coin object")
+
+                    let coin = coinPriceData.coin
+                    XCTAssertEqual(coin.id, "hedera-hashgraph", "Coin id should match")
+                    XCTAssertEqual(coin.symbol, "hbar", "Coin symbol should match")
+                    XCTAssertEqual(coin.market_data.current_price["usd"], coinPriceData.priceUsd, "Coin market data should match")
+                } else {
+                    XCTFail("Result should be of type YourResponseType")
+                }
+
+                expectation.fulfill()
+            }
+
+            wait(for: [expectation], timeout: 10.0)
+        }
 
     func testTransferHbars() {
         let expectation = XCTestExpectation(description: "TransferHbars should complete")
@@ -368,7 +420,7 @@ final class SwiftBladeTests: XCTestCase {
 
         let parameters = swiftBlade.createContractFunctionParameters().addString(value: "Hello Swift test");
         swiftBlade.contractCallFunction(
-            contractId: self.contractId, functionName: "set_message", params: parameters, accountId: self.accountId, accountPrivateKey: self.privateKeyHex, gas: 150000, bladePayFee: false
+            contractId: self.contractId, functionName: "set_message", params: parameters, accountId: self.accountId, accountPrivateKey: self.privateKeyHex, gas: 1000000, bladePayFee: false
         ) { result, error in
             XCTAssertNil(error, "ContractCallFunction should not produce an error")
             XCTAssertNotNil(result, "ContractCallFunction should produce a result")
@@ -543,6 +595,195 @@ final class SwiftBladeTests: XCTestCase {
     }
     
     
+    func testExchangeGetQuotes() {
+        let expectation1 = XCTestExpectation(description: "ExchangeGetQuotes BUY should complete")
+        let expectation2 = XCTestExpectation(description: "ExchangeGetQuotes SELL should complete")
+        let expectation3 = XCTestExpectation(description: "ExchangeGetQuotes SWAP should complete")
+        let expectation4 = XCTestExpectation(description: "ExchangeGetQuotes fail should complete")
+        
+        swiftBlade.initialize(apiKey: apiKeyMainnet, dAppCode: dAppCode, network: HederaNetwork.MAINNET, bladeEnv: env, force: true) { [self] result, error in
+            XCTAssertNil(error, "Initialization should not produce an error")
+            XCTAssertNotNil(result, "Initialization should produce a result")
+        
+            swiftBlade.exchangeGetQuotes(
+                sourceCode: "EUR",
+                sourceAmount: 50,
+                targetCode: "HBAR",
+                strategy: CryptoFlowServiceStrategy.BUY
+            ) { [self] result, error in
+                XCTAssertNil(error, "ExchangeGetQuotes should not produce an error")
+                XCTAssertNotNil(result, "ExchangeGetQuotes should produce a result")
+
+                if let quotesData = result {
+                    XCTAssertNotNil(quotesData.quotes, "quotesData.quotes should present")
+                    XCTAssertGreaterThan(quotesData.quotes.count, 0, "quotesData.quotes should be not empty")
+                } else {
+                    XCTFail("no quotesData.quotes")
+                }
+                
+                expectation1.fulfill()
+                
+                
+            
+                swiftBlade.exchangeGetQuotes(
+                    sourceCode: "USDC",
+                    sourceAmount: 30,
+                    targetCode: "PHP",
+                    strategy: CryptoFlowServiceStrategy.SELL
+                ) { result, error in
+                    XCTAssertNil(error, "ExchangeGetQuotes should not produce an error")
+                    XCTAssertNotNil(result, "ExchangeGetQuotes should produce a result")
+
+                    if let quotesData = result {
+                        XCTAssertNotNil(quotesData.quotes, "quotesData.quotes should present")
+                        XCTAssertGreaterThan(quotesData.quotes.count, 0, "quotesData.quotes should be not empty")
+                    } else {
+                        XCTFail("no quotesData.quotes")
+                    }
+
+                    
+                    expectation2.fulfill()
+                    
+
+                    swiftBlade.exchangeGetQuotes(
+                        sourceCode: "HBAR",
+                        sourceAmount: 5,
+                        targetCode: "USDC",
+                        strategy: CryptoFlowServiceStrategy.SWAP
+                    ) { result, error in
+                        XCTAssertNil(error, "ExchangeGetQuotes should not produce an error")
+                        XCTAssertNotNil(result, "ExchangeGetQuotes should produce a result")
+
+                        expectation3.fulfill()
+                    }
+                }
+                
+            }
+        }
+
+        wait(for: [expectation1, expectation2, expectation3], timeout: 30.0)
+    }
     
-    
+    func testSwapTokens() {
+        let expectation1 = XCTestExpectation(description: "SwapTokens should complete")
+        let expectation2 = XCTestExpectation(description: "SwapTokens should fail")
+
+        swiftBlade.swapTokens(
+            accountId: accountIdEd25519,
+            accountPrivateKey: privateKeyHexEd25519,
+            sourceCode: "USDC",
+            sourceAmount: 0.00001,
+            targetCode: "HBAR",
+            slippage: 0.5,
+            serviceId: "saucerswap"
+        ) { [self] result, error in
+            XCTAssertNil(error, "SwapTokens should not produce an error")
+            XCTAssertNotNil(result, "SwapTokens should produce a result")
+
+            if let resultData = result as? ResultData {
+                XCTAssertNotNil(resultData.success, "resultData.success should present")
+                XCTAssertEqual(resultData.success, true, "resultData.success should be true")
+            } else {
+                XCTFail("no resultData.success")
+            }
+
+            
+            expectation1.fulfill()
+            
+            swiftBlade.swapTokens(
+                accountId: accountIdEd25519,
+                accountPrivateKey: privateKeyHexEd25519,
+                sourceCode: "USDC",
+                sourceAmount: 0.00001,
+                targetCode: "HBAR",
+                slippage: 0.5,
+                serviceId: "unknown-service"
+            ) { result, error in
+                XCTAssertNotNil(error, "SwapTokens should produce an error")
+                XCTAssertNil(result, "SwapTokens should not produce a result")
+
+                expectation2.fulfill()
+            }
+        }
+
+        wait(for: [expectation1, expectation2], timeout: 30.0)
+    }
+
+    func testGetTradeUrl() {
+        let expectation1 = XCTestExpectation(description: "GetTradeUrl should complete")
+        let expectation2 = XCTestExpectation(description: "GetTradeUrl should complete")
+        let expectation3 = XCTestExpectation(description: "GetTradeUrl should fail")
+        
+        swiftBlade.initialize(apiKey: apiKeyMainnet, dAppCode: dAppCode, network: HederaNetwork.MAINNET, bladeEnv: env, force: true) { [self] result, error in
+            XCTAssertNil(error, "Initialization should not produce an error")
+            XCTAssertNotNil(result, "Initialization should produce a result")
+            
+            swiftBlade.getTradeUrl(
+                strategy: CryptoFlowServiceStrategy.BUY,
+                accountId: accountId,
+                sourceCode: "EUR",
+                sourceAmount: 50,
+                targetCode: "HBAR",
+                slippage: 0.5,
+                serviceId: "moonpay"
+            ) { [self] result, error in
+                XCTAssertNil(error, "GetTradeUrl should not produce an error")
+                XCTAssertNotNil(result, "GetTradeUrl should produce a result")
+                
+                if let integrationUrlData = result {
+                    XCTAssertNotNil(integrationUrlData.url, "integrationUrlData.url should present")
+                    XCTAssertGreaterThanOrEqual(integrationUrlData.url.count, 1, "integrationUrlData.url should not be empty")
+                    XCTAssertNotNil(integrationUrlData.url, "integrationUrlData.url should present")
+                } else {
+                    XCTFail("no integrationUrlData.url")
+                }
+                
+                expectation1.fulfill()
+                
+                swiftBlade.getTradeUrl(
+                    strategy: CryptoFlowServiceStrategy.SELL,
+                    accountId: accountId,
+                    sourceCode: "USDC",
+                    sourceAmount: 50,
+                    targetCode: "PHP",
+                    slippage: 0.5,
+                    serviceId: "onmeta"
+                ) { [self] result, error in
+                    XCTAssertNil(error, "GetTradeUrl should not produce an error")
+                    XCTAssertNotNil(result, "GetTradeUrl should produce a result")
+                    
+                    if let integrationUrlData = result {
+                        XCTAssertNotNil(integrationUrlData.url, "integrationUrlData.url should present")
+                        XCTAssertGreaterThanOrEqual(integrationUrlData.url.count, 1, "integrationUrlData.url should not be empty")
+                        XCTAssertNotNil(integrationUrlData.url, "integrationUrlData.url should present")
+                    } else {
+                        XCTFail("no integrationUrlData.url")
+                    }
+
+                    // Add assertions for the result properties if needed
+                    expectation2.fulfill()
+                    
+                    swiftBlade.getTradeUrl(
+                        strategy: CryptoFlowServiceStrategy.SELL,
+                        accountId: accountId,
+                        sourceCode: "EUR",
+                        sourceAmount: 50,
+                        targetCode: "HBAR",
+                        slippage: 0.5,
+                        serviceId: "unknown-service-id"
+                    ) { result, error in
+                        XCTAssertNotNil(error, "GetTradeUrl should produce an error")
+                        XCTAssertNil(result, "GetTradeUrl should not produce a result")
+                        
+                        // Add assertions for the result properties if needed
+                        
+                        expectation3.fulfill()
+                    }
+                }
+                
+            }
+        }
+            
+        wait(for: [expectation1, expectation2, expectation3], timeout: 30.0)
+    }
 }
