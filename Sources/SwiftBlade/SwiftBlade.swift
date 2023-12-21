@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.9"
+    private let sdkVersion: String = "Swift@0.6.10"
 
     // MARK: - It's init time 🎬
     /// Initialization of Swift blade
