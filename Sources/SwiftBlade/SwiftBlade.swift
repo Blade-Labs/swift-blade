@@ -41,8 +41,13 @@ public class SwiftBlade: NSObject {
 
         Task {
             do {
-                self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
-                self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
+                self.visitorId = UserDefaults.standard.string(forKey: "visitorId") ?? ""
+                if (self.visitorId == "") {
+                    self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
+                    self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
+                    UserDefaults.standard.set(self.visitorId, forKey: "visitorId")
+                    UserDefaults.standard.set(Int(Date().timeIntervalSince1970), forKey: "visitorIdTimestamp")
+                }
                 DispatchQueue.main.async {
                     self.initWebView()
                 }
