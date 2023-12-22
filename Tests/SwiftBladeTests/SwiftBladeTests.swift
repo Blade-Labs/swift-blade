@@ -216,7 +216,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "CreateHederaAccount should not produce an error")
             XCTAssertNotNil(result, "CreateHederaAccount should produce a result")
 
-            if let createdAccountData = result as? CreatedAccountData {
+            if let createdAccountData = result {
                 XCTAssertNotNil(createdAccountData.seedPhrase, "Created account should have a seed phrase")
                 XCTAssertNotNil(createdAccountData.publicKey, "Created account should have a publicKey")
                 XCTAssertNotNil(createdAccountData.privateKey, "Created account should have a privateKey")
@@ -243,7 +243,7 @@ final class SwiftBladeTests: XCTestCase {
         swiftBlade.createHederaAccount(deviceId: "") { result, error in
             XCTAssertNotNil(result, "CreateHederaAccount should produce a result")
             
-            if let createdAccountData = result as? CreatedAccountData {
+            if let createdAccountData = result {
                 
                 self.swiftBlade.deleteHederaAccount(
                     deleteAccountId: createdAccountData.accountId!,
@@ -255,7 +255,7 @@ final class SwiftBladeTests: XCTestCase {
                     XCTAssertNil(error, "DeleteHederaAccount should not produce an error")
                     XCTAssertNotNil(result, "DeleteHederaAccount should produce a result")
 
-                    if let transactionReceiptData = result as? TransactionReceiptData {
+                    if let transactionReceiptData = result {
                         XCTAssertEqual(transactionReceiptData.status, "SUCCESS", "TransactionReceiptData should have a 'SUCCESS' status")
                     } else {
                         XCTFail("Result should be a String (transaction ID)")
@@ -275,7 +275,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "GetAccountInfo should not produce an error")
             XCTAssertNotNil(result, "GetAccountInfo should produce a result")
 
-            if let accountInfoData = result as? AccountInfoData {
+            if let accountInfoData = result {
                 XCTAssertEqual(accountInfoData.accountId, self.accountId, "Account ID should match")
                 XCTAssertNotNil(accountInfoData.evmAddress, "Created account should have a evmAddress")
                 XCTAssertNotNil(accountInfoData.calculatedEvmAddress, "Created account should have a calculatedEvmAddress")
@@ -298,7 +298,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "GetKeysFromMnemonic should not produce an error")
             XCTAssertNotNil(result, "GetKeysFromMnemonic should produce a result")
 
-            if let privateKeyData = result as? PrivateKeyData {
+            if let privateKeyData = result {
                 XCTAssertEqual(privateKeyData.privateKey, "3030020100300706052b8104000a04220420a7e529d9c0ea996ff62f9e41d5be81fd67489e28b62ce22420be130626d0ef40", "PrivateKeyData should have a valid private key")
                 XCTAssertEqual(privateKeyData.publicKey, "302d300706052b8104000a0322000283529a9f1353613201042305827fb38110e94c3fd559e3cf9b5645dbe0e38368", "PrivateKeyData should have a valid public key")
                 XCTAssertEqual(privateKeyData.evmAddress, "0x73226de11bb3705db2bb404a5c1a5533bb0aebb5", "PrivateKeyData should have a valid evmAddress")
@@ -321,7 +321,7 @@ final class SwiftBladeTests: XCTestCase {
                     XCTAssertNil(error, "Sign should not produce an error")
                     XCTAssertNotNil(result, "Sign should produce a result")
 
-                    if let signMessageData = result as? SignMessageData {
+                    if let signMessageData = result {
                         XCTAssertNotNil(signMessageData.signedMessage, "Signed message should not be nil")
                         XCTAssertEqual(signMessageData.signedMessage, "27cb9d51434cf1e76d7ac515b19442c619f641e6fccddbf4a3756b14466becb6992dc1d2a82268018147141fc8d66ff9ade43b7f78c176d070a66372d655f942", "Signed message should be valid signature")
                         
@@ -344,14 +344,14 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertNil(signError, "Sign should not produce an error")
                 XCTAssertNotNil(signResult, "Sign should produce a result")
 
-                if let signMessageData = signResult as? SignMessageData {
+                if let signMessageData = signResult {
                     let signedMessage = signMessageData.signedMessage
                     // Verify the signed message here
                     self.swiftBlade.signVerify(messageString: base64encodedString, signature: signedMessage, publicKey: self.publicKeyHex) { verifyResult, verifyError in
                         XCTAssertNil(verifyError, "Verify should not produce an error")
                         XCTAssertNotNil(verifyResult, "Verify should produce a result")
 
-                        if let verifyMessageData = verifyResult as? SignVerifyMessageData {
+                        if let verifyMessageData = verifyResult {
                             XCTAssertTrue(verifyMessageData.valid, "Message should be valid after verification")
                         } else {
                             XCTFail("Verify result should be of type SignVerifyMessageData")
@@ -386,8 +386,7 @@ final class SwiftBladeTests: XCTestCase {
             .addTupleArray(value: [tuple0, tuple1])
             ;
         
-        let parameters = swiftBlade.createContractFunctionParameters();
-        parameters
+        let parameters = swiftBlade.createContractFunctionParameters()
             .addString(value: "Hello, Backend")
 
             .addBytes32(value: [
@@ -425,7 +424,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "ContractCallFunction should not produce an error")
             XCTAssertNotNil(result, "ContractCallFunction should produce a result")
 
-            if let transactionReceiptData = result as? TransactionReceiptData {
+            if let transactionReceiptData = result {
                 XCTAssertEqual(transactionReceiptData.status, "SUCCESS", "TransactionReceiptData should have a 'SUCCESS' status")
             } else {
                 XCTFail("Result should be a String (transaction ID)")
@@ -445,7 +444,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "ContractCallQueryFunction should not produce an error")
             XCTAssertNotNil(result, "ContractCallQueryFunction should produce a result")
 
-            if let contractQueryData = result as? ContractQueryData {
+            if let contractQueryData = result {
                 XCTAssertGreaterThan(contractQueryData.gasUsed, 0, "Used gas should be grater than 0")
                 XCTAssertEqual(contractQueryData.values.count, 2, "Should return 2 values")
                 XCTAssertEqual(contractQueryData.values[0].type, "string", "Should equeal returnTypes")
@@ -468,7 +467,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertNil(error, "EthersSign should not produce an error")
                 XCTAssertNotNil(result, "EthersSign should produce a result")
                 
-                if let signMessageData = result as? SignMessageData {
+                if let signMessageData = result {
                     XCTAssertNotNil(signMessageData.signedMessage, "Signed message should not be nil")
                     XCTAssertEqual(signMessageData.signedMessage, "0x25de7c26ecfa4f28d8b96a95cf58ea7088a72a66b311c796090cb4c7d58c11217b4a7b174b4c31b90c3babb00958b2120274380404c4f1196abe3614df3741561b", "Signed message should be valid signature")
                     
@@ -490,7 +489,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertNil(error, "EthersSign should not produce an error")
                 XCTAssertNotNil(result, "EthersSign should produce a result")
                 
-                if let signMessageData = result as? SignMessageData {
+                if let signMessageData = result {
                     XCTAssertNotNil(signMessageData.signedMessage, "Signed message should not be nil")
                     XCTAssertEqual(signMessageData.signedMessage, "0x25de7c26ecfa4f28d8b96a95cf58ea7088a72a66b311c796090cb4c7d58c11217b4a7b174b4c31b90c3babb00958b2120274380404c4f1196abe3614df3741561b", "Signed message should be valid signature")
                     
@@ -499,7 +498,7 @@ final class SwiftBladeTests: XCTestCase {
                         XCTAssertNil(error, "SplitSignature should not produce an error")
                         XCTAssertNotNil(result, "SplitSignature should produce a result")
 
-                        if let splitSignatureData = result as? SplitSignatureData {
+                        if let splitSignatureData = result {
                             XCTAssertEqual(splitSignatureData.v, 27, "SplitSignatureData should be valid v")
                             XCTAssertEqual(splitSignatureData.r, "0x25de7c26ecfa4f28d8b96a95cf58ea7088a72a66b311c796090cb4c7d58c1121", "SplitSignatureData should be valid r")
                             XCTAssertEqual(splitSignatureData.s, "0x7b4a7b174b4c31b90c3babb00958b2120274380404c4f1196abe3614df374156", "SplitSignatureData should be valid s")
@@ -538,7 +537,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "GetParamsSignature should not produce an error")
             XCTAssertNotNil(result, "GetParamsSignature should produce a result")
 
-            if let splitSignatureData = result as? SplitSignatureData {
+            if let splitSignatureData = result {
                 XCTAssertEqual(splitSignatureData.v, 28, "SplitSignatureData should be valid v")
                 XCTAssertEqual(splitSignatureData.r, "0xe5e662d0564828fd18b2b5b228ade288ad063fadca76812f7902f56cae3e678e", "SplitSignatureData should be valid r")
                 XCTAssertEqual(splitSignatureData.s, "0x61b7ceb82dc6695872289b697a1bca73b81c494288abda29fa022bb7b80c84b5", "SplitSignatureData should be valid s")
@@ -561,7 +560,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "GetTransactions should not produce an error")
             XCTAssertNotNil(result, "GetTransactions should produce a result")
 
-            if let transactionsHistoryData = result as? TransactionsHistoryData {
+            if let transactionsHistoryData = result {
                 XCTAssertNotNil(transactionsHistoryData.nextPage, "transactionsHistoryData nextPage should not be nil")
                 XCTAssertEqual(transactionsHistoryData.transactions.count, 5, "transactionsHistoryData transactions count should be as in params")
             } else {
@@ -583,7 +582,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "GetC14url should not produce an error")
             XCTAssertNotNil(result, "GetC14url should produce a result")
 
-            if let integrationUrlData = result as? IntegrationUrlData {
+            if let integrationUrlData = result {
                 XCTAssertEqual(integrationUrlData.url, "https://pay.c14.money/?clientId=00ce2e0a-ee66-4971-a0e9-b9d627d106b0&targetAssetId=057d6b35-1af5-4827-bee2-c12842faa49e&targetAssetIdLock=true&sourceAmount=1234&quoteAmountLock=true&targetAddress=0.0.346533&targetAddressLock=true", "url should be like that")
             } else {
                 XCTFail("Result should be of type transactionsHistoryData")
@@ -599,7 +598,6 @@ final class SwiftBladeTests: XCTestCase {
         let expectation1 = XCTestExpectation(description: "ExchangeGetQuotes BUY should complete")
         let expectation2 = XCTestExpectation(description: "ExchangeGetQuotes SELL should complete")
         let expectation3 = XCTestExpectation(description: "ExchangeGetQuotes SWAP should complete")
-        let expectation4 = XCTestExpectation(description: "ExchangeGetQuotes fail should complete")
         
         swiftBlade.initialize(apiKey: apiKeyMainnet, dAppCode: dAppCode, network: HederaNetwork.MAINNET, bladeEnv: env, force: true) { [self] result, error in
             XCTAssertNil(error, "Initialization should not produce an error")
@@ -630,7 +628,7 @@ final class SwiftBladeTests: XCTestCase {
                     sourceAmount: 30,
                     targetCode: "PHP",
                     strategy: CryptoFlowServiceStrategy.SELL
-                ) { result, error in
+                ) { [self] result, error in
                     XCTAssertNil(error, "ExchangeGetQuotes should not produce an error")
                     XCTAssertNotNil(result, "ExchangeGetQuotes should produce a result")
 
@@ -680,7 +678,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "SwapTokens should not produce an error")
             XCTAssertNotNil(result, "SwapTokens should produce a result")
 
-            if let resultData = result as? ResultData {
+            if let resultData = result {
                 XCTAssertNotNil(resultData.success, "resultData.success should present")
                 XCTAssertEqual(resultData.success, true, "resultData.success should be true")
             } else {

@@ -20,8 +20,8 @@ jobs:
            -destination 'platform=iOS Simulator,name=iPhone 14' \
            CODE_SIGN_IDENTITY="" \
            CODE_SIGNING_REQUIRED=NO \
-           ONLY_ACTIVE_ARCH=NO \
-           -quiet
+           ONLY_ACTIVE_ARCH=NO
+#           -quiet
 
 #          xcodebuild \
 #           -project [name_of_your_project] \
