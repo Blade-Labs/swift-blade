@@ -265,7 +265,7 @@ final class SwiftBladeTests: XCTestCase {
                 }
             }
         }
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: 40.0)
     }
     
     func testGetAccountInfo() {

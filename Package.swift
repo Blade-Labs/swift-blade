@@ -13,11 +13,9 @@ let package = Package(
             targets: ["SwiftBlade"]),
     ],
     dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
-        .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.6.1")),
-        .package(url: "https://github.com/Boilertalk/Web3.swift.git", from: "0.6.0"),
-        .package(url: "https://github.com/fingerprintjs/fingerprintjs-pro-ios", from: "2.1.8")
+        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: "1.8.0"),
+        .package(url: "https://github.com/attaswift/BigInt.git", from: "5.3.0"),
+        .package(url: "https://github.com/fingerprintjs/fingerprintjs-pro-ios", from: "2.3.1")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -25,9 +23,9 @@ let package = Package(
         .target(
             name: "SwiftBlade",
             dependencies: [
-                "Alamofire",
                 .product(name: "FingerprintPro", package: "fingerprintjs-pro-ios"),
-                .product(name: "Web3", package: "Web3.swift")
+                .product(name: "BigInt", package: "BigInt"),
+                .product(name: "CryptoSwift", package: "CryptoSwift")
             ],
             exclude: ["JS/JSWrapper.bundle.js.LICENSE.txt"],
             resources: [
