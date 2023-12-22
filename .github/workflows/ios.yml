@@ -1,6 +1,8 @@
 name: SwiftBlade tests
 
-on: [push, pull_request]
+on:
+  pull_request:
+    branches: [ "*" ]
 
 jobs:
   build_project:
@@ -22,12 +24,3 @@ jobs:
            CODE_SIGNING_REQUIRED=NO \
            ONLY_ACTIVE_ARCH=NO
 #           -quiet
-
-#          xcodebuild \
-#           -project [name_of_your_project] \
-#           -scheme [your_scheme] \
-#           -sdk iphonesimulator \
-#           -destination 'platform=iOS Simulator,name=iPhone 14,OS=16.2' \
-#            test || exit 1
-#
-
