@@ -1,6 +1,7 @@
 import WebKit
 
 // MARK: - JS wrapper response types
+
 struct ResultRaw: Codable {
     var completionKey: String?
     var error: BladeJSError?
@@ -49,7 +50,6 @@ public struct PrivateKeyData: Codable {
     public var accounts: [String]
     public var evmAddress: String
 }
-
 
 struct TransferResponse: Response, Codable {
     var data: TransferData
@@ -120,7 +120,6 @@ public struct TransactionReceiptData: Codable {
     public var totalSupply: String?
 }
 
-
 struct ContractQueryResponse: Response, Codable {
     var data: ContractQueryData
 }
@@ -134,7 +133,6 @@ public struct ContractQueryRecord: Codable {
     public var type: String
     public var value: String
 }
-
 
 struct SplitSignatureResponse: Response, Codable {
     var data: SplitSignatureData
@@ -212,7 +210,7 @@ public struct ICryptoFlowQuote: Codable {
         public var logo: String
         public var description: String?
     }
-    
+
     public var service: Service
     public var source: IAssetQuote
     public var target: IAssetQuote
@@ -310,6 +308,7 @@ public struct CoinDataMarket: Codable {
 }
 
 // MARK: - SwiftBlade errors
+
 public enum SwiftBladeError: Error {
     case unknownJsError(String)
     case apiError(String)
@@ -323,19 +322,20 @@ public struct BladeJSError: Error, Codable {
 
 extension BladeJSError: LocalizedError {
     public var errorDescription: String? {
-        return NSLocalizedString("\(self.name): \(self.reason)", comment: self.reason);
+        NSLocalizedString("\(name): \(reason)", comment: reason)
     }
 }
 
 // MARK: - SwiftBlade enums
+
 public enum HederaNetwork: String {
     case TESTNET
     case MAINNET
 }
 
 public enum BladeEnv: String {
-    case Prod = "Prod"
-    case CI = "CI"
+    case Prod
+    case CI
 }
 
 public enum CryptoFlowServiceStrategy: String {

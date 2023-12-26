@@ -10,12 +10,13 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "SwiftBlade",
-            targets: ["SwiftBlade"]),
+            targets: ["SwiftBlade"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: "1.8.0"),
         .package(url: "https://github.com/attaswift/BigInt.git", from: "5.3.0"),
-        .package(url: "https://github.com/fingerprintjs/fingerprintjs-pro-ios", from: "2.3.1")
+        .package(url: "https://github.com/fingerprintjs/fingerprintjs-pro-ios", from: "2.3.1"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -25,16 +26,17 @@ let package = Package(
             dependencies: [
                 .product(name: "FingerprintPro", package: "fingerprintjs-pro-ios"),
                 .product(name: "BigInt", package: "BigInt"),
-                .product(name: "CryptoSwift", package: "CryptoSwift")
+                .product(name: "CryptoSwift", package: "CryptoSwift"),
             ],
             exclude: ["JS/JSWrapper.bundle.js.LICENSE.txt"],
             resources: [
-              .process("JS/index.html"),
-              .process("JS/JSWrapper.bundle.js")
+                .process("JS/index.html"),
+                .process("JS/JSWrapper.bundle.js"),
             ]
         ),
         .testTarget(
             name: "SwiftBladeTests",
-            dependencies: ["SwiftBlade"]),
+            dependencies: ["SwiftBlade"]
+        ),
     ]
 )
