@@ -15,9 +15,10 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.9"
+    private let sdkVersion: String = "Swift@0.6.10"
 
     // MARK: - It's init time 🎬
+
     /// Initialization of Swift blade
     ///
     /// - Parameters:
@@ -30,10 +31,10 @@ public class SwiftBlade: NSObject {
     public func initialize(apiKey: String, dAppCode: String, network: HederaNetwork, bladeEnv: BladeEnv, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
         guard !webViewInitialized || force else {
             print("Error while doing double init of SwiftBlade")
-            return completion(nil, BladeJSError.init(name: "Error", reason: "Error while doing double init of SwiftBlade"))
+            return completion(nil, BladeJSError(name: "Error", reason: "Error while doing double init of SwiftBlade"))
         }
         // Setting up all required properties
-        self.initCompletion = completion
+        initCompletion = completion
         self.apiKey = apiKey
         self.dAppCode = dAppCode
         self.network = network
@@ -41,24 +42,30 @@ public class SwiftBlade: NSObject {
 
         Task {
             do {
-                self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
-                self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
+                self.visitorId = UserDefaults.standard.string(forKey: "visitorId") ?? ""
+                if self.visitorId == "" {
+                    self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
+                    self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
+                    UserDefaults.standard.set(self.visitorId, forKey: "visitorId")
+                    UserDefaults.standard.set(Int(Date().timeIntervalSince1970), forKey: "visitorIdTimestamp")
+                }
                 DispatchQueue.main.async {
                     self.initWebView()
                 }
             } catch {
-                completion(nil, BladeJSError.init(name: "Init failed", reason: "\(error)"));
+                completion(nil, BladeJSError(name: "Init failed", reason: "\(error)"))
             }
         }
     }
 
     // MARK: - Public methods 📢
+
     /// Get SDK info
     ///
     /// - Parameters:
     ///   - completion: result with `InfoData` type
     public func getInfo(completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("getInfo");
+        let completionKey = getCompletionKey("getInfo")
         performRequest(
             completionKey: completionKey,
             js: "getInfo('\(completionKey)')",
@@ -73,7 +80,7 @@ public class SwiftBlade: NSObject {
     ///   - id: Hedera id (address), example: 0.0.112233
     ///   - completion: result with BalanceData type
     public func getBalance(_ id: String, completion: @escaping (_ result: BalanceData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("getBalance");
+        let completionKey = getCompletionKey("getBalance")
         performRequest(
             completionKey: completionKey,
             js: "getBalance('\(esc(id))', '\(completionKey)')",
@@ -87,7 +94,7 @@ public class SwiftBlade: NSObject {
     /// - Parameters:
     ///   - completion: result with CoinListData type
     public func getCoinList(completion: @escaping (_ result: CoinListData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("getCoinList");
+        let completionKey = getCompletionKey("getCoinList")
         performRequest(
             completionKey: completionKey,
             js: "getCoinList('\(completionKey)')",
@@ -102,7 +109,7 @@ public class SwiftBlade: NSObject {
     ///   - search: CoinGecko coinId, or address in one of the coin platforms or `hbar` (default, alias for `hedera-hashgraph`)
     ///   - completion: result with CoinInfoData type
     public func getCoinPrice(_ search: String, completion: @escaping (_ result: CoinInfoData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("getCoinPrice");
+        let completionKey = getCompletionKey("getCoinPrice")
         performRequest(
             completionKey: completionKey,
             js: "getCoinPrice('\(esc(search))', '\(completionKey)')",
@@ -121,7 +128,7 @@ public class SwiftBlade: NSObject {
     ///   - memo: memo (limited to 100 characters)
     ///   - completion: result with `TransferData` type
     public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("transferHbars");
+        let completionKey = getCompletionKey("transferHbars")
         performRequest(
             completionKey: completionKey,
             js: "transferHbars('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', '\(completionKey)')",
@@ -142,7 +149,7 @@ public class SwiftBlade: NSObject {
     ///   - freeTransfer: for tokens configured for this dAppCode on Blade backend
     ///   - completion: result with `TransferData` type
     public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, freeTransfer: Bool = true, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("transferTokens");
+        let completionKey = getCompletionKey("transferTokens")
         performRequest(
             completionKey: completionKey,
             js: "transferTokens('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', \(freeTransfer), '\(completionKey)')",
@@ -157,7 +164,7 @@ public class SwiftBlade: NSObject {
     ///   - deviceId: unique device id (advanced security feature, required only for some dApps)
     ///   - completion: result with CreatedAccountData type
     public func createHederaAccount(deviceId: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("createAccount");
+        let completionKey = getCompletionKey("createAccount")
         performRequest(
             completionKey: completionKey,
             js: "createAccount('\(esc(deviceId))', '\(completionKey)')",
@@ -165,7 +172,6 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-
 
     /// Method to get pending Hedera account
     ///
@@ -175,7 +181,7 @@ public class SwiftBlade: NSObject {
     ///   - completion: result with `CreatedAccountData` type
 
     public func getPendingAccount(transactionId: String, seedPhrase: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("getPendingAccount");
+        let completionKey = getCompletionKey("getPendingAccount")
         performRequest(
             completionKey: completionKey,
             js: "getPendingAccount('\(esc(transactionId))', '\(esc(seedPhrase))', '\(completionKey)')",
@@ -194,7 +200,7 @@ public class SwiftBlade: NSObject {
     ///   - operatorPrivateKey: operator account private key
     ///   - completion: result with TransactionReceiptData type
     public func deleteHederaAccount(deleteAccountId: String, deletePrivateKey: String, transferAccountId: String, operatorAccountId: String, operatorPrivateKey: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("deleteHederaAccount");
+        let completionKey = getCompletionKey("deleteHederaAccount")
         performRequest(
             completionKey: completionKey,
             js: "deleteAccount('\(esc(deleteAccountId))', '\(esc(deletePrivateKey))', '\(esc(transferAccountId))', '\(esc(operatorAccountId))', '\(esc(operatorPrivateKey))',  '\(completionKey)')",
@@ -208,8 +214,8 @@ public class SwiftBlade: NSObject {
     /// - Parameters:
     ///   - accountId: accountId
     ///   - completion: result with AccountInfoData type
-    public func getAccountInfo (accountId: String, completion: @escaping (_ result: AccountInfoData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("getAccountInfo");
+    public func getAccountInfo(accountId: String, completion: @escaping (_ result: AccountInfoData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("getAccountInfo")
         performRequest(
             completionKey: completionKey,
             js: "getAccountInfo('\(esc(accountId))', '\(completionKey)')",
@@ -224,8 +230,8 @@ public class SwiftBlade: NSObject {
     ///   - mnemonic: seed phrase
     ///   - lookupNames: lookup for accounts
     ///   - completion: result with PrivateKeyData type
-    public func getKeysFromMnemonic (mnemonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("getKeysFromMnemonic");
+    public func getKeysFromMnemonic(mnemonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("getKeysFromMnemonic")
         performRequest(
             completionKey: completionKey,
             js: "getKeysFromMnemonic('\(esc(mnemonic))', \(lookupNames), '\(completionKey)')",
@@ -240,8 +246,8 @@ public class SwiftBlade: NSObject {
     ///   - messageString: message in base64 string
     ///   - privateKey: private key string
     ///   - completion: result with SignMessageData type
-    public func sign (messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("sign");
+    public func sign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("sign")
         performRequest(
             completionKey: completionKey,
             js: "sign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')",
@@ -258,7 +264,7 @@ public class SwiftBlade: NSObject {
     ///   - publicKey: public key string
     ///   - completion: result with SignVerifyMessageData type
     public func signVerify(messageString: String, signature: String, publicKey: String, completion: @escaping (_ result: SignVerifyMessageData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("signVerify");
+        let completionKey = getCompletionKey("signVerify")
         performRequest(
             completionKey: completionKey,
             js: "signVerify('\(esc(messageString))', '\(esc(signature))', '\(esc(publicKey))', '\(completionKey)')",
@@ -269,7 +275,7 @@ public class SwiftBlade: NSObject {
 
     /// Method to create smart-contract function parameters (instance of ContractFunctionParameters)
     public func createContractFunctionParameters() -> ContractFunctionParameters {
-        return ContractFunctionParameters();
+        return ContractFunctionParameters()
     }
 
     /// Method to call smart-contract function
@@ -283,8 +289,8 @@ public class SwiftBlade: NSObject {
     ///   - gas: gas amount for transaction (default 100000)
     ///   - bladePayFee: blade pay fee, otherwise fee will be payed from sender accountId
     ///   - completion: result with TransactionReceiptData type
-    public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, bladePayFee: Bool, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("contractCallFunction");
+    public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100_000, bladePayFee: Bool, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("contractCallFunction")
         performRequest(
             completionKey: completionKey,
             js: "contractCallFunction('\(esc(contractId))', '\(esc(functionName))', '\(params.encode())', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), '\(completionKey)')",
@@ -305,11 +311,11 @@ public class SwiftBlade: NSObject {
     ///   -  bladePayFee: blade pay fee, otherwise fee will be pay from sender accountId
     ///   -  returnTypes: array of return types, e.g. ["string", "int32"]
     ///   -  completion: result with ContractQueryData type
-    public func contractCallQueryFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100000, bladePayFee: Bool, returnTypes: [String], completion: @escaping (_ result: ContractQueryData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("contractCallQueryFunction");
+    public func contractCallQueryFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100_000, bladePayFee: Bool, returnTypes: [String], completion: @escaping (_ result: ContractQueryData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("contractCallQueryFunction")
         performRequest(
             completionKey: completionKey,
-            js: "contractCallQueryFunction('\(esc(contractId))', '\(esc(functionName))', '\(params.encode())', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), [\(returnTypes.map({"'\(esc($0))'"}).joined(separator: ","))], '\(completionKey)')",
+            js: "contractCallQueryFunction('\(esc(contractId))', '\(esc(functionName))', '\(params.encode())', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), [\(returnTypes.map { "'\(esc($0))'" }.joined(separator: ","))], '\(completionKey)')",
             decodeType: ContractQueryResponse.self,
             completion: completion
         )
@@ -322,7 +328,7 @@ public class SwiftBlade: NSObject {
     ///   - privateKey: private key string
     ///   - completion: result with SignMessageData type
     public func ethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("ethersSign");
+        let completionKey = getCompletionKey("ethersSign")
         performRequest(
             completionKey: completionKey,
             js: "ethersSign('\(esc(messageString))', '\(esc(privateKey))', '\(completionKey)')",
@@ -336,8 +342,8 @@ public class SwiftBlade: NSObject {
     /// - Parameters:
     ///   - signature: signature string "0x21fbf0696......"
     ///   - completion: result with SplitSignatureData type
-    public func splitSignature(signature: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void ) {
-        let completionKey = getCompletionKey("splitSignature");
+    public func splitSignature(signature: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("splitSignature")
         performRequest(
             completionKey: completionKey,
             js: "splitSignature('\(esc(signature))', '\(completionKey)')",
@@ -352,8 +358,8 @@ public class SwiftBlade: NSObject {
     ///   - params: function arguments (instance of ContractFunctionParameters)
     ///   - accountPrivateKey: account private key string
     ///   - completion: result with SplitSignatureData type
-    public func getParamsSignature(params: ContractFunctionParameters, accountPrivateKey: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void ) {
-        let completionKey = getCompletionKey("getParamsSignature");
+    public func getParamsSignature(params: ContractFunctionParameters, accountPrivateKey: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("getParamsSignature")
         performRequest(
             completionKey: completionKey,
             js: "getParamsSignature('\(params.encode())', '\(esc(accountPrivateKey))', '\(completionKey)')",
@@ -371,7 +377,7 @@ public class SwiftBlade: NSObject {
     ///   - transactionsLimit: limit of transactions to load
     ///   - completion: result with TransactionsHistoryData type
     public func getTransactions(accountId: String, transactionType: String, nextPage: String = "", transactionsLimit: Int = 10, completion: @escaping (_ result: TransactionsHistoryData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("getTransactions");
+        let completionKey = getCompletionKey("getTransactions")
         performRequest(
             completionKey: completionKey,
             js: "getTransactions('\(esc(accountId))', '\(esc(transactionType))', '\(esc(nextPage))', '\(transactionsLimit)', '\(completionKey)')",
@@ -388,7 +394,7 @@ public class SwiftBlade: NSObject {
     ///   - amount: amount to buy
     ///   - completion: result with IntegrationUrlData type
     public func getC14url(asset: String, account: String, amount: String, completion: @escaping (_ result: IntegrationUrlData?, _ error: BladeJSError?) -> Void) {
-        let completionKey = getCompletionKey("getC14url");
+        let completionKey = getCompletionKey("getC14url")
         performRequest(
             completionKey: completionKey,
             js: "getC14url('\(esc(asset))', '\(esc(account))', '\(esc(amount))', '\(completionKey)')",
@@ -396,7 +402,7 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-    
+
     /// Get swap quotes from different services
     ///
     /// - Parameters:
@@ -412,7 +418,7 @@ public class SwiftBlade: NSObject {
         strategy: CryptoFlowServiceStrategy,
         completion: @escaping (_ result: SwapQuotesData?, _ error: BladeJSError?) -> Void
     ) {
-        let completionKey = getCompletionKey("exchangeGetQuotes");
+        let completionKey = getCompletionKey("exchangeGetQuotes")
         performRequest(
             completionKey: completionKey,
             js: "exchangeGetQuotes('\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', '\(esc(strategy.rawValue))', '\(completionKey)')",
@@ -420,7 +426,7 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-    
+
     /// Get configured url to buy or sell tokens or fiat
     ///
     /// - Parameters:
@@ -442,7 +448,7 @@ public class SwiftBlade: NSObject {
         serviceId: String,
         completion: @escaping (_ result: IntegrationUrlData?, _ error: BladeJSError?) -> Void
     ) {
-        let completionKey = getCompletionKey("getTradeUrl");
+        let completionKey = getCompletionKey("getTradeUrl")
         performRequest(
             completionKey: completionKey,
             js: "getTradeUrl('\(strategy.rawValue)', '\(esc(accountId))', '\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', \(slippage), '\(esc(serviceId))', '\(completionKey)')",
@@ -450,7 +456,7 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-    
+
     /// Swap tokens
     ///
     /// - Parameters:
@@ -472,7 +478,7 @@ public class SwiftBlade: NSObject {
         serviceId: String,
         completion: @escaping (_ result: ResultData?, _ error: BladeJSError?) -> Void
     ) {
-        let completionKey = getCompletionKey("swapTokens");
+        let completionKey = getCompletionKey("swapTokens")
         performRequest(
             completionKey: completionKey,
             js: "swapTokens('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', \(slippage), '\(esc(serviceId))', '\(completionKey)')",
@@ -483,14 +489,14 @@ public class SwiftBlade: NSObject {
 
     /// Method to clean-up webView
     public func cleanup() {
-        if (self.webView != nil) {
-            self.webView!.configuration.userContentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
-            self.webView!.removeFromSuperview()
-            self.webView!.navigationDelegate = nil
-            self.webView!.uiDelegate = nil
+        if webView != nil {
+            webView!.configuration.userContentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
+            webView!.removeFromSuperview()
+            webView!.navigationDelegate = nil
+            webView!.uiDelegate = nil
 
             // Set webView to nil
-            self.webView = nil
+            webView = nil
         }
 
         webViewInitialized = false
@@ -501,15 +507,15 @@ public class SwiftBlade: NSObject {
     }
 
     // MARK: - Private methods 🔒
-    
+
     private func performRequest<T>(
         completionKey: String,
         js: String,
         decodeType: T.Type,
         completion: @escaping (T.DataType?, BladeJSError?) -> Void
     ) where T: Response, T.DataType: Decodable {
-        deferCompletion(forKey: completionKey) { (data, error) in
-            if (error != nil) {
+        deferCompletion(forKey: completionKey) { data, error in
+            if error != nil {
                 return completion(nil, error)
             }
             do {
@@ -527,8 +533,8 @@ public class SwiftBlade: NSObject {
             completion(nil, BladeJSError(name: "Blade executeJS error", reason: error.description))
         }
     }
-    
-    private func executeJS (_ script: String) throws {
+
+    private func executeJS(_ script: String) throws {
         guard webViewInitialized else {
             print("Error while executing JS, webview not loaded")
             throw SwiftBladeError.initError("Error while executing JS, webview not loaded")
@@ -536,7 +542,7 @@ public class SwiftBlade: NSObject {
         webView!.evaluateJavaScript(script)
     }
 
-    private func deferCompletion (forKey: String, completion: @escaping (_ result: Data?, _ error: BladeJSError?) -> Void) {
+    private func deferCompletion(forKey: String, completion: @escaping (_ result: Data?, _ error: BladeJSError?) -> Void) {
         deferCompletions.updateValue(completion, forKey: forKey)
     }
 
@@ -547,44 +553,44 @@ public class SwiftBlade: NSObject {
 
     private func initWebView() {
         // removing old webView if exist
-        if (self.webView != nil) {
-            self.webView!.configuration.userContentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
-            self.webView!.removeFromSuperview()
-            self.webView!.navigationDelegate = nil
-            self.webView!.uiDelegate = nil
+        if webView != nil {
+            webView!.configuration.userContentController.removeScriptMessageHandler(forName: "bladeMessageHandler")
+            webView!.removeFromSuperview()
+            webView!.navigationDelegate = nil
+            webView!.uiDelegate = nil
 
             // Set webView to nil
-            self.webView = nil
+            webView = nil
         }
 
         // Setting up and loading webview
-        self.webView = WKWebView();
-        
-        if (self.bladeEnv == .CI && self.network == .TESTNET) {
+        webView = WKWebView()
+
+        if bladeEnv == .CI && network == .TESTNET {
             if #available(iOS 16.4, *) {
                 // self.webView!.isInspectable = true
-            };
+            }
         }
-        self.webView!.navigationDelegate = self
+        webView!.navigationDelegate = self
         if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
-            self.webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+            webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }
-        self.webView!.configuration.userContentController.add(self, name: "bladeMessageHandler")
+        webView!.configuration.userContentController.add(self, name: "bladeMessageHandler")
     }
 
     private func initBladeSdkJS() throws {
-        let completionKey = getCompletionKey("initBladeSdkJS");
+        let completionKey = getCompletionKey("initBladeSdkJS")
         performRequest(
             completionKey: completionKey,
             js: "init('\(esc(apiKey!))', '\(esc(network.rawValue.lowercased()))', '\(esc(dAppCode!))',  '\(visitorId)', '\(bladeEnv)', '\(esc(sdkVersion))', '\(completionKey)')",
             decodeType: InfoResponse.self,
-            completion: self.initCompletion!
+            completion: initCompletion!
         )
     }
 
     private func getCompletionKey(_ tag: String = "") -> String {
-        completionId += 1;
-        return tag + String(completionId);
+        completionId += 1
+        return tag + String(completionId)
     }
 }
 
@@ -594,20 +600,20 @@ extension SwiftBlade: WKScriptMessageHandler {
             let data = Data(jsonString.utf8)
             do {
                 let response = try JSONDecoder().decode(ResultRaw.self, from: data)
-                if (response.completionKey == nil) {
+                if response.completionKey == nil {
                     throw SwiftBladeError.unknownJsError("Received JS response without completionKey")
                 }
                 let deferedCompletion = deferCompletions[response.completionKey!]!
 
                 // TODO: fix this hacky way of throwing error on data parse
-                if (response.error != nil) {
+                if response.error != nil {
                     deferedCompletion(Data("".utf8), response.error!)
                 } else {
                     deferedCompletion(data, nil)
                 }
-            } catch let error {
+            } catch {
                 print(error)
-//                throw error
+                // throw error
             }
         }
     }
@@ -619,16 +625,14 @@ extension SwiftBlade: WKNavigationDelegate {
         webViewInitialized = true
 
         // Call initBladeSdkJS and initCompletion after that
-        try? self.initBladeSdkJS()
+        try? initBladeSdkJS()
     }
 
     public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         // if webview process killed - reload it. Init triggers at WKNavigationDelegate{webView}. Nice 👌
         webView.reload()
-        self.initWebView()
-        /**
-         //to test on simulator run in cli: kill child process of simulator with 'com.apple.WebKit.WebContent' in title
-         `kill $(pgrep -P $(pgrep launchd_sim) 'com.apple.WebKit.WebContent')`
-        */
+        initWebView()
+        // to test on simulator run in cli: kill child process of simulator with 'com.apple.WebKit.WebContent' in title
+        // `kill $(pgrep -P $(pgrep launchd_sim) 'com.apple.WebKit.WebContent')`
     }
 }
