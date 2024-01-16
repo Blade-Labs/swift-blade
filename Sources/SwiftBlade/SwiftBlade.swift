@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.10"
+    private let sdkVersion: String = "Swift@0.6.11"
 
     // MARK: - It's init time 🎬
 
@@ -126,13 +126,13 @@ public class SwiftBlade: NSObject {
     ///   - receiverId: receiver
     ///   - amount: amount
     ///   - memo: memo (limited to 100 characters)
-    ///   - completion: result with `TransferData` type
-    public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
+    ///   - completion: result with `TransactionReceiptData` type
+    public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferHbars")
         performRequest(
             completionKey: completionKey,
             js: "transferHbars('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', '\(completionKey)')",
-            decodeType: TransferResponse.self,
+            decodeType: TransactionReceiptResponse.self,
             completion: completion
         )
     }
@@ -144,16 +144,16 @@ public class SwiftBlade: NSObject {
     ///   - accountId: sender
     ///   - accountPrivateKey: sender's private key to sign transfer transaction
     ///   - receiverId: receiver
-    ///   - amount: amount
+    ///   - amountOrSerial: amount of fungible tokens to send (with token-decimals correction) on NFT serial number
     ///   - memo: memo (limited to 100 characters)
     ///   - freeTransfer: for tokens configured for this dAppCode on Blade backend
-    ///   - completion: result with `TransferData` type
-    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, freeTransfer: Bool = true, completion: @escaping (_ result: TransferData?, _ error: BladeJSError?) -> Void) {
+    ///   - completion: result with `TransactionReceiptData` type
+    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amountOrSerial: Decimal, memo: String, freeTransfer: Bool = true, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferTokens")
         performRequest(
             completionKey: completionKey,
-            js: "transferTokens('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amount)', '\(esc(memo))', \(freeTransfer), '\(completionKey)')",
-            decodeType: TransferResponse.self,
+            js: "transferTokens('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amountOrSerial)', '\(esc(memo))', \(freeTransfer), '\(completionKey)')",
+            decodeType: TransactionReceiptResponse.self,
             completion: completion
         )
     }
@@ -486,6 +486,109 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
+     
+    /// Create token (NFT or Fungible Token)
+    ///
+    /// - Parameters:
+    ///   - treasuryAccountId: treasury account id
+    ///   -  supplyPrivateKey: supply account private key
+    ///   -  tokenName: token name (string up to 100 bytes)
+    ///   -  tokenSymbol: token symbol (string up to 100 bytes)
+    ///   -  isNft: set token type NFT
+    ///   -  keys: token keys
+    ///   -  decimals: token decimals (0 for nft)
+    ///   -  initialSupply: token initial supply (0 for nft)
+    ///   -  maxSupply: token max supply
+    ///   -  completion: callback function, with result of CreateTokenData or BladeJSError
+    public func createToken(
+         treasuryAccountId: String,
+         supplyPrivateKey: String,
+         tokenName: String,
+         tokenSymbol: String,
+         isNft: Bool,
+         keys: [KeyRecord],
+         decimals: Int,
+         initialSupply: Int,
+         maxSupply: Int,
+         completion: @escaping (_ result: CreateTokenData?, _ error: BladeJSError?) -> Void
+    ) {
+        let completionKey = getCompletionKey("createToken")
+        let keysJson = keys.map { try? JSONEncoder().encode($0) }
+                              .compactMap { $0 }
+                              .map { String(data: $0, encoding: .utf8)! }
+                              .joined(separator: ",")
+        performRequest(
+            completionKey: completionKey,
+            js: "createToken('\(esc(treasuryAccountId))', '\(esc(supplyPrivateKey))', '\(esc(tokenName))', '\(esc(tokenSymbol))', \(isNft),  [\(keysJson)], \(decimals), \(initialSupply), \(maxSupply), '\(completionKey)')",
+            decodeType: CreateTokenResponse.self,
+            completion: completion
+        )
+    }
+   
+    
+    /// Associate token to account
+    ///
+    /// - Parameters:
+    ///   -  tokenId: token id
+    ///   -   accountId: account id to associate token
+    ///   -   accountPrivateKey: account private key
+    ///   -  completion: callback function, with result of TransactionReceiptData or BladeJSError
+
+    public func associateToken(
+         tokenId: String,
+         accountId: String,
+         accountPrivateKey: String,
+         completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void
+     ) {
+         let completionKey = getCompletionKey("associateToken")
+         performRequest(
+             completionKey: completionKey,
+             js: "associateToken('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(completionKey)')",
+             decodeType: TransactionReceiptResponse.self,
+             completion: completion
+         )
+     }
+
+    /// Mint one NFT
+    ///
+    /// - Parameters:
+    ///   - tokenId: token id to mint NFT
+    ///   - supplyAccountId: token supply account id
+    ///   - supplyPrivateKey: token supply private key
+    ///   - file: image to mint (base64 DataUrl image, eg.: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAA...)
+    ///   - metadata: NFT metadata
+    ///   - storageConfig: IPFS provider config
+    ///   - completion: callback function, with result of CreateTokenData or BladeJSError
+    public func nftMint(
+         tokenId: String,
+         supplyAccountId: String,
+         supplyPrivateKey: String,
+         file: String,
+         metadata: [String: String],
+         storageConfig: NFTStorageConfig,
+         completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void
+     ) {
+         let completionKey = getCompletionKey("nftMint")
+         var metadataJson = "{}"
+         var storageConfigJson = "{}"
+         let encoder = JSONEncoder()
+         do {
+             let metadataJsonData = try encoder.encode(metadata)
+             metadataJson = String(data: metadataJsonData, encoding: .utf8) ?? "{}"
+             
+             let storageConfigJsonData = try encoder.encode(storageConfig)
+             storageConfigJson = String(data: storageConfigJsonData, encoding: .utf8) ?? "{}"
+         } catch {
+             print("Error encoding storageConfig to JSON: \(error)")
+         }
+
+         performRequest(
+             completionKey: completionKey,
+             js: "nftMint('\(esc(tokenId))', '\(esc(supplyAccountId))', '\(esc(supplyPrivateKey))', '\(esc(file))', \(metadataJson), \(storageConfigJson), '\(completionKey)')",
+             decodeType: TransactionReceiptResponse.self,
+             completion: completion
+         )
+     }
 
     /// Method to clean-up webView
     public func cleanup() {

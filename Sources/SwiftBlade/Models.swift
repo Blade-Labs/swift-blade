@@ -51,16 +51,6 @@ public struct PrivateKeyData: Codable {
     public var evmAddress: String
 }
 
-struct TransferResponse: Response, Codable {
-    var data: TransferData
-}
-
-public struct TransferData: Codable {
-    public var nodeId: String
-    public var transactionHash: String
-    public var transactionId: String
-}
-
 struct AccountAPIResponse: Codable {
     var id: String
     var network: String
@@ -118,6 +108,7 @@ public struct TransactionReceiptData: Codable {
     public var contractId: String?
     public var topicSequenceNumber: String?
     public var totalSupply: String?
+    public var serials: [String]
 }
 
 struct ContractQueryResponse: Response, Codable {
@@ -154,7 +145,7 @@ public struct TransactionsHistoryData: Codable {
 }
 
 public struct TransactionHistoryDetail: Codable {
-    public var fee: Int
+    public var fee: Double
     public var memo: String
     public var nftTransfers: [TransactionHistoryNftTransfer]?
     public var time: String
@@ -249,6 +240,14 @@ public struct ResultData: Codable {
     public var success: Bool
 }
 
+struct CreateTokenResponse: Response, Codable {
+    var data: CreateTokenData
+}
+
+public struct CreateTokenData: Codable {
+    public var tokenId: String
+}
+
 public struct RemoteConfig: Codable {
     public var fpApiKey: String
 }
@@ -307,6 +306,26 @@ public struct CoinDataMarket: Codable {
     public var current_price: [String: Double]
 }
 
+public struct KeyRecord: Codable {
+    public var privateKey: String
+    public var type: KeyType
+    
+    public init(privateKey: String, type: KeyType) {
+        self.privateKey = privateKey
+        self.type = type
+    }
+}
+
+public struct NFTStorageConfig: Encodable {
+    public var provider: NFTStorageProvider
+    public var apiKey: String
+    
+    public init(provider: NFTStorageProvider, apiKey: String) {
+        self.provider = provider
+        self.apiKey = apiKey
+    }
+}
+
 // MARK: - SwiftBlade errors
 
 public enum SwiftBladeError: Error {
@@ -342,4 +361,17 @@ public enum CryptoFlowServiceStrategy: String {
     case BUY = "Buy"
     case SELL = "Sell"
     case SWAP = "Swap"
+}
+
+public enum KeyType: String, Codable {
+    case admin = "admin"
+    case kyc = "kyc"
+    case freeze = "freeze"
+    case wipe = "wipe"
+    case pause = "pause"
+    case feeSchedule = "feeSchedule"
+}
+
+public enum NFTStorageProvider: String, Encodable {
+    case nftStorage = "nftStorage"
 }
