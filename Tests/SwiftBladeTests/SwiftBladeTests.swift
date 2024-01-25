@@ -17,6 +17,8 @@ final class SwiftBladeTests: XCTestCase {
     var privateKeyHexEd25519 = "302e020100300506032b6570042204201c1fc6ab4f5937bf9261cd3d1f1609cb5f30838d018207b476ff50d97ef8e2a5"
     var publicKeyHex = "302d300706052b8104000a032200029dc73991b0d9cdbb59b2cd0a97a0eaff6de801726cb39804ea9461df6be2dd30"
     let originalMessage = "hello"
+    let tokenName = "Swift Token SDK"
+    let tokenSymbol = "Arr!"
 
     override func setUp() {
         super.setUp()
@@ -54,7 +56,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.10", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.11", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
@@ -148,10 +150,12 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "TransferHbars should not produce an error")
             XCTAssertNotNil(result, "TransferHbars should produce a result")
 
-            if let transferData = result as TransferData? {
-                XCTAssertNotNil(transferData.nodeId, "TransferData should have nodeId")
-                XCTAssertNotNil(transferData.transactionId, "TransferData should have transactionId")
-                XCTAssertNotNil(transferData.transactionHash, "TransferData should have transactionHash")
+            if let transferData = result as TransactionReceiptData? {
+                XCTAssertNotNil(transferData.status, "TransferData should have status")
+                XCTAssertNil(transferData.contractId, "TransferData should have contractId")
+                XCTAssertNotNil(transferData.topicSequenceNumber, "TransferData should have topicSequenceNumber")
+                XCTAssertNotNil(transferData.totalSupply, "TransferData should have totalSupply")
+                XCTAssertNotNil(transferData.serials, "TransferData should have serials")
             } else {
                 XCTFail("Result should be of type TransferData")
             }
@@ -172,17 +176,19 @@ final class SwiftBladeTests: XCTestCase {
             accountId: accountId,
             accountPrivateKey: privateKeyHex,
             receiverId: accountId2,
-            amount: amount,
+            amountOrSerial: amount,
             memo: "transferTokens tests Swift (paid)",
             freeTransfer: false
         ) { result, error in
             XCTAssertNil(error, "TransferTokens should not produce an error")
             XCTAssertNotNil(result, "TransferTokens should produce a result")
 
-            if let transferData = result as TransferData? {
-                XCTAssertNotNil(transferData.nodeId, "TransferData should have nodeId")
-                XCTAssertNotNil(transferData.transactionId, "TransferData should have transactionId")
-                XCTAssertNotNil(transferData.transactionHash, "TransferData should have transactionHash")
+            if let transferData = result as TransactionReceiptData? {
+                XCTAssertNotNil(transferData.status, "TransferData should have status")
+                XCTAssertNil(transferData.contractId, "TransferData should have contractId")
+                XCTAssertNotNil(transferData.topicSequenceNumber, "TransferData should have topicSequenceNumber")
+                XCTAssertNotNil(transferData.totalSupply, "TransferData should have totalSupply")
+                XCTAssertNotNil(transferData.serials, "TransferData should have serials")
             } else {
                 XCTFail("Result should be of type TransferData")
             }
@@ -195,7 +201,7 @@ final class SwiftBladeTests: XCTestCase {
             accountId: accountId,
             accountPrivateKey: privateKeyHex,
             receiverId: accountId2,
-            amount: amount,
+            amountOrSerial: amount,
             memo: "transferTokens tests Swift (free)",
             freeTransfer: true
         ) { result, error in
@@ -745,5 +751,117 @@ final class SwiftBladeTests: XCTestCase {
         }
 
         wait(for: [expectation1, expectation2, expectation3], timeout: 30.0)
+    }
+    
+    
+    func testNFT() {
+        let expectationCreateToken = XCTestExpectation(description: "testNFT should complete expectationCreateToken")
+        let expectationAssociateToken = XCTestExpectation(description: "testNFT should complete expectationAssociateToken")
+        let expectationMintToken = XCTestExpectation(description: "testNFT should complete expectationMintToken")
+        let expectationTransferNFT = XCTestExpectation(description: "testNFT should complete expectationTransferNFT")
+
+        swiftBlade.initialize(apiKey: apiKeyMainnet, dAppCode: dAppCode, network: HederaNetwork.TESTNET, bladeEnv: env, force: true) { [self] result, error in
+            XCTAssertNil(error, "Initialization should not produce an error")
+            XCTAssertNotNil(result, "Initialization should produce a result")
+
+            let keys = [
+                KeyRecord(privateKey: privateKeyHexEd25519, type: KeyType.admin)
+            ]
+            
+            swiftBlade.createToken(
+                treasuryAccountId: accountId, 
+                supplyPrivateKey: privateKeyHex,
+                tokenName: tokenName,
+                tokenSymbol: tokenSymbol,
+                isNft: true,
+                keys: keys,
+                decimals: 0,
+                initialSupply: 0,
+                maxSupply: 250
+            ) { [self] result, error in
+                XCTAssertNil(error, "createToken should not produce an error")
+                XCTAssertNotNil(result, "createToken should produce a result")
+
+                if let tokenData = result {
+                    XCTAssertNotNil(tokenData.tokenId, "tokenData.tokenId should present")
+                } else {
+                    XCTFail("no tokenData.tokenId")
+                }
+                expectationCreateToken.fulfill()
+                let tokenId = result!.tokenId
+
+                swiftBlade.associateToken(
+                    tokenId: tokenId,
+                    accountId: accountIdEd25519,
+                    accountPrivateKey: privateKeyHexEd25519
+                ) { [self] result, error in
+                    XCTAssertNil(error, "associateToken should not produce an error")
+                    XCTAssertNotNil(result, "associateToken should produce a result")
+
+                    if let tokenAssociateData = result {
+                        XCTAssertNotNil(tokenAssociateData.status, "tokenAssociateData.status should present")
+                        XCTAssertNil(tokenAssociateData.contractId, "tokenAssociateData.contractId should present")
+                        XCTAssertNotNil(tokenAssociateData.topicSequenceNumber, "tokenAssociateData.topicSequenceNumber should present")
+                        XCTAssertNotNil(tokenAssociateData.totalSupply, "tokenAssociateData.totalSupply should present")
+                        XCTAssertNotNil(tokenAssociateData.serials, "tokenAssociateData.serials should present")
+                    } else {
+                        XCTFail("no tokenAssociateData")
+                    }
+                    
+                    expectationAssociateToken.fulfill()
+                    
+                    swiftBlade.nftMint(
+                        tokenId: tokenId,
+                        supplyAccountId: accountId,
+                        supplyPrivateKey: privateKeyHex,
+                        file: "data:image/png;base64,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",
+                        metadata: [
+                            "name": "NFTitle",
+                            "score": "10",
+                            "power": "4",
+                            "intelligence": "6",
+                            "speed": "10"
+                        ],
+                        storageConfig: NFTStorageConfig(
+                            provider: NFTStorageProvider.nftStorage,
+                            apiKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDZFNzY0ZmM0ZkZFOEJhNjdCNjc1NDk1Q2NEREFiYjk0NTE4Njk0QjYiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTcwNDQ2NDUxODQ2MiwibmFtZSI6IkJsYWRlU0RLLXRlc3RrZXkifQ.t1wCiEuiTvcYOwssdZgiYaug4aF8ZrvMBdkTASojWGU"
+                        )
+                    ) { [self] result, error in
+                        XCTAssertNil(error, "nftMint should not produce an error")
+                        XCTAssertNotNil(result, "nftMint should produce a result")
+
+                        if let tokenMintData = result {
+                            XCTAssertNotNil(tokenMintData.status, "tokenMintData.status should present")
+                            XCTAssertNil(tokenMintData.contractId, "tokenMintData.contractId should present")
+                            XCTAssertNotNil(tokenMintData.topicSequenceNumber, "tokenMintData.topicSequenceNumber should present")
+                            XCTAssertNotNil(tokenMintData.totalSupply, "tokenMintData.totalSupply should present")
+                            XCTAssertNotNil(tokenMintData.serials, "tokenMintData.serials should present")
+                        } else {
+                            XCTFail("no tokenMintData")
+                        }
+
+                        // Add assertions for the result properties if needed
+                        expectationMintToken.fulfill()
+
+                        swiftBlade.transferTokens(
+                            tokenId: tokenId,
+                            accountId: accountId,
+                            accountPrivateKey: privateKeyHex,
+                            receiverId: accountIdEd25519,
+                            amountOrSerial: 1,
+                            memo: "transfer NFT in Test"
+                        ) { result, error in
+                            XCTAssertNil(error, "transferTokens should not produce an error")
+                            XCTAssertNotNil(result, "GetTradeUrl should produce a result")
+
+                            // Add assertions for the result properties if needed
+                            expectationTransferNFT.fulfill()
+                        }
+                    }
+                }
+            }
+        }
+        
+        wait(for: [expectationCreateToken, expectationAssociateToken, expectationMintToken, expectationTransferNFT], timeout: 120.0)
     }
 }

@@ -21,3 +21,28 @@ public enum BladeEnv: String {
     case CI = "CI"
 }
 ```
+
+```swift
+public enum CryptoFlowServiceStrategy: String {
+    case BUY = "Buy"
+    case SELL = "Sell"
+    case SWAP = "Swap"
+}
+```
+
+```swift
+public enum KeyType: String, Codable {
+    case admin = "admin"
+    case kyc = "kyc"
+    case freeze = "freeze"
+    case wipe = "wipe"
+    case pause = "pause"
+    case feeSchedule = "feeSchedule"
+}
+```
+
+```swift
+public enum NFTStorageProvider: String, Encodable {
+    case nftStorage = "nftStorage"
+}
+```
