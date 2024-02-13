@@ -8,11 +8,11 @@ final class SwiftBladeTests: XCTestCase {
     var dAppCode = "unitysdktest"
     var network = HederaNetwork.TESTNET
     var env = BladeEnv.CI
-    var accountId = "0.0.346533"
-    var accountIdEd25519 = "0.0.346532"
-    var accountId2 = "0.0.346530"
-    var contractId = "0.0.416245"
-    var tokenId = "0.0.433870"
+    var accountId = "0.0.1443"
+    var accountIdEd25519 = "0.0.1430"
+    var accountId2 = "0.0.1767"
+    var contractId = "0.0.2215872"
+    var tokenId = "0.0.2216053"
     var privateKeyHex = "3030020100300706052b8104000a04220420ebccecef769bb5597d0009123a0fd96d2cdbe041c2a2da937aaf8bdc8731799b"
     var privateKeyHexEd25519 = "302e020100300506032b6570042204201c1fc6ab4f5937bf9261cd3d1f1609cb5f30838d018207b476ff50d97ef8e2a5"
     var publicKeyHex = "302d300706052b8104000a032200029dc73991b0d9cdbb59b2cd0a97a0eaff6de801726cb39804ea9461df6be2dd30"
@@ -56,7 +56,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.12", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.15", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
@@ -336,18 +336,18 @@ final class SwiftBladeTests: XCTestCase {
     func testGetKeysFromMnemonic() {
         let expectation = XCTestExpectation(description: "GetKeysFromMnemonic should complete")
 
-        let mnemonic = "best soccer little verify love ladder else kick depth mesh silly desert"
+        let mnemonic = "limb claim next what faint place nut prevent fragile begin betray physical"
 
         swiftBlade.getKeysFromMnemonic(mnemonic: mnemonic, lookupNames: true) { result, error in
             XCTAssertNil(error, "GetKeysFromMnemonic should not produce an error")
             XCTAssertNotNil(result, "GetKeysFromMnemonic should produce a result")
 
             if let privateKeyData = result {
-                XCTAssertEqual(privateKeyData.privateKey, "3030020100300706052b8104000a04220420a7e529d9c0ea996ff62f9e41d5be81fd67489e28b62ce22420be130626d0ef40", "PrivateKeyData should have a valid private key")
-                XCTAssertEqual(privateKeyData.publicKey, "302d300706052b8104000a0322000283529a9f1353613201042305827fb38110e94c3fd559e3cf9b5645dbe0e38368", "PrivateKeyData should have a valid public key")
-                XCTAssertEqual(privateKeyData.evmAddress, "0x73226de11bb3705db2bb404a5c1a5533bb0aebb5", "PrivateKeyData should have a valid evmAddress")
+                XCTAssertEqual(privateKeyData.privateKey, "3030020100300706052b8104000a04220420cb76c87175f403d1d9b8e0b1a58724bd2cee0e2489826d771634da957799119b", "PrivateKeyData should have a valid private key")
+                XCTAssertEqual(privateKeyData.publicKey, "302d300706052b8104000a0322000215aa00fb07e73439fc628cac2ba43694d6170e7444b9b121a58847ca57766f77", "PrivateKeyData should have a valid public key")
+                XCTAssertEqual(privateKeyData.evmAddress, "0xb96be10ca97df55ec5d42929884f65b34520699a", "PrivateKeyData should have a valid evmAddress")
                 XCTAssertEqual(privateKeyData.accounts.count, 1, "PrivateKeyData should have a valid number of accountIds")
-                XCTAssertEqual(privateKeyData.accounts[0], "0.0.2018696", "PrivateKeyData should have a valid accountId")
+                XCTAssertEqual(privateKeyData.accounts[0], "0.0.3419337", "PrivateKeyData should have a valid accountId")
             } else {
                 XCTFail("Result should be of type PrivateKeyData")
             }
@@ -566,9 +566,9 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNotNil(result, "GetParamsSignature should produce a result")
 
             if let splitSignatureData = result {
-                XCTAssertEqual(splitSignatureData.v, 28, "SplitSignatureData should be valid v")
-                XCTAssertEqual(splitSignatureData.r, "0xe5e662d0564828fd18b2b5b228ade288ad063fadca76812f7902f56cae3e678e", "SplitSignatureData should be valid r")
-                XCTAssertEqual(splitSignatureData.s, "0x61b7ceb82dc6695872289b697a1bca73b81c494288abda29fa022bb7b80c84b5", "SplitSignatureData should be valid s")
+                XCTAssertEqual(splitSignatureData.v, 27, "SplitSignatureData should be valid v")
+                XCTAssertEqual(splitSignatureData.r, "0x0c6e8f0487709cfc1ebbc41e47ce56aee5cf5bc933a4cd6cb2695b098dbe4ee4", "SplitSignatureData should be valid r")
+                XCTAssertEqual(splitSignatureData.s, "0x22d0b6351670c37eb112ebd80123452237cb5c893767510a9356214189f6fe86", "SplitSignatureData should be valid s")
             } else {
                 XCTFail("Result should be of type SignMessageData")
             }
@@ -605,7 +605,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNotNil(result, "GetC14url should produce a result")
 
             if let integrationUrlData = result {
-                XCTAssertEqual(integrationUrlData.url, "https://pay.c14.money/?clientId=00ce2e0a-ee66-4971-a0e9-b9d627d106b0&targetAssetId=057d6b35-1af5-4827-bee2-c12842faa49e&targetAssetIdLock=true&sourceAmount=1234&quoteAmountLock=true&targetAddress=0.0.346533&targetAddressLock=true", "url should be like that")
+                XCTAssertEqual(integrationUrlData.url, "https://pay.c14.money/?clientId=00ce2e0a-ee66-4971-a0e9-b9d627d106b0&targetAssetId=057d6b35-1af5-4827-bee2-c12842faa49e&targetAssetIdLock=true&sourceAmount=1234&quoteAmountLock=true&targetAddress=0.0.1443&targetAddressLock=true", "url should be like that")
             } else {
                 XCTFail("Result should be of type transactionsHistoryData")
             }
