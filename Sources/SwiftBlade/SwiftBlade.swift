@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.11"
+    private let sdkVersion: String = "Swift@0.6.12"
 
     // MARK: - It's init time 🎬
 
@@ -224,6 +224,37 @@ public class SwiftBlade: NSObject {
         )
     }
 
+    /// Get Node list
+    ///
+    /// - Parameters:
+    ///   - completion: result with NodesData type
+    public func getNodeList(completion: @escaping (_ result: NodesData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("getNodeList")
+        performRequest(
+            completionKey: completionKey,
+            js: "getNodeList('\(completionKey)')",
+            decodeType: NodesResponse.self,
+            completion: completion
+        )
+    }
+  
+    /// Stake/unstake account
+    ///
+    /// - Parameters:
+    ///   - accountId: Hedera account id
+    ///   - accountPrivateKey account private key (DER encoded hex string)
+    ///   - nodeId node id to stake to. If negative or null, account will be unstaked
+    ///   - completion: result with TransactionReceiptData type
+    public func stakeToNode(accountId: String, accountPrivateKey: String, nodeId: Int, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("stakeToNode")
+        performRequest(
+            completionKey: completionKey,
+            js: "stakeToNode('\(esc(accountId))', '\(esc(accountPrivateKey))', \(nodeId), '\(completionKey)')",
+            decodeType: TransactionReceiptResponse.self,
+            completion: completion
+        )
+    }
+    
     /// Restore public and private key by seed phrase
     ///
     /// - Parameters:

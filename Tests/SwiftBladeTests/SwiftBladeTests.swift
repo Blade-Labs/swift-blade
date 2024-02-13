@@ -56,7 +56,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.11", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.12", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
@@ -278,6 +278,9 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(accountInfoData.accountId, self.accountId, "Account ID should match")
                 XCTAssertNotNil(accountInfoData.evmAddress, "Created account should have a evmAddress")
                 XCTAssertNotNil(accountInfoData.calculatedEvmAddress, "Created account should have a calculatedEvmAddress")
+                XCTAssertNotNil(accountInfoData.publicKey, "Created account should have a publicKey")
+                XCTAssertNotNil(accountInfoData.stakingInfo, "Created account should have a stakingInfo")
+                XCTAssertNotNil(accountInfoData.stakingInfo.pendingReward, "Created account stakingInfo should have a pendingReward")
             } else {
                 XCTFail("Result should be of type AccountInfoData")
             }
@@ -286,6 +289,48 @@ final class SwiftBladeTests: XCTestCase {
         }
 
         wait(for: [expectation], timeout: 10.0)
+    }
+    
+    func testStakeAccount() {
+        let expectationNodeList = XCTestExpectation(description: "GetNodeList should complete")
+        let expectationStakeAccount = XCTestExpectation(description: "StakeAccount should complete")
+
+        swiftBlade.getNodeList() { result, error in
+            XCTAssertNil(error, "GetAccountInfo should not produce an error")
+            XCTAssertNotNil(result, "GetAccountInfo should produce a result")
+            
+            if let nodeListData = result {
+                XCTAssertNotNil(nodeListData.nodes, "NodeList should have a nodes")
+                XCTAssertGreaterThan(nodeListData.nodes.count, 0, "NodeList should have some nodes")
+                XCTAssertNotNil(nodeListData.nodes[0].description, "NodeInfo should have a description")
+                XCTAssertNotNil(nodeListData.nodes[0].max_stake, "NodeInfo should have a max_stake")
+                XCTAssertNotNil(nodeListData.nodes[0].min_stake, "NodeInfo should have a min_stake")
+                XCTAssertNotNil(nodeListData.nodes[0].node_id, "NodeInfo should have a node_id")
+            } else {
+                XCTFail("Result should be of type NodesData")
+            }
+
+            expectationNodeList.fulfill()
+            
+            
+            self.swiftBlade.stakeToNode(accountId: self.accountId, accountPrivateKey: self.privateKeyHex, nodeId: -1) { result, error in
+                XCTAssertNil(error, "GetAccountInfo should not produce an error")
+                XCTAssertNotNil(result, "GetAccountInfo should produce a result")
+
+                if let transferData = result as TransactionReceiptData? {
+                    XCTAssertNotNil(transferData.status, "TransferData should have status")
+                    XCTAssertNil(transferData.contractId, "TransferData should have contractId")
+                    XCTAssertNotNil(transferData.topicSequenceNumber, "TransferData should have topicSequenceNumber")
+                    XCTAssertNotNil(transferData.totalSupply, "TransferData should have totalSupply")
+                    XCTAssertNotNil(transferData.serials, "TransferData should have serials")
+                } else {
+                    XCTFail("Result should be of type TransferData")
+                }
+
+                expectationStakeAccount.fulfill()
+            }
+        }
+        wait(for: [expectationNodeList, expectationStakeAccount], timeout: 30.0)
     }
 
     func testGetKeysFromMnemonic() {

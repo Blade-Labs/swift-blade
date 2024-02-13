@@ -130,6 +130,41 @@ public struct AccountInfoData: Codable {
     public var accountId: String
     public var evmAddress: String
     public var calculatedEvmAddress: String
+    public var publicKey: String
+    public var stakingInfo: StakingInfo
+}
+```
+
+```swift
+public struct StakingInfo: Codable {
+    public var pendingReward: Int64
+    public var stakedNodeId: Int64?
+    public var stakePeriodStart: String?
+}
+```
+
+```swift
+struct NodesResponse: Response, Codable {
+    var data: NodesData
+}
+```
+
+```swift
+public struct NodesData: Codable {
+    public var nodes: [NodeInfo]
+}
+```
+
+```swift
+public struct NodeInfo: Codable {
+    public var description: String
+    public var max_stake: Int64
+    public var min_stake: Int64
+    public var node_id: Int
+    public var node_account_id: String
+    public var stake: Int64
+    public var stake_not_rewarded: Int64
+    public var stake_rewarded: Int64
 }
 ```
 
