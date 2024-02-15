@@ -10,7 +10,7 @@
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/Blade-Labs/swift-blade.git", from: "0.6.15")
+    .package(url: "https://github.com/Blade-Labs/swift-blade.git", from: "0.6.16")
 ]
 ```
 
