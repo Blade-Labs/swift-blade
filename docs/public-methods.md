@@ -606,11 +606,11 @@ public func createToken(
 }
 ```
 
-## Associate token to account
+## Associate token to account. Association fee will be covered by Blade, if tokenId configured in dApp
 
 ### Parameters:
 
-* `tokenId`: token id
+* `tokenId`: token id to associate. Empty to associate all tokens configured in dApp
 * `accountId`: account id to associate token
 * `accountPrivateKey`: account private key
 * `completion`: callback function, with result of TransactionReceiptData or BladeJSError
