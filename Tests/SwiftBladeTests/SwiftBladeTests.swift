@@ -56,7 +56,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.16", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.17", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
