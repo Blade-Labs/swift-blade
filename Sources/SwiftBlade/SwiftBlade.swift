@@ -161,13 +161,14 @@ public class SwiftBlade: NSObject {
     /// Method to create Hedera account
     ///
     /// - Parameters:
+    ///   - privateKey: optional field if you need specify account key (hex encoded privateKey with DER-prefix)
     ///   - deviceId: unique device id (advanced security feature, required only for some dApps)
     ///   - completion: result with CreatedAccountData type
-    public func createHederaAccount(deviceId: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
+    public func createHederaAccount(privateKey: String, deviceId: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("createAccount")
         performRequest(
             completionKey: completionKey,
-            js: "createAccount('\(esc(deviceId))', '\(completionKey)')",
+            js: "createAccount('\(esc(privateKey))', '\(esc(deviceId))', '\(completionKey)')",
             decodeType: CreatedAccountResponse.self,
             completion: completion
         )
