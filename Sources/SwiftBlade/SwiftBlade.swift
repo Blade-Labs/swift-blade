@@ -709,36 +709,15 @@ public class SwiftBlade: NSObject {
         webView!.navigationDelegate = self
         
         
-        do {
-            print(Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "JS"))
-        } catch {
-            print(error)
-        }
-        
-        if let mainBundleURLs = Bundle.main.urls(forResourcesWithExtension: nil, subdirectory: nil) {
-            for url in mainBundleURLs {
-                print(url.lastPathComponent)
-            }
-        }
-        
-        let myBundle = Bundle(for: SwiftBlade.self)
-
-        guard let resourceBundleURL = myBundle.url(
-            forResource: "SwiftBlade_SwiftBlade", withExtension: "bundle")
-        else { fatalError("SwiftBlade_SwiftBlade.bundle not found!") }
+        guard let resourceBundleURL = Bundle(for: SwiftBlade.self).url(forResource: "SwiftBlade_SwiftBlade", withExtension: "bundle")
+            else { fatalError("SwiftBlade_SwiftBlade.bundle not found!") }
 
         guard let resourceBundle = Bundle(url: resourceBundleURL)
-            else { fatalError("Cannot access MySDK.bundle!") }
+            else { fatalError("Cannot access SwiftBlade_SwiftBlade.bundle!") }
         
-//        if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
         if let url = resourceBundle.url(forResource: "index", withExtension: "html") {
             webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
-            print("bundle url \(url)")
-        } else {
-            print("NO bundle url")
         }
-        
-        
         webView!.configuration.userContentController.add(self, name: "bladeMessageHandler")
     }
 
