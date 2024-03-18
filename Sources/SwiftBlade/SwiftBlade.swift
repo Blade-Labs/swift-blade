@@ -707,11 +707,28 @@ public class SwiftBlade: NSObject {
             }
         }
         webView!.navigationDelegate = self
+        
+        
+        do {
+            print(Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "JS"))
+        } catch {
+            print(error)
+        }
+        
+        if let mainBundleURLs = Bundle.main.urls(forResourcesWithExtension: nil, subdirectory: nil) {
+            for url in mainBundleURLs {
+                print(url.lastPathComponent)
+            }
+        }
+        
 //        if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
         if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
             webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
             print("bundle url \(url)")
+        } else {
+            print("NO bundle url")
         }
+        
         
         webView!.configuration.userContentController.add(self, name: "bladeMessageHandler")
     }
