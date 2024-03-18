@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.author           = { 'Blade Labs' => 'https://bladelabs.io' }
   s.source           = { :git => 'https://github.com/Blade-Labs/swift-blade', :tag => s.version.to_s }
   s.platforms        = { :ios => '13.0' }
-  s.swift_version    = '5.5'
+  s.swift_version    = '5.1'
 
 
   # Specify the files to include in your library
