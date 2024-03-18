@@ -24,7 +24,8 @@ Pod::Spec.new do |s|
   # Specify any framework dependencies if needed
   s.frameworks = 'Foundation'
   
-  s.dependency 'BigInt', '~> 5.3'
+  s.dependency 'BigInt', '~> 5.0.0'
+#   s.dependency 'BigInt', '~> 5.3'
   s.dependency 'FingerprintPro', '~> 2.4'
 
   # Specify any libraries or frameworks to link with your library
