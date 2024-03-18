@@ -18,7 +18,7 @@ Pod::Spec.new do |s|
 
   # Specify any resources that need to be included (e.g., xib files, images)
   s.resource_bundles = {
-    'SwiftBladeResources' => ['Sources/SwiftBlade/JS/*.*']
+    'SwiftBlade_SwiftBlade' => ['Sources/SwiftBlade/JS/*.*']
   }
 
   # Specify any framework dependencies if needed

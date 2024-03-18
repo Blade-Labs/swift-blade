@@ -721,8 +721,17 @@ public class SwiftBlade: NSObject {
             }
         }
         
+        let myBundle = Bundle(for: SwiftBlade.self)
+
+        guard let resourceBundleURL = myBundle.url(
+            forResource: "SwiftBlade_SwiftBlade", withExtension: "bundle")
+        else { fatalError("SwiftBlade_SwiftBlade.bundle not found!") }
+
+        guard let resourceBundle = Bundle(url: resourceBundleURL)
+            else { fatalError("Cannot access MySDK.bundle!") }
+        
 //        if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
-        if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
+        if let url = resourceBundle.url(forResource: "index", withExtension: "html") {
             webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
             print("bundle url \(url)")
         } else {
