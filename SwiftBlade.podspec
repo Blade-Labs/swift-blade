@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://github.com/Blade-Labs/swift-blade'
   s.license          = { :type => 'Apache 2.0', :file => 'LICENSE' }
   s.author           = { 'Blade Labs' => 'https://bladelabs.io' }
-  s.source           = { :git => 'https://github.com/Blade-Labs/swift-blade', :tag => s.version.to_s }
+  s.source           = { :git => 'git@github.com:Blade-Labs/swift-blade.git', :tag => s.version.to_s }
   s.platforms        = { :ios => '13.0' }
   s.swift_version    = '5.1'
 
