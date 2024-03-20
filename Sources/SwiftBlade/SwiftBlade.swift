@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.17"
+    private let sdkVersion: String = "Swift@0.6.18"
 
     // MARK: - It's init time 🎬
 
@@ -161,13 +161,14 @@ public class SwiftBlade: NSObject {
     /// Method to create Hedera account
     ///
     /// - Parameters:
+    ///   - privateKey: optional field if you need specify account key (hex encoded privateKey with DER-prefix)
     ///   - deviceId: unique device id (advanced security feature, required only for some dApps)
     ///   - completion: result with CreatedAccountData type
-    public func createHederaAccount(deviceId: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
+    public func createHederaAccount(privateKey: String, deviceId: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("createAccount")
         performRequest(
             completionKey: completionKey,
-            js: "createAccount('\(esc(deviceId))', '\(completionKey)')",
+            js: "createAccount('\(esc(privateKey))', '\(esc(deviceId))', '\(completionKey)')",
             decodeType: CreatedAccountResponse.self,
             completion: completion
         )
@@ -706,7 +707,15 @@ public class SwiftBlade: NSObject {
             }
         }
         webView!.navigationDelegate = self
-        if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
+        
+        
+        guard let resourceBundleURL = Bundle(for: SwiftBlade.self).url(forResource: "SwiftBlade_SwiftBlade", withExtension: "bundle")
+            else { fatalError("SwiftBlade_SwiftBlade.bundle not found!") }
+
+        guard let resourceBundle = Bundle(url: resourceBundleURL)
+            else { fatalError("Cannot access SwiftBlade_SwiftBlade.bundle!") }
+        
+        if let url = resourceBundle.url(forResource: "index", withExtension: "html") {
             webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }
         webView!.configuration.userContentController.add(self, name: "bladeMessageHandler")
