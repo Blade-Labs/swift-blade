@@ -3,19 +3,19 @@
 ## Requirements
 
 * **Swift v5.3+**
-* **iOS 10+ (2016)**
+* **iOS 13+ (2019)**
 
 ## Install
 
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/Blade-Labs/swift-blade.git", from: "0.6.18")
+    .package(url: "https://github.com/Blade-Labs/swift-blade.git", from: "0.6.19")
 ]
 ```
 
 ```podfile
-pod 'SwiftBlade', :git => 'git@github.com:Blade-Labs/swift-blade.git', :tag => '0.6.18'
+pod 'SwiftBlade', :git => 'git@github.com:Blade-Labs/swift-blade.git', :tag => '0.6.19'
 ```
 
 {% hint style="info" %}

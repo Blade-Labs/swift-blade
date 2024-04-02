@@ -196,12 +196,13 @@ public struct TransactionHistoryTransfer: Codable {
     public var account: String
     public var amount: Decimal
     public var is_approval: Bool
+    public var token_id: String?
 }
 
 public struct TransactionHistoryNftTransfer: Codable {
     public var is_approval: Bool
     public var receiver_account_id: String
-    public var sender_account_id: String
+    public var sender_account_id: String?
     public var serial_number: Int
     public var token_id: String
 }
