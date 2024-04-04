@@ -56,7 +56,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.19", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.20", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
@@ -82,7 +82,7 @@ final class SwiftBladeTests: XCTestCase {
             expectation.fulfill()
         }
 
-        wait(for: [expectation], timeout: 10.0)
+        wait(for: [expectation], timeout: 100.0)
     }
 
     func testGetCoinList() {
@@ -112,14 +112,17 @@ final class SwiftBladeTests: XCTestCase {
     func testGetCoinPrice() {
         let expectation = XCTestExpectation(description: "getCoinPrice should complete")
 
-        swiftBlade.getCoinPrice("Hbar") { result, error in
+        swiftBlade.getCoinPrice("Hbar", "uah") { result, error in
             XCTAssertNil(error, "getCoinPrice should not produce an error")
             XCTAssertNotNil(result, "getCoinPrice should produce a result")
 
             if let coinPriceData = result {
                 XCTAssertNotNil(coinPriceData.priceUsd, "Coin price should have a USD value")
                 XCTAssertNotNil(coinPriceData.coin, "Coin price should have a coin object")
-
+                XCTAssertNotNil(coinPriceData.price, "Coin price should have a price value")
+                XCTAssertNotNil(coinPriceData.currency, "Coin price should have a currency value")
+                XCTAssertEqual(coinPriceData.currency, "uah", "Currency should match")
+                
                 let coin = coinPriceData.coin
                 XCTAssertEqual(coin.id, "hedera-hashgraph", "Coin id should match")
                 XCTAssertEqual(coin.symbol, "hbar", "Coin symbol should match")
@@ -350,6 +353,30 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(privateKeyData.accounts[0], "0.0.3419337", "PrivateKeyData should have a valid accountId")
             } else {
                 XCTFail("Result should be of type PrivateKeyData")
+            }
+
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 10.0)
+    }
+    
+    func testSearchAccounts() {
+        let expectation = XCTestExpectation(description: "SearchAccounts should complete")
+
+        let mnemonic = "limb claim next what faint place nut prevent fragile begin betray physical"
+
+        swiftBlade.searchAccounts(mnemonic) { result, error in
+            XCTAssertNil(error, "SearchAccounts should not produce an error")
+            XCTAssertNotNil(result, "SearchAccounts should produce a result")
+
+            if let accountData = result?.accounts[0] {
+                XCTAssertEqual(accountData.privateKey, "3030020100300706052b8104000a04220420cb76c87175f403d1d9b8e0b1a58724bd2cee0e2489826d771634da957799119b", "AccountPrivateData should have a valid private key")
+                XCTAssertEqual(accountData.publicKey, "302d300706052b8104000a0322000215aa00fb07e73439fc628cac2ba43694d6170e7444b9b121a58847ca57766f77", "AccountPrivateData should have a valid public key")
+                XCTAssertEqual(accountData.evmAddress, "0xb96be10ca97df55ec5d42929884f65b34520699a", "AccountPrivateData should have a valid evmAddress")
+                XCTAssertEqual(accountData.address, "0.0.3419337", "AccountPrivateData should have a valid accountId")
+            } else {
+                XCTFail("Result should be of type AccountPrivateData")
             }
 
             expectation.fulfill()

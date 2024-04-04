@@ -51,6 +51,23 @@ public struct PrivateKeyData: Codable {
     public var evmAddress: String
 }
 
+struct AccountPrivateResponse: Response, Codable {
+    var data: AccountPrivateData
+}
+
+public struct AccountPrivateData: Codable {
+    public var accounts: [AccountPrivateRecord]
+}
+
+public struct AccountPrivateRecord: Codable {
+    public var privateKey: String
+    public var publicKey: String
+    public var evmAddress: String
+    public var address: String
+    public var path: String
+    public var keyType: CryptoKeyType
+}
+
 struct AccountAPIResponse: Codable {
     var id: String
     var network: String
@@ -308,6 +325,8 @@ struct CoinInfoResponse: Response, Codable {
 public struct CoinInfoData: Codable {
     public var coin: CoinData
     public var priceUsd: Double
+    public var price: Double?
+    public var currency: String
 }
 
 public struct CoinData: Codable {
@@ -390,6 +409,11 @@ public enum CryptoFlowServiceStrategy: String {
     case BUY = "Buy"
     case SELL = "Sell"
     case SWAP = "Swap"
+}
+
+public enum CryptoKeyType: String, Codable {
+    case ECDSA_SECP256K1 = "ECDSA_SECP256K1"
+    case ED25519 = "ED25519"
 }
 
 public enum KeyType: String, Codable {

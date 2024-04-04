@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.19"
+    private let sdkVersion: String = "Swift@0.6.20"
 
     // MARK: - It's init time 🎬
 
@@ -107,12 +107,13 @@ public class SwiftBlade: NSObject {
     ///
     /// - Parameters:
     ///   - search: CoinGecko coinId, or address in one of the coin platforms or `hbar` (default, alias for `hedera-hashgraph`)
+    ///   - currency: result currency for price field
     ///   - completion: result with CoinInfoData type
-    public func getCoinPrice(_ search: String, completion: @escaping (_ result: CoinInfoData?, _ error: BladeJSError?) -> Void) {
+    public func getCoinPrice(_ search: String, _ currency: String = "usd", completion: @escaping (_ result: CoinInfoData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getCoinPrice")
         performRequest(
             completionKey: completionKey,
-            js: "getCoinPrice('\(esc(search))', '\(completionKey)')",
+            js: "getCoinPrice('\(esc(search))', '\(esc(currency))', '\(completionKey)')",
             decodeType: CoinInfoResponse.self,
             completion: completion
         )
@@ -158,13 +159,32 @@ public class SwiftBlade: NSObject {
         )
     }
 
+
+    /// Method to sign scheduled transaction
+    ///
+    /// - Parameters:
+    ///   - scheduleId: scheduled transaction id (0.0.xxxxx)
+    ///   - accountId: account id (0.0.xxxxx)
+    ///   - accountPrivateKey: hex encoded privateKey with DER-prefix
+    ///   - completion: result with `TransactionReceiptData` type
+    public func signScheduleId(_ scheduleId: String, _ accountId: String, _ accountPrivateKey: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("signScheduleId")
+        performRequest(
+            completionKey: completionKey,
+            js: "signScheduleId('\(esc(scheduleId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(completionKey)')",
+            decodeType: TransactionReceiptResponse.self,
+            completion: completion
+        )
+    }
+
+    
     /// Method to create Hedera account
     ///
     /// - Parameters:
     ///   - privateKey: optional field if you need specify account key (hex encoded privateKey with DER-prefix)
     ///   - deviceId: unique device id (advanced security feature, required only for some dApps)
     ///   - completion: result with CreatedAccountData type
-    public func createHederaAccount(privateKey: String, deviceId: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
+    public func createHederaAccount(_ privateKey: String = "", deviceId: String = "", completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("createAccount")
         performRequest(
             completionKey: completionKey,
@@ -262,12 +282,28 @@ public class SwiftBlade: NSObject {
     ///   - mnemonic: seed phrase
     ///   - lookupNames: lookup for accounts
     ///   - completion: result with PrivateKeyData type
+    @available(*, deprecated, message: "This method is deprecated. Please use [searchAccounts] instead.")
     public func getKeysFromMnemonic(mnemonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getKeysFromMnemonic")
         performRequest(
             completionKey: completionKey,
             js: "getKeysFromMnemonic('\(esc(mnemonic))', \(lookupNames), '\(completionKey)')",
             decodeType: PrivateKeyResponse.self,
+            completion: completion
+        )
+    }
+    
+    /// Get accounts list and keys from private key or mnemonic. Returned keys with DER header.
+    ///
+    /// - Parameters:
+    ///   - keyOrMnemonic: BIP39 mnemonic, private key with DER header
+    ///   - completion: result with AccountPrivateData type
+    public func searchAccounts(_ keyOrMnemonic: String, completion: @escaping (_ result: AccountPrivateData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("searchAccounts")
+        performRequest(
+            completionKey: completionKey,
+            js: "searchAccounts('\(esc(keyOrMnemonic))', '\(completionKey)')",
+            decodeType: AccountPrivateResponse.self,
             completion: completion
         )
     }

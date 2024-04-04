@@ -68,6 +68,29 @@ public struct PrivateKeyData: Codable {
 ```
 
 ```swift
+struct AccountPrivateResponse: Response, Codable {
+    var data: AccountPrivateData
+}
+```
+
+```swift
+public struct AccountPrivateData: Codable {
+    public var accounts: [AccountPrivateRecord]
+}
+```
+
+```swift
+public struct AccountPrivateRecord: Codable {
+    public var privateKey: String
+    public var publicKey: String
+    public var evmAddress: String
+    public var address: String
+    public var path: String
+    public var keyType: CryptoKeyType
+}
+```
+
+```swift
 struct AccountAPIResponse: Codable {
     var id: String
     var network: String
@@ -406,6 +429,8 @@ struct CoinInfoResponse: Response, Codable {
 public struct CoinInfoData: Codable {
     public var coin: CoinData
     public var priceUsd: Double
+    public var price: Double?
+    public var currency: String
 }
 ```
 
