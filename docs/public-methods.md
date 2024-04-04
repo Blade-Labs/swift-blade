@@ -60,14 +60,15 @@ public func getCoinList(completion: @escaping (_ result: CoinListData?, _ error:
 ### Parameters:
 
 * `search`: CoinGecko coinId, or address in one of the coin platforms or `hbar` (default, alias for `hedera-hashgraph`)
+* `currency`: result currency for price field
 * `completion`: result with `CoinInfoData` type
 
 ```swift
-public func getCoinPrice(_ search: String, completion: @escaping (_ result: CoinInfoData?, _ error: BladeJSError?) -> Void) {
-    let completionKey = getCompletionKey("getCoinPrice");
+public func getCoinPrice(_ search: String, _ currency: String = "usd", completion: @escaping (_ result: CoinInfoData?, _ error: BladeJSError?) -> Void) {
+    let completionKey = getCompletionKey("getCoinPrice")
     performRequest(
         completionKey: completionKey,
-        js: "getCoinPrice('\(esc(search))', '\(completionKey)')",
+        js: "getCoinPrice('\(esc(search))', '\(esc(currency))', '\(completionKey)')",
         decodeType: CoinInfoResponse.self,
         completion: completion
     )
@@ -203,6 +204,27 @@ public func getAccountInfo (accountId: String, completion: @escaping (_ result: 
 }
 ```
 
+## Method to sign scheduled transaction
+
+### Parameters:
+
+* `scheduleId`: scheduled transaction id (0.0.xxxxx)
+* `accountId`: account id (0.0.xxxxx)
+* `accountPrivateKey`: hex encoded privateKey with DER-prefix
+* `completion`: result with TransactionReceiptData type
+
+```swift
+public func signScheduleId(_ scheduleId: String, _ accountId: String, _ accountPrivateKey: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
+    let completionKey = getCompletionKey("signScheduleId")
+    performRequest(
+        completionKey: completionKey,
+        js: "signScheduleId('\(esc(scheduleId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(completionKey)')",
+        decodeType: TransactionReceiptResponse.self,
+        completion: completion
+    )
+}
+```
+
 ## Get Node list
 
 ### Parameters:
@@ -245,6 +267,7 @@ public func stakeToNode(accountId: String, accountPrivateKey: String, nodeId: In
 
 
 ## Restore public and private key by seed phrase
+**deprecated. Use [searchAccounts]**
 
 ### Parameters:
 
@@ -259,6 +282,25 @@ public func getKeysFromMnemonic (mnemonic: String, lookupNames: Bool = false, co
         completionKey: completionKey,
         js: "getKeysFromMnemonic('\(esc(mnemonic))', \(lookupNames), '\(completionKey)')",
         decodeType: PrivateKeyResponse.self,
+        completion: completion
+    )
+}
+```
+
+## Get accounts list and keys from private key or mnemonic. Returned keys with DER header.
+
+### Parameters:
+
+* `keyOrMnemonic`: BIP39 mnemonic, private key with DER header
+* `completion`: result with `AccountPrivateData` type
+
+```swift
+public func searchAccounts(_ keyOrMnemonic: String, completion: @escaping (_ result: AccountPrivateData?, _ error: BladeJSError?) -> Void) {
+    let completionKey = getCompletionKey("searchAccounts")
+    performRequest(
+        completionKey: completionKey,
+        js: "searchAccounts('\(esc(keyOrMnemonic))', '\(completionKey)')",
+        decodeType: AccountPrivateResponse.self,
         completion: completion
     )
 }

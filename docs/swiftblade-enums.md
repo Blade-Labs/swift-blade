@@ -31,6 +31,13 @@ public enum CryptoFlowServiceStrategy: String {
 ```
 
 ```swift
+public enum CryptoKeyType: String, Codable {
+    case ECDSA_SECP256K1 = "ECDSA_SECP256K1"
+    case ED25519 = "ED25519"
+}
+```
+
+```swift
 public enum KeyType: String, Codable {
     case admin = "admin"
     case kyc = "kyc"
