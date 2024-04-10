@@ -384,6 +384,46 @@ final class SwiftBladeTests: XCTestCase {
 
         wait(for: [expectation], timeout: 10.0)
     }
+    
+    func testDropTokens() {
+        let expectation1 = XCTestExpectation(description: "CreateHederaAccount should complete")
+        let expectation2 = XCTestExpectation(description: "DropTokens should complete")
+        let expectation3 = XCTestExpectation(description: "DropTokens should complete")
+
+        swiftBlade.createHederaAccount("", deviceId: "") { result, error in
+            XCTAssertNil(error, "CreateHederaAccount should not produce an error")
+            XCTAssertNotNil(result, "CreateHederaAccount should produce a result")
+
+            if let createdAccountData = result {
+                expectation1.fulfill()
+                
+                self.swiftBlade.dropTokens(
+                    accountId: createdAccountData.accountId ?? "",
+                    accountPrivateKey: createdAccountData.privateKey ?? "",
+                    secretNonce: "unity_test"
+                ) { [self] result, error in
+                    XCTAssertNil(error, "DropTokens should not produce an error")
+                    XCTAssertNotNil(result, "DropTokens should produce a result")
+                    expectation2.fulfill()
+
+                    self.swiftBlade.dropTokens(
+                        accountId: createdAccountData.accountId ?? "",
+                        accountPrivateKey: createdAccountData.privateKey ?? "",
+                        secretNonce: "unity_test"
+                    ) { [self] result, error in
+                        XCTAssertNotNil(error, "ExchangeGetQuotes should produce an error")
+                        XCTAssertNil(result, "ExchangeGetQuotes should not produce a result")
+                        expectation3.fulfill()
+                    }
+                }
+            } else {
+                XCTFail("Result should be of type CreatedAccountData")
+            }
+            
+        }
+
+        wait(for: [expectation1, expectation2, expectation3], timeout: 60.0)
+    }
 
     func testSign() {
         let expectation = XCTestExpectation(description: "Sign should complete")

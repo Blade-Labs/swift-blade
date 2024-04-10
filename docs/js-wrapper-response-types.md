@@ -480,6 +480,24 @@ public struct KeyRecord: Codable {
 ```
 
 ```swift
+struct TokenDropResponse: Response, Codable {
+    var data: TokenDropData
+}
+```
+
+```swift
+public struct TokenDropData: Codable {
+    public var status: String
+    public var statusCode: Int
+    public var timestamp: String
+    public var executionStatus: String
+    public var requestId: String
+    public var accountId: String
+    public var redirectUrl: String
+}
+```
+
+```swift
 public struct NFTStorageConfig: Encodable {
     public var provider: NFTStorageProvider
     public var apiKey: String

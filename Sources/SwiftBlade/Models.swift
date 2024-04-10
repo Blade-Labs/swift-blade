@@ -374,6 +374,20 @@ public struct NFTStorageConfig: Encodable {
     }
 }
 
+struct TokenDropResponse: Response, Codable {
+    var data: TokenDropData
+}
+
+public struct TokenDropData: Codable {
+    public var status: String
+    public var statusCode: Int
+    public var timestamp: String
+    public var executionStatus: String
+    public var requestId: String
+    public var accountId: String
+    public var redirectUrl: String
+}
+
 // MARK: - SwiftBlade errors
 
 public enum SwiftBladeError: Error {
