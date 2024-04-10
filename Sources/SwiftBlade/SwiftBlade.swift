@@ -308,6 +308,23 @@ public class SwiftBlade: NSObject {
         )
     }
 
+    /// Bladelink drop to account
+    ///
+    /// - Parameters:
+    ///   - accountId: Hedera account id (0.0.xxxxx)
+    ///   - accountPrivateKey: account private key (DER encoded hex string)
+    ///   - secretNonce: configured for dApp. Should be kept in secret
+    ///   - completion: result with TokenDropData type
+    public func dropTokens(accountId: String, accountPrivateKey: String, secretNonce: String, completion: @escaping (_ result: TokenDropData?, _ error: BladeJSError?) -> Void) {
+        let completionKey = getCompletionKey("dropTokens")
+        performRequest(
+            completionKey: completionKey,
+            js: "dropTokens('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(secretNonce))', '\(completionKey)')",
+            decodeType: TokenDropResponse.self,
+            completion: completion
+        )
+    }
+
     /// Sign message with private key
     ///
     /// - Parameters:
