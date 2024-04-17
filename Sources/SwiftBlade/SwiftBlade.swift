@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.22"
+    private let sdkVersion: String = "Swift@0.6.23"
 
     // MARK: - It's init time 🎬
 
@@ -42,11 +42,21 @@ public class SwiftBlade: NSObject {
 
         Task {
             do {
-                self.visitorId = UserDefaults.standard.string(forKey: "visitorId") ?? ""
+                if (
+                    (UserDefaults.standard.string(forKey: "visitorIdEnv") ?? "") == self.bladeEnv.rawValue
+                    && Int(Date().timeIntervalSince1970) - UserDefaults.standard.integer(forKey: "visitorIdTimestamp") < 3600 * 24 * 30
+                ) {
+                    self.visitorId = UserDefaults.standard.string(forKey: "visitorId") ?? ""
+                    print(self.visitorId)
+                } else {
+                    print("NO VISITOR")
+                }
+   
                 if self.visitorId == "" {
                     self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
                     self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
                     UserDefaults.standard.set(self.visitorId, forKey: "visitorId")
+                    UserDefaults.standard.set(self.bladeEnv.rawValue, forKey: "visitorIdEnv")
                     UserDefaults.standard.set(Int(Date().timeIntervalSince1970), forKey: "visitorIdTimestamp")
                 }
                 DispatchQueue.main.async {
