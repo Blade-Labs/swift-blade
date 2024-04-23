@@ -53,3 +53,21 @@ public enum NFTStorageProvider: String, Encodable {
     case nftStorage = "nftStorage"
 }
 ```
+
+```swift
+public enum ScheduleTransactionType: String, Codable {
+    case TRANSFER = "TRANSFER"
+    // case SUBMIT_MESSAGE = "SUBMIT_MESSAGE"
+    // case APPROVE_ALLOWANCE = "APPROVE_ALLOWANCE"
+    // case TOKEN_MINT = "TOKEN_MINT"
+    // case TOKEN_BURN = "TOKEN_BURN"
+}
+```
+
+```swift
+public enum ScheduleTransferType: String, Codable {
+    case HBAR = "HBAR"
+    case FT = "FT"
+    case NFT = "NFT"
+}
+```

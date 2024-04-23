@@ -204,6 +204,42 @@ public func getAccountInfo (accountId: String, completion: @escaping (_ result: 
 }
 ```
 
+## Create scheduled transaction
+
+### Parameters:
+
+* `accountId`: account id (0.0.xxxxx)
+* `accountPrivateKey`: hex encoded privateKey with DER-prefix
+* `type` schedule transaction type (currently only TRANSFER supported)
+* `transfers` array of transfers to schedule (HBAR, FT, NFT)
+* `freeSchedule` if true, Blade will pay transaction fee (also dApp had to be configured for free schedules)
+* `completion`: result with CreateScheduleData type
+
+```swift
+public func createScheduleTransaction(
+    accountId: String,
+    accountPrivateKey: String,
+    type: ScheduleTransactionType,
+    transfers: [ScheduleTransactionTransfer],
+    _ freeSchedule: Bool = false,
+    completion: @escaping (_ result: CreateScheduleData?, _ error: BladeJSError?) -> Void
+) {
+    let completionKey = getCompletionKey("createScheduleTransaction")
+    
+    let transfersEncoded = transfers.map { try? JSONEncoder().encode($0) }
+                          .compactMap { $0 }
+                          .map { String(data: $0, encoding: .utf8)! }
+                          .joined(separator: ",")
+    
+    performRequest(
+        completionKey: completionKey,
+        js: "createScheduleTransaction('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(type.rawValue))', [\(transfersEncoded)], \(freeSchedule), '\(completionKey)')",
+        decodeType: CreateScheduleResponse.self,
+        completion: completion
+    )
+}
+```
+
 ## Method to sign scheduled transaction
 
 ### Parameters:
@@ -211,14 +247,23 @@ public func getAccountInfo (accountId: String, completion: @escaping (_ result: 
 * `scheduleId`: scheduled transaction id (0.0.xxxxx)
 * `accountId`: account id (0.0.xxxxx)
 * `accountPrivateKey`: hex encoded privateKey with DER-prefix
+* `receiverAccountId` account id of receiver for additional validation in case of dApp freeSchedule transactions configured
+* `freeSchedule` if true, Blade will pay transaction fee (also dApp had to be configured for free schedules)
 * `completion`: result with TransactionReceiptData type
 
 ```swift
-public func signScheduleId(_ scheduleId: String, _ accountId: String, _ accountPrivateKey: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
+public func signScheduleId(
+    scheduleId: String,
+    accountId: String,
+    accountPrivateKey: String,
+    _ receiverAccountId: String = "",
+    _ freeSchedule: Bool = false,
+    completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void
+) {
     let completionKey = getCompletionKey("signScheduleId")
     performRequest(
         completionKey: completionKey,
-        js: "signScheduleId('\(esc(scheduleId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(completionKey)')",
+        js: "signScheduleId('\(esc(scheduleId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverAccountId))', \(freeSchedule), '\(completionKey)')",
         decodeType: TransactionReceiptResponse.self,
         completion: completion
     )
