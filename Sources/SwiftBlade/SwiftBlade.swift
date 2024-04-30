@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.24"
+    private let sdkVersion: String = "Swift@0.6.25"
 
     // MARK: - It's init time 🎬
 
@@ -570,6 +570,7 @@ public class SwiftBlade: NSObject {
     ///   - targetCode: name (HBAR, KARATE, USDC, other token code)
     ///   - slippage: slippage in percents. Transaction will revert if the price changes unfavorably by more than this percentage.
     ///   - serviceId: service id to use for swap (saucerswap, onmeta, etc)
+    ///   - redirectUrl: url to redirect after final step
     ///   - completion: result with IntegrationUrlData type
     public func getTradeUrl(
         strategy: CryptoFlowServiceStrategy,
@@ -579,12 +580,13 @@ public class SwiftBlade: NSObject {
         targetCode: String,
         slippage: Double,
         serviceId: String,
+        _ redirectUrl: String = "",
         completion: @escaping (_ result: IntegrationUrlData?, _ error: BladeJSError?) -> Void
     ) {
         let completionKey = getCompletionKey("getTradeUrl")
         performRequest(
             completionKey: completionKey,
-            js: "getTradeUrl('\(strategy.rawValue)', '\(esc(accountId))', '\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', \(slippage), '\(esc(serviceId))', '\(completionKey)')",
+            js: "getTradeUrl('\(strategy.rawValue)', '\(esc(accountId))', '\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', \(slippage), '\(esc(serviceId))', '\(esc(redirectUrl))', '\(completionKey)')",
             decodeType: IntegrationUrlResponse.self,
             completion: completion
         )

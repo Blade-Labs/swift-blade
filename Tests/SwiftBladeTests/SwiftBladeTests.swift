@@ -9,12 +9,12 @@ final class SwiftBladeTests: XCTestCase {
     var network = HederaNetwork.TESTNET
     var env = BladeEnv.CI
     var accountId = "0.0.1443"
-    var accountIdEd25519 = "0.0.1430"
-    var accountId2 = "0.0.1767"
+    var accountIdEd25519 = "0.0.1767"
+    var accountId2 = "0.0.1430"
     var contractId = "0.0.2215872"
     var tokenId = "0.0.2216053"
     var privateKeyHex = "3030020100300706052b8104000a04220420ebccecef769bb5597d0009123a0fd96d2cdbe041c2a2da937aaf8bdc8731799b"
-    var privateKeyHexEd25519 = "302e020100300506032b6570042204201c1fc6ab4f5937bf9261cd3d1f1609cb5f30838d018207b476ff50d97ef8e2a5"
+    var privateKeyHexEd25519 = "302e020100300506032b657004220420c903827cacbaf81f105aa548db06a3ab8cbddd362f54be0a803430a4401f6b2c"
     var publicKeyHex = "302d300706052b8104000a032200029dc73991b0d9cdbb59b2cd0a97a0eaff6de801726cb39804ea9461df6be2dd30"
     let originalMessage = "hello"
     let tokenName = "Swift Token SDK"
@@ -56,7 +56,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.24", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.25", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
@@ -710,9 +710,9 @@ final class SwiftBladeTests: XCTestCase {
                 expectation1.fulfill()
 
                 swiftBlade.exchangeGetQuotes(
-                    sourceCode: "USDC",
-                    sourceAmount: 30,
-                    targetCode: "PHP",
+                    sourceCode: "HBAR",
+                    sourceAmount: 2000,
+                    targetCode: "USD",
                     strategy: CryptoFlowServiceStrategy.SELL
                 ) { [self] result, error in
                     XCTAssertNil(error, "ExchangeGetQuotes should not produce an error")
@@ -752,9 +752,9 @@ final class SwiftBladeTests: XCTestCase {
         swiftBlade.swapTokens(
             accountId: accountIdEd25519,
             accountPrivateKey: privateKeyHexEd25519,
-            sourceCode: "USDC",
-            sourceAmount: 0.00001,
-            targetCode: "HBAR",
+            sourceCode: "HBAR",
+            sourceAmount: 1,
+            targetCode: "SAUCE",
             slippage: 0.5,
             serviceId: "saucerswap"
         ) { [self] result, error in
@@ -823,11 +823,11 @@ final class SwiftBladeTests: XCTestCase {
                 swiftBlade.getTradeUrl(
                     strategy: CryptoFlowServiceStrategy.SELL,
                     accountId: accountId,
-                    sourceCode: "USDC",
-                    sourceAmount: 50,
-                    targetCode: "PHP",
+                    sourceCode: "HBAR",
+                    sourceAmount: 2000,
+                    targetCode: "USD",
                     slippage: 0.5,
-                    serviceId: "onmeta"
+                    serviceId: "transak"
                 ) { [self] result, error in
                     XCTAssertNil(error, "GetTradeUrl should not produce an error")
                     XCTAssertNotNil(result, "GetTradeUrl should produce a result")
