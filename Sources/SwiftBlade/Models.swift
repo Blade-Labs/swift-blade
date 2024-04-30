@@ -388,6 +388,70 @@ public struct TokenDropData: Codable {
     public var redirectUrl: String
 }
 
+struct CreateScheduleResponse: Response, Codable {
+    var data: CreateScheduleData
+}
+
+public struct CreateScheduleData: Codable {
+    public var scheduleId: String
+}
+
+public protocol ScheduleTransactionTransfer: Codable {
+    var type: ScheduleTransferType { get }
+    var sender: String { get }
+    var receiver: String { get }
+    var value: Int { get }
+    var tokenId: String { get set }
+    var serial: Int { get }
+}
+
+public class ScheduleTransactionTransferHbar: ScheduleTransactionTransfer {
+    public required init(sender: String, receiver: String, value: Int) {
+        self.sender = sender
+        self.receiver = receiver
+        self.value = value
+    }
+    
+    public var type: ScheduleTransferType = .HBAR
+    public let sender: String
+    public let receiver: String
+    public let value: Int
+    public var tokenId: String = ""
+    public var serial: Int = 0
+}
+
+public class ScheduleTransactionTransferToken: ScheduleTransactionTransfer {
+    public required init(sender: String, receiver: String, tokenId: String, value: Int) {
+        self.sender = sender
+        self.receiver = receiver
+        self.tokenId = tokenId
+        self.value = value
+    }
+    
+    public var type: ScheduleTransferType = .FT
+    public let sender: String
+    public let receiver: String
+    public let value: Int
+    public var tokenId: String
+    public var serial: Int = 0
+}
+
+public class ScheduleTransactionTransferNFT: ScheduleTransactionTransfer {
+    public required init(sender: String, receiver: String, tokenId: String, serial: Int) {
+        self.sender = sender
+        self.receiver = receiver
+        self.tokenId = tokenId
+        self.serial = serial
+    }
+    
+    public var type: ScheduleTransferType = .NFT
+    public let sender: String
+    public let receiver: String
+    public var value: Int = 0
+    public var tokenId: String
+    public var serial: Int
+}
+
 // MARK: - SwiftBlade errors
 
 public enum SwiftBladeError: Error {
@@ -441,4 +505,18 @@ public enum KeyType: String, Codable {
 
 public enum NFTStorageProvider: String, Encodable {
     case nftStorage = "nftStorage"
+}
+
+public enum ScheduleTransactionType: String, Codable {
+    case TRANSFER = "TRANSFER"
+    // case SUBMIT_MESSAGE = "SUBMIT_MESSAGE"
+    // case APPROVE_ALLOWANCE = "APPROVE_ALLOWANCE"
+    // case TOKEN_MINT = "TOKEN_MINT"
+    // case TOKEN_BURN = "TOKEN_BURN"
+}
+
+public enum ScheduleTransferType: String, Codable {
+    case HBAR = "HBAR"
+    case FT = "FT"
+    case NFT = "NFT"
 }

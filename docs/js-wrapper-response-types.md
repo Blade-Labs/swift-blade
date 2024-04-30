@@ -498,6 +498,82 @@ public struct TokenDropData: Codable {
 ```
 
 ```swift
+struct CreateScheduleResponse: Response, Codable {
+    var data: CreateScheduleData
+}
+```
+
+```swift
+public struct CreateScheduleData: Codable {
+    public var scheduleId: String
+}
+```
+
+```swift
+public protocol ScheduleTransactionTransfer: Codable {
+    var type: ScheduleTransferType { get }
+    var sender: String { get }
+    var receiver: String { get }
+    var value: Int { get }
+    var tokenId: String { get set }
+    var serial: Int { get }
+}
+```
+
+```swift
+public class ScheduleTransactionTransferHbar: ScheduleTransactionTransfer {
+    public required init(sender: String, receiver: String, value: Int) {
+        self.sender = sender
+        self.receiver = receiver
+        self.value = value
+    }
+    
+    public var type: ScheduleTransferType = .HBAR
+    public let sender: String
+    public let receiver: String
+    public let value: Int
+    public var tokenId: String = ""
+    public var serial: Int = 0
+}
+```
+
+```swift
+public class ScheduleTransactionTransferToken: ScheduleTransactionTransfer {
+    public required init(sender: String, receiver: String, tokenId: String, value: Int) {
+        self.sender = sender
+        self.receiver = receiver
+        self.tokenId = tokenId
+        self.value = value
+    }
+    
+    public var type: ScheduleTransferType = .FT
+    public let sender: String
+    public let receiver: String
+    public let value: Int
+    public var tokenId: String
+    public var serial: Int = 0
+}
+```
+
+```swift
+public class ScheduleTransactionTransferNFT: ScheduleTransactionTransfer {
+    public required init(sender: String, receiver: String, tokenId: String, serial: Int) {
+        self.sender = sender
+        self.receiver = receiver
+        self.tokenId = tokenId
+        self.serial = serial
+    }
+    
+    public var type: ScheduleTransferType = .NFT
+    public let sender: String
+    public let receiver: String
+    public var value: Int = 0
+    public var tokenId: String
+    public var serial: Int
+}
+```
+
+```swift
 public struct NFTStorageConfig: Encodable {
     public var provider: NFTStorageProvider
     public var apiKey: String

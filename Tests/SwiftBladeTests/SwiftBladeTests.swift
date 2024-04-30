@@ -56,7 +56,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.23", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.24", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
@@ -975,5 +975,51 @@ final class SwiftBladeTests: XCTestCase {
         }
         
         wait(for: [expectationCreateToken, expectationAssociateToken, expectationMintToken, expectationTransferNFT], timeout: 120.0)
+    }
+    
+    func testSchedule() {
+        let expectation1 = XCTestExpectation(description: "createScheduleTransaction should complete")
+        let expectation2 = XCTestExpectation(description: "signScheduleId should complete")
+        
+        swiftBlade.createScheduleTransaction(
+            accountId: accountIdEd25519,
+            accountPrivateKey: privateKeyHexEd25519,
+            type: .TRANSFER,
+            transfers: [
+                ScheduleTransactionTransferHbar(sender: accountId, receiver: accountIdEd25519, value: 10000000),
+                ScheduleTransactionTransferToken(sender: accountId, receiver: accountIdEd25519, tokenId: tokenId, value: 3)
+            ],
+            false
+        ) { [self] result, error in
+            XCTAssertNil(error, "GetAccountInfo should not produce an error")
+            XCTAssertNotNil(result, "GetAccountInfo should produce a result")
+            
+            XCTAssertNil(error, "createScheduleTransaction should not produce an error")
+            XCTAssertNotNil(result, "createScheduleTransaction should produce a result")
+            
+            if let resultData = result {
+                XCTAssertNotNil(resultData.scheduleId, "scheduleId should present")
+            } else {
+                XCTFail("no scheduleId")
+            }
+
+
+            expectation1.fulfill()
+            
+            self.swiftBlade.signScheduleId(
+                    scheduleId: "result?.scheduleId!",
+                    accountId: self.accountId,
+                    accountPrivateKey: self.privateKeyHex,
+                    receiverAccountId: "",
+                    freeSchedule: false
+                ) { (result: TransactionReceiptData?, error: BladeJSError?) in
+                    XCTAssertNotNil(error, "signScheduleId should produce an error")
+                    XCTAssertNil(result, "signScheduleId should not produce a result")
+                    expectation2.fulfill()
+
+                }
+        }
+        
+        wait(for: [expectation1, expectation2], timeout: 30.0)
     }
 }
