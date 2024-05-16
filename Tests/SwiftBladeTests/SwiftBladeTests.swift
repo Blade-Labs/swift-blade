@@ -798,6 +798,8 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "Initialization should not produce an error")
             XCTAssertNotNil(result, "Initialization should produce a result")
 
+            var redirectUrl = "redirect-url-here"
+            
             swiftBlade.getTradeUrl(
                 strategy: CryptoFlowServiceStrategy.BUY,
                 accountId: accountId,
@@ -827,11 +829,14 @@ final class SwiftBladeTests: XCTestCase {
                     sourceAmount: 2000,
                     targetCode: "USD",
                     slippage: 0.5,
-                    serviceId: "transak"
+                    serviceId: "transak",
+                    redirectUrl
                 ) { [self] result, error in
                     XCTAssertNil(error, "GetTradeUrl should not produce an error")
                     XCTAssertNotNil(result, "GetTradeUrl should produce a result")
 
+                    print(result)
+                    
                     if let integrationUrlData = result {
                         XCTAssertNotNil(integrationUrlData.url, "integrationUrlData.url should present")
                         XCTAssertGreaterThanOrEqual(integrationUrlData.url.count, 1, "integrationUrlData.url should not be empty")

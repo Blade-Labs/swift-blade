@@ -23,6 +23,14 @@ public enum BladeEnv: String {
 ```
 
 ```swift
+public enum SwiftBladeError: Error {
+    case unknownJsError(String)
+    case apiError(String)
+    case initError(String)
+}
+```
+
+```swift
 public enum CryptoFlowServiceStrategy: String {
     case BUY = "Buy"
     case SELL = "Sell"

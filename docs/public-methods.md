@@ -1,5 +1,55 @@
 # Public methods 📢
 
+## Initialize Blade SDK
+
+### Parameters:
+
+* `apiKey`: api key given by Blade team
+* `dAppCode`: dAppCode given by Blade team
+* `network`: `.TESTNET` or `.MAINNET`
+* `bladeEnv`: `.PROD` or `.CI`
+* `force`: if true, will force initialization of webView even if it was already initialized
+* `completion`: completion closure that will be executed after webView is fully loaded and rendered, and result with `InfoData` type
+
+```swift
+public func initialize(apiKey: String, dAppCode: String, network: HederaNetwork, bladeEnv: BladeEnv, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
+    guard !webViewInitialized || force else {
+        print("Error while doing double init of SwiftBlade")
+        return completion(nil, BladeJSError(name: "Error", reason: "Error while doing double init of SwiftBlade"))
+    }
+    // Setting up all required properties
+    initCompletion = completion
+    self.apiKey = apiKey
+    self.dAppCode = dAppCode
+    self.network = network
+    self.bladeEnv = bladeEnv
+
+    Task {
+        do {
+            if (
+                (UserDefaults.standard.string(forKey: "visitorIdEnv") ?? "") == self.bladeEnv.rawValue
+                && Int(Date().timeIntervalSince1970) - UserDefaults.standard.integer(forKey: "visitorIdTimestamp") < 3600 * 24 * 30
+            ) {
+                self.visitorId = UserDefaults.standard.string(forKey: "visitorId") ?? ""
+            }
+
+            if self.visitorId == "" {
+                self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
+                self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
+                UserDefaults.standard.set(self.visitorId, forKey: "visitorId")
+                UserDefaults.standard.set(self.bladeEnv.rawValue, forKey: "visitorIdEnv")
+                UserDefaults.standard.set(Int(Date().timeIntervalSince1970), forKey: "visitorIdTimestamp")
+            }
+            DispatchQueue.main.async {
+                self.initWebView()
+            }
+        } catch {
+            completion(nil, BladeJSError(name: "Init failed", reason: "\(error)"))
+        }
+    }
+}
+```
+
 ## Get SDK-instance info
 
 ### Parameters:
