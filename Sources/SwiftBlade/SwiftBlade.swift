@@ -19,16 +19,24 @@ public class SwiftBlade: NSObject {
 
     // MARK: - It's init time 🎬
 
-    /// Initialization of Swift blade
+    /// Init instance of SwiftBlade for correct work with Blade API and Hedera network.
     ///
     /// - Parameters:
-    ///   - apiKey: api key given by Blade team
-    ///   - dAppCode: dAppCode given by Blade team
-    ///   - network: `.TESTNET` or `.MAINNET`
-    ///   - bladeEnv: `.CI` or `.PROD`
-    ///   - force: if true, will force initialization of webView even if it was already initialized
+    ///   - apiKey: Unique key for API provided by Blade team.
+    ///   - dAppCode: your dAppCode - request specific one by contacting Bladelabs team
+    ///   - network: `.TESTNET` or `.MAINNET` of Hedera network
+    ///   - bladeEnv: `.CI` or `.PROD` field to set BladeAPI environment. Prod used by default.
+    ///   - force: optional field to force init. Will not crash if already initialized
     ///   - completion: completion closure that will be executed after webView is fully loaded and rendered, and result with `InfoData` type
-    public func initialize(apiKey: String, dAppCode: String, network: HederaNetwork, bladeEnv: BladeEnv, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
+    ///
+    /// ```
+    /// SwiftBlade.shared.initialize(apiKey: apiKey, dAppCode: apiKey, network: .TESTNET, bladeEnv: .Prod) { (result, error) in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns `InfoData` - with information about Blade instance, including visitorId
+    public func initialize(apiKey: String, dAppCode: String, network: HederaNetwork, bladeEnv: BladeEnv = BladeEnv.Prod, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
         guard !webViewInitialized || force else {
             print("Error while doing double init of SwiftBlade")
             return completion(nil, BladeJSError(name: "Error", reason: "Error while doing double init of SwiftBlade"))
@@ -67,10 +75,18 @@ public class SwiftBlade: NSObject {
 
     // MARK: - Public methods 📢
 
-    /// Get SDK info
+    /// Get SDK info and check if SDK initialized
     ///
     /// - Parameters:
     ///   - completion: result with `InfoData` type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getInfo() { (result, error) in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: InfoData - with information about Blade instance, including visitorId
     public func getInfo(completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getInfo")
         performRequest(
@@ -86,6 +102,14 @@ public class SwiftBlade: NSObject {
     /// - Parameters:
     ///   - id: Hedera id (address), example: 0.0.112233
     ///   - completion: result with BalanceData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getBalance("0.0.10001") { (result, error) in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `BalanceData` - with information about Hedera account balances (hbar and list of token balances)
     public func getBalance(_ id: String, completion: @escaping (_ result: BalanceData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getBalance")
         performRequest(
@@ -100,6 +124,14 @@ public class SwiftBlade: NSObject {
     ///
     /// - Parameters:
     ///   - completion: result with CoinListData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getCoinList { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `CoinListData` - with list of coins described by name, alias, platforms
     public func getCoinList(completion: @escaping (_ result: CoinListData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getCoinList")
         performRequest(
@@ -111,11 +143,20 @@ public class SwiftBlade: NSObject {
     }
 
     /// Get coin price and coin info from CoinGecko. Search can be coin id or address in one of the coin platforms.
+    /// In addition to the price in USD, the price in the currency you specified is returned
     ///
     /// - Parameters:
     ///   - search: CoinGecko coinId, or address in one of the coin platforms or `hbar` (default, alias for `hedera-hashgraph`)
     ///   - currency: result currency for price field
     ///   - completion: result with CoinInfoData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getCoinPrice("Hbar", "uah") { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `CoinInfoData`
     public func getCoinPrice(_ search: String, _ currency: String = "usd", completion: @escaping (_ result: CoinInfoData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getCoinPrice")
         performRequest(
@@ -129,12 +170,32 @@ public class SwiftBlade: NSObject {
     /// Method to execute Hbar transfers from current account to receiver
     ///
     /// - Parameters:
-    ///   - accountId: sender
+    ///   - accountId: sender account id
     ///   - accountPrivateKey: sender's private key to sign transfer transaction
     ///   - receiverId: receiver
     ///   - amount: amount
     ///   - memo: memo (limited to 100 characters)
     ///   - completion: result with `TransactionReceiptData` type
+    ///
+    /// ```
+    /// let accountId = "0.0.10001"
+    /// let privateKeyHex = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// let receiverId = "0.0.10002"
+    /// let amount: Decimal = 7.0
+    /// let memo = "transferHbars tests Swift"
+    ///
+    /// SwiftBlade.shared.transferHbars(
+    ///     accountId: accountId,
+    ///     accountPrivateKey: privateKeyHex,
+    ///     receiverId: receiverId,
+    ///     amount: amount,
+    ///     memo: memo
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: {TransactionReceiptData} receipt
     public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferHbars")
         performRequest(
@@ -148,19 +209,41 @@ public class SwiftBlade: NSObject {
     /// Method to execute token transfers from current account to receiver
     ///
     /// - Parameters:
-    ///   - tokenId: token
-    ///   - accountId: sender
-    ///   - accountPrivateKey: sender's private key to sign transfer transaction
-    ///   - receiverId: receiver
+    ///   - tokenId: token id to send (0.0.xxxxx)
+    ///   - accountId: sender account id (0.0.xxxxx)
+    ///   - accountPrivateKey: sender's hex-encoded private key with DER-header (302e020100300506032b657004220420...). ECDSA or Ed25519
+    ///   - receiverId: receiver account id (0.0.xxxxx)
     ///   - amountOrSerial: amount of fungible tokens to send (with token-decimals correction) on NFT serial number
     ///   - memo: memo (limited to 100 characters)
-    ///   - freeTransfer: for tokens configured for this dAppCode on Blade backend
+    ///   - usePaymaster: if true, Paymaster account will pay fee transaction. Only for single dApp configured fungible-token. In that case tokenId not used
     ///   - completion: result with `TransactionReceiptData` type
-    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amountOrSerial: Decimal, memo: String, freeTransfer: Bool = true, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
+    ///
+    /// ```
+    /// let tokenId = "0.0.1337"
+    /// let senderId = "0.0.10001"
+    /// let senderKey = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// let receiverId = "0.0.10002"
+    /// let amount: Decimal = 5.0
+    ///
+    /// SwiftBlade.shared.transferTokens(
+    ///     tokenId: tokenId,
+    ///     accountId: senderId,
+    ///     accountPrivateKey: senderKey,
+    ///     receiverId: receiverId,
+    ///     amountOrSerial: amount,
+    ///     memo: "transferTokens tests Swift (paid)",
+    ///     usePaymaster: false
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TransactionReceiptData` receipt
+    public func transferTokens(tokenId: String, accountId: String, accountPrivateKey: String, receiverId: String, amountOrSerial: Decimal, memo: String, usePaymaster: Bool = true, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferTokens")
         performRequest(
             completionKey: completionKey,
-            js: "transferTokens('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amountOrSerial)', '\(esc(memo))', \(freeTransfer), '\(completionKey)')",
+            js: "transferTokens('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverId))', '\(amountOrSerial)', '\(esc(memo))', \(usePaymaster), '\(completionKey)')",
             decodeType: TransactionReceiptResponse.self,
             completion: completion
         )
@@ -170,17 +253,39 @@ public class SwiftBlade: NSObject {
     ///
     /// - Parameters:
     ///   - accountId: account id (0.0.xxxxx)
-    ///   - accountPrivateKey: hex encoded privateKey with DER-prefix
-    ///   - type schedule transaction type (currently only TRANSFER supported)
-    ///   - transfers array of transfers to schedule (HBAR, FT, NFT)
-    ///   - freeSchedule if true, Blade will pay transaction fee (also dApp had to be configured for free schedules)
+    ///   - accountPrivateKey: account key (hex encoded privateKey with DER-prefix)
+    ///   - type: schedule transaction type (currently only TRANSFER supported)
+    ///   - transfers: array of transfers to schedule (HBAR, FT, NFT)
+    ///   - usePaymaster: if true, Paymaster account will pay transaction fee (also dApp had to be configured for free schedules)
     ///   - completion: result with `CreateScheduleData` type
+    ///
+    /// ```
+    /// let receiverId = "0.0.10002"
+    /// let receiverKey = "302d300706052b8104000a032200029dc73991b00002..."
+    /// let senderId = "0.0.10001"
+    /// let tokenId = "0.0.1337"
+    ///
+    /// SwiftBlade.shared.createScheduleTransaction(
+    ///     accountId: receiverId,
+    ///     accountPrivateKey: receiverKey,
+    ///     type: .TRANSFER,
+    ///     transfers: [
+    ///         ScheduleTransactionTransferHbar(sender: senderId, receiver: receiverId, value: 10000000),
+    ///         ScheduleTransactionTransferToken(sender: senderId, receiver: receiverId, tokenId: tokenId, value: 3)
+    ///     ],
+    ///     false
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `CreateScheduleData` scheduleId
     public func createScheduleTransaction(
         accountId: String,
         accountPrivateKey: String,
         type: ScheduleTransactionType,
         transfers: [ScheduleTransactionTransfer],
-        _ freeSchedule: Bool = false,
+        _ usePaymaster: Bool = false,
         completion: @escaping (_ result: CreateScheduleData?, _ error: BladeJSError?) -> Void
     ) {
         let completionKey = getCompletionKey("createScheduleTransaction")
@@ -192,7 +297,7 @@ public class SwiftBlade: NSObject {
 
         performRequest(
             completionKey: completionKey,
-            js: "createScheduleTransaction('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(type.rawValue))', [\(transfersEncoded)], \(freeSchedule), '\(completionKey)')",
+            js: "createScheduleTransaction('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(type.rawValue))', [\(transfersEncoded)], \(usePaymaster), '\(completionKey)')",
             decodeType: CreateScheduleResponse.self,
             completion: completion
         )
@@ -206,32 +311,61 @@ public class SwiftBlade: NSObject {
     ///   - accountId: account id (0.0.xxxxx)
     ///   - accountPrivateKey: hex encoded privateKey with DER-prefix
     ///   - receiverAccountId account id of receiver for additional validation in case of dApp freeSchedule transactions configured
-    ///   - freeSchedule if true, Blade will pay transaction fee (also dApp had to be configured for free schedules)
+    ///   - usePaymaster if true, Paymaster account will pay transaction fee (also dApp had to be configured for free schedules)
     ///   - completion: result with `TransactionReceiptData` type
+    /// 
+    /// ```
+    /// let senderId = "0.0.10001"
+    /// let senderKey = "302d300706052b8104000a032200029dc73991b00001..."
+    /// let receiverId = "0.0.10002"
+    /// let scheduleId = "0.0...." // result of createScheduleTransaction on receiver side
+    ///
+    /// SwiftBlade.shared.signScheduleId(
+    ///     scheduleId: scheduleId,
+    ///     accountId: senderId,
+    ///     accountPrivateKey: senderKey,
+    ///     receiverAccountId: receiverId,
+    ///     usePaymaster: false
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TransactionReceiptData` receipt
     public func signScheduleId(
         scheduleId: String,
         accountId: String,
         accountPrivateKey: String,
         receiverAccountId: String = "",
-        freeSchedule: Bool = false,
+        usePaymaster: Bool = false,
         completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void
     ) {
         let completionKey = getCompletionKey("signScheduleId")
         performRequest(
             completionKey: completionKey,
-            js: "signScheduleId('\(esc(scheduleId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverAccountId))', \(freeSchedule), '\(completionKey)')",
+            js: "signScheduleId('\(esc(scheduleId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(receiverAccountId))', \(usePaymaster), '\(completionKey)')",
             decodeType: TransactionReceiptResponse.self,
             completion: completion
         )
     }
 
     
-    /// Method to create Hedera account
+    /// Create new Hedera account (ECDSA). Only for configured dApps. Depending on dApp config Blade create account, associate tokens, etc.
+    /// In case of not using pre-created accounts pool and network high load, this method can return transactionId and no accountId.
+    /// In that case account creation added to queue, and you should wait some time and call `getPendingAccount()` method.
     ///
     /// - Parameters:
     ///   - privateKey: optional field if you need specify account key (hex encoded privateKey with DER-prefix)
     ///   - deviceId: unique device id (advanced security feature, required only for some dApps)
     ///   - completion: result with CreatedAccountData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.createHederaAccount() { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `CreatedAccountData` new account data, including private key and account id
     public func createHederaAccount(_ privateKey: String = "", deviceId: String = "", completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("createAccount")
         performRequest(
@@ -242,13 +376,16 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Method to get pending Hedera account
+    /// Get account from queue (read more at `createAccount()`).
+    /// If account already created, return account data.
+    /// If account not created yet, response will be same as in `createHederaAccount()` method if account in queue.
     ///
-    /// - Parameters
+    /// - Parameters:
     ///   - transactionId: can be received on createHederaAccount method, when busy network is busy, and account creation added to queue
-    ///   - seedPhrase: returned from createHederaAccount method, required for updating keys and proper response &#x20;
+    ///   - seedPhrase: returned from createHederaAccount method, required for updating keys and proper response
     ///   - completion: result with `CreatedAccountData` type
-
+    ///
+    /// - Returns: `CreatedAccountData` new account data
     public func getPendingAccount(transactionId: String, seedPhrase: String, completion: @escaping (_ result: CreatedAccountData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getPendingAccount")
         performRequest(
@@ -259,7 +396,7 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Method to delete Hedera account
+    /// Delete Hedera account. This method requires account private key and operator private key. Operator is the one who paying fees
     ///
     /// - Parameters:
     ///   - deleteAccountId: account to delete - id
@@ -268,6 +405,26 @@ public class SwiftBlade: NSObject {
     ///   - operatorAccountId: operator account Id
     ///   - operatorPrivateKey: operator account private key
     ///   - completion: result with TransactionReceiptData type
+    ///
+    /// ```
+    /// let deleteAccountId = "0.0.65468464"
+    /// let deletePrivateKey = "3030020100300706052b8104000a04220420ebc..."
+    /// let transferAccountId = "0.0.10001"
+    /// let operatorAccountId = "0.0.10002"
+    /// let operatorPrivateKey = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    ///
+    /// SwiftBlade.shared.deleteHederaAccount(
+    ///     deleteAccountId: deleteAccountId,
+    ///     deletePrivateKey: deletePrivateKey,
+    ///     transferAccountId: transferAccountId,
+    ///     operatorAccountId: operatorAccountId,
+    ///     operatorPrivateKey: operatorPrivateKey
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TransactionReceiptData` receipt
     public func deleteHederaAccount(deleteAccountId: String, deletePrivateKey: String, transferAccountId: String, operatorAccountId: String, operatorPrivateKey: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("deleteHederaAccount")
         performRequest(
@@ -278,11 +435,21 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Get account evmAddress and calculated evmAddress from public key
+    /// Get account info.
+    /// EvmAddress is address of Hedera account if exists. Else accountId will be converted to solidity address.
+    /// CalculatedEvmAddress is calculated from account public key. May be different from evmAddress.
     ///
     /// - Parameters:
-    ///   - accountId: accountId
+    ///   - accountId: Hedera account id (0.0.xxxxx)
     ///   - completion: result with AccountInfoData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getAccountInfo(accountId: "0.0.10001") { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `AccountInfoData`
     public func getAccountInfo(accountId: String, completion: @escaping (_ result: AccountInfoData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getAccountInfo")
         performRequest(
@@ -293,10 +460,18 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Get Node list
+    /// Get Node list and use it for choosing account stacking node
     ///
     /// - Parameters:
     ///   - completion: result with NodesData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getNodeList() { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `NodesData` node list
     public func getNodeList(completion: @escaping (_ result: NodesData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getNodeList")
         performRequest(
@@ -310,10 +485,18 @@ public class SwiftBlade: NSObject {
     /// Stake/unstake account
     ///
     /// - Parameters:
-    ///   - accountId: Hedera account id
+    ///   - accountId: Hedera account id (0.0.xxxxx)
     ///   - accountPrivateKey account private key (DER encoded hex string)
     ///   - nodeId node id to stake to. If negative or null, account will be unstaked
     ///   - completion: result with TransactionReceiptData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.stakeToNode(accountId: "0.0.10002", accountPrivateKey: "302d300706052b8104000a032200029dc73991b0d9cd...", nodeId: 5) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TransactionReceiptData` receipt
     public func stakeToNode(accountId: String, accountPrivateKey: String, nodeId: Int, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("stakeToNode")
         performRequest(
@@ -324,12 +507,23 @@ public class SwiftBlade: NSObject {
         )
     }
     
-    /// Restore public and private key by seed phrase
+    /// Get private key and accountId from mnemonic. Supported standard and legacy key derivation.
+    /// If account not found, standard ECDSA key will be returned.
+    /// Keys returned with DER header. EvmAddress computed from Public key.
     ///
     /// - Parameters:
-    ///   - mnemonic: seed phrase
-    ///   - lookupNames: lookup for accounts
+    ///   - mnemonic: seed phrase (BIP39 mnemonic)
+    ///   - lookupNames: lookup for accounts (not used anymore, account search is mandatory)
     ///   - completion: result with PrivateKeyData type
+    ///
+    /// ```
+    /// let mnemonic = "purity slab doctor swamp tackle rebuild summer bean craft toddler blouse switch"
+    /// SwiftBlade.shared.getKeysFromMnemonic(mnemonic: mnemonic, lookupNames: true) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `PrivateKeyData` private key derived from mnemonic and account id
     @available(*, deprecated, message: "This method is deprecated. Please use [searchAccounts] instead.")
     public func getKeysFromMnemonic(mnemonic: String, lookupNames: Bool = false, completion: @escaping (_ result: PrivateKeyData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getKeysFromMnemonic")
@@ -341,11 +535,22 @@ public class SwiftBlade: NSObject {
         )
     }
     
-    /// Get accounts list and keys from private key or mnemonic. Returned keys with DER header.
+    /// Get accounts list and keys from private key or mnemonic
+    /// Supporting standard and legacy key derivation.
+    /// Every key with account will be returned.
     ///
     /// - Parameters:
     ///   - keyOrMnemonic: BIP39 mnemonic, private key with DER header
     ///   - completion: result with AccountPrivateData type
+    ///
+    /// ```
+    /// let mnemonic = "purity slab doctor swamp tackle rebuild summer bean craft toddler blouse switch"
+    /// SwiftBlade.shared.searchAccounts(mnemonic) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `AccountPrivateData` list of found accounts with private keys
     public func searchAccounts(_ keyOrMnemonic: String, completion: @escaping (_ result: AccountPrivateData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("searchAccounts")
         performRequest(
@@ -363,6 +568,22 @@ public class SwiftBlade: NSObject {
     ///   - accountPrivateKey: account private key (DER encoded hex string)
     ///   - secretNonce: configured for dApp. Should be kept in secret
     ///   - completion: result with TokenDropData type
+    ///
+    /// ```
+    /// let accountId = "0.0.10002"
+    /// let accountPrivateKey = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// let secretNonce = "[ CENSORED ]"
+    ///
+    /// SwiftBlade.shared.dropTokens(
+    ///     accountId: accountId,
+    ///     accountPrivateKey: accountPrivateKey,
+    ///     secretNonce: secretNonce
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TokenDropData` status
     public func dropTokens(accountId: String, accountPrivateKey: String, secretNonce: String, completion: @escaping (_ result: TokenDropData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("dropTokens")
         performRequest(
@@ -373,12 +594,24 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Sign message with private key
+    /// Sign base64-encoded message with private key. Returns hex-encoded signature.
     ///
     /// - Parameters:
-    ///   - messageString: message in base64 string
-    ///   - privateKey: private key string
+    ///   - messageString: base64-encoded message to sign
+    ///   - privateKey: hex-encoded private key with DER header
     ///   - completion: result with SignMessageData type
+    ///
+    /// ```
+    /// let originalMessage = "hello"
+    /// let privateKeyHex = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// if let base64encodedString = originalMessage.data(using: .utf8)?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)) {
+    ///     SwiftBlade.shared.sign(messageString: base64encodedString, privateKey: privateKeyHex) { result, error in
+    ///         print(result ?? error)
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Returns: `SignMessageData` signature
     public func sign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("sign")
         performRequest(
@@ -392,10 +625,23 @@ public class SwiftBlade: NSObject {
     /// Verify message signature with public key
     ///
     /// - Parameters:
-    ///   - messageString: message in base64 string
-    ///   - signature: hex-encoded signature string
-    ///   - publicKey: public key string
+    ///   - messageString: base64-encoded message (same as provided to `sign()` method)
+    ///   - signature: hex-encoded signature (result from `sign()` method)
+    ///   - publicKey: hex-encoded public key with DER header
     ///   - completion: result with SignVerifyMessageData type
+    ///
+    /// ```
+    /// let originalString = "hello"
+    /// let signedMessage = "27cb9d51434cf1e76d7ac515b19442c619f641e6fccddbf4a3756b14466becb6992dc1d2a82268018147141fc8d66ff9ade43b7f78c176d070a66372d655f942"
+    /// let publicKey = "302d300706052b8104000a032200029dc73991b0d9cdbb59b2cd0a97a0eaff6de801726cb39804ea9461df6be2dd30"
+    /// if let base64encodedString = originalMessage.data(using: .utf8)?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)) {
+    ///     SwiftBlade.shared.signVerify(messageString: base64encodedString, signature: signedMessage, publicKey: publicKey) { result, error in
+    ///         print(result ?? error)
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Returns: `SignVerifyMessageData` verification result
     public func signVerify(messageString: String, signature: String, publicKey: String, completion: @escaping (_ result: SignVerifyMessageData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("signVerify")
         performRequest(
@@ -407,59 +653,116 @@ public class SwiftBlade: NSObject {
     }
 
     /// Method to create smart-contract function parameters (instance of ContractFunctionParameters)
+    ///
+    /// ```
+    /// let tuple = SwiftBlade.shared.createContractFunctionParameters()
+    ///     .addInt64(value: 16)
+    ///     .addInt64(value: 32)
+    /// ```
+    ///
+    /// - Returns: `ContractFunctionParameters`
     public func createContractFunctionParameters() -> ContractFunctionParameters {
         return ContractFunctionParameters()
     }
 
-    /// Method to call smart-contract function
+    /// Call contract function. Directly or via BladeAPI using paymaster account (fee will be paid by Paymaster account), depending on your dApp configuration.
     ///
     /// - Parameters:
-    ///   - contractId: contract id
-    ///   - functionName: contract function name
-    ///   - params: function arguments (instance of ContractFunctionParameters)
-    ///   - accountId: sender account id
-    ///   - accountPrivateKey: sender's private key to sign transfer transaction
-    ///   - gas: gas amount for transaction (default 100000)
-    ///   - bladePayFee: blade pay fee, otherwise fee will be payed from sender accountId
+    ///   - contractId: contract id (0.0.xxxxx)
+    ///   - functionName: name of the contract function to call
+    ///   - params: function argument. Can be generated with `createContractFunctionParameters()` method
+    ///   - accountId: operator account id (0.0.xxxxx)
+    ///   - accountPrivateKey: operator's hex-encoded private key with DER-header, ECDSA or Ed25519
+    ///   - gas: gas limit for transaction (default 100000)
+    ///   - usePaymaster: if true, fee will be paid by Paymaster account (note: msg.sender inside the contract will be Paymaster account)
     ///   - completion: result with TransactionReceiptData type
-    public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100_000, bladePayFee: Bool, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
+    ///
+    /// ```
+    /// let contractId = "0.0.123456"
+    /// let functionName = "set_message"
+    /// let parameters = SwiftBlade.shared.createContractFunctionParameters().addString(value: "Hello Swift test")
+    /// let accountId = "0.0.10002"
+    /// let accountPrivateKey = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// let gas = 155_000
+    /// let usePaymaster = false
+    ///
+    /// SwiftBlade.shared.contractCallFunction(
+    ///     contractId: contractId, functionName: functionName, params: parameters, accountId: accountId, accountPrivateKey: accountPrivateKey, gas: gas, usePaymaster: usePaymaster
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TransactionReceiptData` receipt
+    public func contractCallFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100_000, usePaymaster: Bool, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("contractCallFunction")
         performRequest(
             completionKey: completionKey,
-            js: "contractCallFunction('\(esc(contractId))', '\(esc(functionName))', '\(params.encode())', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), '\(completionKey)')",
+            js: "contractCallFunction('\(esc(contractId))', '\(esc(functionName))', '\(params.encode())', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(usePaymaster), '\(completionKey)')",
             decodeType: TransactionReceiptResponse.self,
             completion: completion
         )
     }
 
-    /// Method to call smart-contract query
+    /// Call query on contract function. Similar to  `contractCallFunction()` can be called directly or via BladeAPI using Paymaster account.
     ///
     /// - Parameters:
-    ///   -  contractId: contract id
-    ///   -  functionName: contract function name
-    ///   -  params: function arguments (instance of ContractFunctionParameters)
-    ///   -  accountId: sender account id
-    ///   -  accountPrivateKey: sender's private key to sign transfer transaction
-    ///   -  gas: gas amount for transaction (default 100000)
-    ///   -  bladePayFee: blade pay fee, otherwise fee will be pay from sender accountId
-    ///   -  returnTypes: array of return types, e.g. ["string", "int32"]
+    ///   -  contractId: contract id (0.0.xxxxx)
+    ///   -  functionName: name of the contract function to call
+    ///   -  params: function argument. Can be generated with `createContractFunctionParameters()` method
+    ///   -  accountId: operator account id (0.0.xxxxx)
+    ///   -  accountPrivateKey: operator's hex-encoded private key with DER-header, ECDSA or Ed25519
+    ///   -  gas: gas limit for the transaction
+    ///   -  usePaymaster: if true, the fee will be paid by paymaster account (note: msg.sender inside the contract will be Paymaster account)
+    ///   -  returnTypes: list of return types, e.g. ["string", "int32"]
     ///   -  completion: result with ContractQueryData type
-    public func contractCallQueryFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100_000, bladePayFee: Bool, returnTypes: [String], completion: @escaping (_ result: ContractQueryData?, _ error: BladeJSError?) -> Void) {
+    ///
+    /// ```
+    /// let contractId = "0.0.123456"
+    /// let functionName = "get_message"
+    /// let parameters = SwiftBlade.shared.createContractFunctionParameters()
+    /// let accountId = "0.0.10002"
+    /// let accountPrivateKey = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// let gas = 155_000
+    /// let usePaymaster = false
+    /// let returnTypes = ["string", "int32"]
+    ///
+    /// SwiftBlade.shared.contractCallQueryFunction(
+    ///     contractId: contractId, functionName: functionName, params: SwiftBlade.shared.createContractFunctionParameters(), accountId: accountId, accountPrivateKey: accountPrivateKey, gas: gas, usePaymaster: usePaymaster, returnTypes: returnTypes
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `ContractQueryData` contract query call result
+    public func contractCallQueryFunction(contractId: String, functionName: String, params: ContractFunctionParameters, accountId: String, accountPrivateKey: String, gas: Int = 100_000, usePaymaster: Bool, returnTypes: [String], completion: @escaping (_ result: ContractQueryData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("contractCallQueryFunction")
         performRequest(
             completionKey: completionKey,
-            js: "contractCallQueryFunction('\(esc(contractId))', '\(esc(functionName))', '\(params.encode())', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(bladePayFee), [\(returnTypes.map { "'\(esc($0))'" }.joined(separator: ","))], '\(completionKey)')",
+            js: "contractCallQueryFunction('\(esc(contractId))', '\(esc(functionName))', '\(params.encode())', '\(esc(accountId))', '\(esc(accountPrivateKey))', \(gas), \(usePaymaster), [\(returnTypes.map { "'\(esc($0))'" }.joined(separator: ","))], '\(completionKey)')",
             decodeType: ContractQueryResponse.self,
             completion: completion
         )
     }
 
-    /// Sign message with private key (ethers lib)
+    /// Sign base64-encoded message with private key using ethers lib. Returns hex-encoded signature.
     ///
     /// - Parameters:
-    ///   - messageString: message in base64 string
-    ///   - privateKey: private key string
+    ///   - messageString: base64-encoded message to sign
+    ///   - privateKey: hex-encoded private key with DER header
     ///   - completion: result with SignMessageData type
+    ///
+    /// ```
+    /// let originalMessage = "hello"
+    /// let privateKeyHex = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// if let base64encodedString = originalMessage.data(using: .utf8)?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: 0)) {
+    ///     SwiftBlade.shared.ethersSign(messageString: base64encodedString, privateKey: privateKeyHex) { result, error in
+    ///         print(result ?? error)
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Returns: `SignMessageData` signature
     public func ethersSign(messageString: String, privateKey: String, completion: @escaping (_ result: SignMessageData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("ethersSign")
         performRequest(
@@ -470,11 +773,20 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Method to split signature into v-r-s
+    /// Split signature to v-r-s format.
     ///
     /// - Parameters:
-    ///   - signature: signature string "0x21fbf0696......"
+    ///   - signature: hex-encoded signature
     ///   - completion: result with SplitSignatureData type
+    ///
+    /// ```
+    /// let signedMessage = "0x27cb9d51434cf1e76d7ac515b19442c619f641e6fccddbf4a3756b14466becb6992dc1d2a82268018147141fc8d66ff9ade43b7f78c176d070a66372d655f942"
+    /// SwiftBlade.shared.splitSignature(signature: signMessageData.signedMessage) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `SplitSignatureData` v-r-s signature
     public func splitSignature(signature: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("splitSignature")
         performRequest(
@@ -485,12 +797,27 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Method to split signature into v-r-s
+    /// Get v-r-s signature of contract function params
     ///
     /// - Parameters:
-    ///   - params: function arguments (instance of ContractFunctionParameters)
-    ///   - accountPrivateKey: account private key string
+    ///   - params: data to sign. (instance of ContractFunctionParameters. Can be generated with `createContractFunctionParameters()` method)
+    ///   - accountPrivateKey: signer private key (hex-encoded with DER header)
     ///   - completion: result with SplitSignatureData type
+    ///
+    /// ```
+    /// let privateKeyHex = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// let parameters = SwiftBlade.shared.createContractFunctionParameters()
+    ///     .addAddress(value: accountId)
+    ///     .addUInt64Array(value: [300_000, 300_000])
+    ///     .addUInt64Array(value: [6])
+    ///     .addUInt64Array(value: [2])
+    ///
+    /// SwiftBlade.shared.getParamsSignature(params: parameters, accountPrivateKey: privateKeyHex) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `SplitSignatureData` v-r-s signature
     public func getParamsSignature(params: ContractFunctionParameters, accountPrivateKey: String, completion: @escaping (_ result: SplitSignatureData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getParamsSignature")
         performRequest(
@@ -501,14 +828,25 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Method to get transactions history
+    /// Get transactions history for account. Can be filtered by transaction type.
+    /// Transaction requested from mirror node. Every transaction requested for child transactions. Result are flattened.
+    /// If transaction type is not provided, all transactions will be returned.
+    /// If transaction type is CRYPTOTRANSFERTOKEN records will additionally contain plainData field with decoded data.
     ///
     /// - Parameters:
-    ///   - accountId: accountId of history
-    ///   - transactionType: filter by type of transaction
-    ///   - nextPage: link from response to load next page of history
-    ///   - transactionsLimit: limit of transactions to load
+    ///   - accountId: account id to get transactions for (0.0.xxxxx)
+    ///   - transactionType: one of enum MirrorNodeTransactionType or "CRYPTOTRANSFERTOKEN"
+    ///   - nextPage: link to next page of transactions from previous request
+    ///   - transactionsLimit: number of transactions to return. Speed of request depends on this value if transactionType is set.
     ///   - completion: result with TransactionsHistoryData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getTransactions(accountId: "0.0.10001", transactionType: "", nextPage: "", transactionsLimit: 5) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TransactionsHistoryData` transactions list
     public func getTransactions(accountId: String, transactionType: String, nextPage: String = "", transactionsLimit: Int = 10, completion: @escaping (_ result: TransactionsHistoryData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getTransactions")
         performRequest(
@@ -519,13 +857,23 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Method to get C14 url for payment
+    /// Get configured url for C14 integration (iframe or popup)
+    /// Deprecated now. Please use `exchangeGetQuotes` and `getTradeUrl` methods. Results aggregated on many providers, including C14
     ///
     /// - Parameters:
     ///   - asset: USDC, HBAR, KARATE or C14 asset uuid
-    ///   - account: receiver account id
-    ///   - amount: amount to buy
+    ///   - account: receiver account id (0.0.xxxxx)
+    ///   - amount: preset amount. May be overwritten if out of range (min/max)
     ///   - completion: result with IntegrationUrlData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getC14url(asset: "KARATE", account: "0.0.10001", amount: "1234") { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `IntegrationUrlData` url to open
+    @available(*, deprecated, message: "This method is deprecated. Please use [exchangeGetQuotes] and [getTradeUrl] methods. Results aggregated on many providers, including C14.")
     public func getC14url(asset: String, account: String, amount: String, completion: @escaping (_ result: IntegrationUrlData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getC14url")
         performRequest(
@@ -536,7 +884,7 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Get swap quotes from different services
+    /// Get quotes from different services for buy, sell or swap
     ///
     /// - Parameters:
     ///   - sourceCode: name (HBAR, KARATE, other token code)
@@ -544,6 +892,19 @@ public class SwiftBlade: NSObject {
     ///   - targetCode: name (HBAR, KARATE, USDC, other token code)
     ///   - strategy: one of enum CryptoFlowServiceStrategy (Buy, Sell, Swap)
     ///   - completion: result with SwapQuotesData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.exchangeGetQuotes(
+    ///     sourceCode: "EUR",
+    ///     sourceAmount: 50,
+    ///     targetCode: "HBAR",
+    ///     strategy: CryptoFlowServiceStrategy.BUY
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: SwapQuotesData quotes from different providers
     public func exchangeGetQuotes(
         sourceCode: String,
         sourceAmount: Double,
@@ -572,6 +933,22 @@ public class SwiftBlade: NSObject {
     ///   - serviceId: service id to use for swap (saucerswap, onmeta, etc)
     ///   - redirectUrl: url to redirect after final step
     ///   - completion: result with IntegrationUrlData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getTradeUrl(
+    ///     strategy: CryptoFlowServiceStrategy.BUY,
+    ///     accountId: "0.0.10001",
+    ///     sourceCode: "EUR",
+    ///     sourceAmount: 50,
+    ///     targetCode: "HBAR",
+    ///     slippage: 0.5,
+    ///     serviceId: "moonpay"
+    /// ) { [self] result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `IntegrationUrlData` url to open
     public func getTradeUrl(
         strategy: CryptoFlowServiceStrategy,
         accountId: String,
@@ -603,6 +980,27 @@ public class SwiftBlade: NSObject {
     ///   - slippage: slippage in percents. Transaction will revert if the price changes unfavorably by more than this percentage.
     ///   - serviceId: service id to use for swap (saucerswap, etc)
     ///   - completion: result with ResultData type
+    ///
+    /// ```
+    /// let accountId = "0.0.10001"
+    /// let accountPrivateKey = "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// let sourceCode = "USDC"
+    /// let targetCode = "KARATE"
+    ///
+    /// SwiftBlade.shared.swapTokens(
+    ///     accountId: accountId,
+    ///     accountPrivateKey: accountPrivateKey,
+    ///     sourceCode: sourceCode,
+    ///     sourceAmount: 1,
+    ///     targetCode: targetCode,
+    ///     slippage: 0.5,
+    ///     serviceId: "saucerswap"
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `ResultData` swap result
     public func swapTokens(
         accountId: String,
         accountPrivateKey: String,
@@ -635,6 +1033,28 @@ public class SwiftBlade: NSObject {
     ///   -  initialSupply: token initial supply (0 for nft)
     ///   -  maxSupply: token max supply
     ///   -  completion: callback function, with result of CreateTokenData or BladeJSError
+    ///
+    /// ```
+    /// let keys = [
+    ///     KeyRecord(privateKey: adminPrivateKey, type: KeyType.admin)
+    /// ]
+    ///
+    /// SwiftBlade.shared.createToken(
+    ///     treasuryAccountId: accountId,
+    ///     supplyPrivateKey: privateKey,
+    ///     tokenName: "Blade Demo Token",
+    ///     tokenSymbol: "GD",
+    ///     isNft: true,
+    ///     keys: keys,
+    ///     decimals: 0,
+    ///     initialSupply: 0,
+    ///     maxSupply: 250
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `CreateTokenData` token id
     public func createToken(
          treasuryAccountId: String,
          supplyPrivateKey: String,
@@ -661,14 +1081,25 @@ public class SwiftBlade: NSObject {
     }
    
     
-    /// Associate token to account
+    /// Associate token to account. Association fee will be covered by PayMaster, if tokenId configured in dApp
     ///
     /// - Parameters:
-    ///   -  tokenId: token id
+    ///   -  tokenId: token id to associate. Empty to associate all tokens configured in dApp
     ///   -   accountId: account id to associate token
     ///   -   accountPrivateKey: account private key
     ///   -  completion: callback function, with result of TransactionReceiptData or BladeJSError
-
+    ///
+    /// ```
+    /// SwiftBlade.shared.associateToken(
+    ///     tokenId: "0.0.1337",
+    ///     accountId: "0.0.10001",
+    ///     accountPrivateKey: "302d300706052b8104000a032200029dc73991b0d9cd..."
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TransactionReceiptData` receipt
     public func associateToken(
          tokenId: String,
          accountId: String,
@@ -694,6 +1125,30 @@ public class SwiftBlade: NSObject {
     ///   - metadata: NFT metadata
     ///   - storageConfig: IPFS provider config
     ///   - completion: callback function, with result of CreateTokenData or BladeJSError
+    ///
+    /// ```
+    /// SwiftBlade.shared.nftMint(
+    ///     tokenId: "0.0.13377",
+    ///     supplyAccountId: "0.0.10001",
+    ///     supplyPrivateKey: "302d300706052b8104000a032200029dc73991b0d9cd...",
+    ///     file: "data:image/png;base64,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",
+    ///     metadata: [
+    ///         "name": "NFTitle",
+    ///         "score": "10",
+    ///         "power": "4",
+    ///         "intelligence": "6",
+    ///         "speed": "10"
+    ///     ],
+    ///     storageConfig: NFTStorageConfig(
+    ///         provider: NFTStorageProvider.nftStorage,
+    ///         apiKey: "eyJhbGciOiJIUzI1NiIsI.................cYOwssdZgiYaug4aF8ZrvMBdkTASojWGU"
+    ///     )
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TransactionReceiptData` receipt
     public func nftMint(
          tokenId: String,
          supplyAccountId: String,
