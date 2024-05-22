@@ -86,7 +86,7 @@ public class SwiftBlade: NSObject {
     /// }
     /// ```
     ///
-    /// - Returns: InfoData - with information about Blade instance, including visitorId
+    /// - Returns: `InfoData` - with information about Blade instance, including visitorId
     public func getInfo(completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getInfo")
         performRequest(
@@ -195,7 +195,7 @@ public class SwiftBlade: NSObject {
     /// }
     /// ```
     ///
-    /// - Returns: {TransactionReceiptData} receipt
+    /// - Returns: `TransactionReceiptData` receipt
     public func transferHbars(accountId: String, accountPrivateKey: String, receiverId: String, amount: Decimal, memo: String, completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferHbars")
         performRequest(
