@@ -181,7 +181,7 @@ final class SwiftBladeTests: XCTestCase {
             receiverId: accountId2,
             amountOrSerial: amount,
             memo: "transferTokens tests Swift (paid)",
-            freeTransfer: false
+            usePaymaster: false
         ) { result, error in
             XCTAssertNil(error, "TransferTokens should not produce an error")
             XCTAssertNotNil(result, "TransferTokens should produce a result")
@@ -206,7 +206,7 @@ final class SwiftBladeTests: XCTestCase {
             receiverId: accountId2,
             amountOrSerial: amount,
             memo: "transferTokens tests Swift (free)",
-            freeTransfer: true
+            usePaymaster: true
         ) { result, error in
             XCTAssertNil(error, "TransferTokens should not produce an error")
             XCTAssertNotNil(result, "TransferTokens should produce a result")
@@ -520,7 +520,7 @@ final class SwiftBladeTests: XCTestCase {
 
         let parameters = swiftBlade.createContractFunctionParameters().addString(value: "Hello Swift test")
         swiftBlade.contractCallFunction(
-            contractId: contractId, functionName: "set_message", params: parameters, accountId: accountId, accountPrivateKey: privateKeyHex, gas: 1_000_000, bladePayFee: false
+            contractId: contractId, functionName: "set_message", params: parameters, accountId: accountId, accountPrivateKey: privateKeyHex, gas: 1_000_000, usePaymaster: false
         ) { result, error in
             XCTAssertNil(error, "ContractCallFunction should not produce an error")
             XCTAssertNotNil(result, "ContractCallFunction should produce a result")
@@ -540,7 +540,7 @@ final class SwiftBladeTests: XCTestCase {
         let expectation = XCTestExpectation(description: "ContractCallQueryFunction should complete")
 
         swiftBlade.contractCallQueryFunction(
-            contractId: contractId, functionName: "get_message", params: swiftBlade.createContractFunctionParameters(), accountId: accountId, accountPrivateKey: privateKeyHex, gas: 150_000, bladePayFee: false, returnTypes: ["string", "int32"]
+            contractId: contractId, functionName: "get_message", params: swiftBlade.createContractFunctionParameters(), accountId: accountId, accountPrivateKey: privateKeyHex, gas: 150_000, usePaymaster: false, returnTypes: ["string", "int32"]
         ) { result, error in
             XCTAssertNil(error, "ContractCallQueryFunction should not produce an error")
             XCTAssertNotNil(result, "ContractCallQueryFunction should produce a result")
@@ -798,6 +798,8 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNil(error, "Initialization should not produce an error")
             XCTAssertNotNil(result, "Initialization should produce a result")
 
+            var redirectUrl = "redirect-url-here"
+            
             swiftBlade.getTradeUrl(
                 strategy: CryptoFlowServiceStrategy.BUY,
                 accountId: accountId,
@@ -827,11 +829,14 @@ final class SwiftBladeTests: XCTestCase {
                     sourceAmount: 2000,
                     targetCode: "USD",
                     slippage: 0.5,
-                    serviceId: "transak"
+                    serviceId: "transak",
+                    redirectUrl
                 ) { [self] result, error in
                     XCTAssertNil(error, "GetTradeUrl should not produce an error")
                     XCTAssertNotNil(result, "GetTradeUrl should produce a result")
 
+                    print(result)
+                    
                     if let integrationUrlData = result {
                         XCTAssertNotNil(integrationUrlData.url, "integrationUrlData.url should present")
                         XCTAssertGreaterThanOrEqual(integrationUrlData.url.count, 1, "integrationUrlData.url should not be empty")
@@ -1011,7 +1016,7 @@ final class SwiftBladeTests: XCTestCase {
                     accountId: self.accountId,
                     accountPrivateKey: self.privateKeyHex,
                     receiverAccountId: "",
-                    freeSchedule: false
+                    usePaymaster: false
                 ) { (result: TransactionReceiptData?, error: BladeJSError?) in
                     XCTAssertNotNil(error, "signScheduleId should produce an error")
                     XCTAssertNil(result, "signScheduleId should not produce a result")

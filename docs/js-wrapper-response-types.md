@@ -1,4 +1,4 @@
-# JS wrapper response types
+# Response types
 
 ```swift
 struct ResultRaw: Codable {

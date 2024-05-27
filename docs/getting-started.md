@@ -24,12 +24,14 @@ pod 'SwiftBlade', :git => 'git@github.com:Blade-Labs/swift-blade.git', :tag => '
 
 ## Usage
 
+During initialization, Swift Blade will fetch all required data from Blade servers, and will initialize the webView with all required data, including visitorId.
+
 ```swift
 import SwiftBlade
 
-SwiftBlade.shared.initialize(apiKey: "API_KEY", dAppCode: "dAppCode", network: .TESTNET) { (result, error) in
-  // ready to use SwiftBlade
-  print(result)
+SwiftBlade.shared.initialize(apiKey: "API_KEY", dAppCode: "dAppCode", network: .TESTNET, bladeEnv: .Prod) { (result, error) in
+    print("init complete")
+    print(result ?? error)
 }
 
 // Get balance by hedera id
