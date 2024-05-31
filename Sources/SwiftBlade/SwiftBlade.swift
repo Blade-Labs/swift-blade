@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.25"
+    private let sdkVersion: String = "Swift@0.6.27"
 
     // MARK: - It's init time 🎬
 
@@ -1207,7 +1207,9 @@ public class SwiftBlade: NSObject {
         decodeType: T.Type,
         completion: @escaping (T.DataType?, BladeJSError?) -> Void
     ) where T: Response, T.DataType: Decodable {
+        var timer: Timer? = nil
         deferCompletion(forKey: completionKey) { data, error in
+            timer?.invalidate()
             if error != nil {
                 return completion(nil, error)
             }
@@ -1221,8 +1223,14 @@ public class SwiftBlade: NSObject {
         }
         do {
             try executeJS("bladeSdk.\(js)")
+            timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [self] _ in
+                // in iOS 17.5.1 found problem that WKWebView hinernating after 2600-3400ms.
+                // To prevent that, it's "pinging" every second while awaiting response
+                webView?.evaluateJavaScript("")
+            }
         } catch let error as NSError {
             print(error)
+            timer?.invalidate()
             completion(nil, BladeJSError(name: "Blade executeJS error", reason: error.description))
         }
     }
