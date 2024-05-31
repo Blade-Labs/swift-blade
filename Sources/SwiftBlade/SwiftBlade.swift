@@ -1224,7 +1224,7 @@ public class SwiftBlade: NSObject {
         do {
             try executeJS("bladeSdk.\(js)")
             timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [self] _ in
-                // in iOS 17.5.1 found problem that WKWebView hinernating after 2600-3400ms.
+                // in iOS 17.5.1 found problem that WKWebView hibernating after 2600-3400ms.
                 // To prevent that, it's "pinging" every second while awaiting response
                 webView?.evaluateJavaScript("")
             }
