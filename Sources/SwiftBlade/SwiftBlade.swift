@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.27"
+    private let sdkVersion: String = "Swift@0.6.28"
 
     // MARK: - It's init time 🎬
 
@@ -1084,14 +1084,14 @@ public class SwiftBlade: NSObject {
     /// Associate token to account. Association fee will be covered by PayMaster, if tokenId configured in dApp
     ///
     /// - Parameters:
-    ///   -  tokenId: token id to associate. Empty to associate all tokens configured in dApp
+    ///   -  tokenIdOrCampaign: token id to associate. Empty to associate all tokens configured in dApp. Campaign name to associate on demand
     ///   -   accountId: account id to associate token
     ///   -   accountPrivateKey: account private key
     ///   -  completion: callback function, with result of TransactionReceiptData or BladeJSError
     ///
     /// ```
     /// SwiftBlade.shared.associateToken(
-    ///     tokenId: "0.0.1337",
+    ///     tokenIdOrCampaign: "0.0.1337",
     ///     accountId: "0.0.10001",
     ///     accountPrivateKey: "302d300706052b8104000a032200029dc73991b0d9cd..."
     /// ) { result, error in
@@ -1101,7 +1101,7 @@ public class SwiftBlade: NSObject {
     ///
     /// - Returns: `TransactionReceiptData` receipt
     public func associateToken(
-         tokenId: String,
+        tokenIdOrCampaign: String,
          accountId: String,
          accountPrivateKey: String,
          completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void
@@ -1109,7 +1109,7 @@ public class SwiftBlade: NSObject {
          let completionKey = getCompletionKey("associateToken")
          performRequest(
              completionKey: completionKey,
-             js: "associateToken('\(esc(tokenId))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(completionKey)')",
+             js: "associateToken('\(esc(tokenIdOrCampaign))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(completionKey)')",
              decodeType: TransactionReceiptResponse.self,
              completion: completion
          )

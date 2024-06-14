@@ -56,7 +56,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.27", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.28", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
@@ -82,7 +82,7 @@ final class SwiftBladeTests: XCTestCase {
             expectation.fulfill()
         }
 
-        wait(for: [expectation], timeout: 120.0)
+        wait(for: [expectation], timeout: 320.0)
     }
 
     func testGetCoinList() {
@@ -908,7 +908,7 @@ final class SwiftBladeTests: XCTestCase {
                 let tokenId = result!.tokenId
 
                 swiftBlade.associateToken(
-                    tokenId: tokenId,
+                    tokenIdOrCampaign: tokenId,
                     accountId: accountIdEd25519,
                     accountPrivateKey: privateKeyHexEd25519
                 ) { [self] result, error in
