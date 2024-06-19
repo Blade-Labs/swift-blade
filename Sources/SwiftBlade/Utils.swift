@@ -3,7 +3,10 @@ import Foundation
 
 func getRemoteConfig(network: HederaNetwork, dAppCode: String, sdkVersion: String, bladeEnv: BladeEnv) async throws -> RemoteConfig {
     var url: URL? = nil
-    var fallbackConfig = RemoteConfig(fpApiKey: "")
+    var fallbackConfig = RemoteConfig(
+        fpApiKey: "",
+        fpSubdomain: "https://identity.bladewallet.io"
+    )
     switch bladeEnv {
     case .Prod:
         url = URL(string: "https://rest.prod.bladewallet.io/openapi/v7/sdk/config")!
@@ -29,14 +32,17 @@ func getRemoteConfig(network: HederaNetwork, dAppCode: String, sdkVersion: Strin
     }
 }
 
-func getVisitorId(fingerPrintApiKey: String) async throws -> String {
+func getVisitorId(_ remoteConfig: RemoteConfig) async throws -> String {
     do {
-        let customDomain: Region = .custom(domain: "https://identity.bladewallet.io")
-        let configuration = Configuration(apiKey: fingerPrintApiKey, region: customDomain)
+        let customDomain: Region = .custom(domain: remoteConfig.fpSubdomain)
+        let configuration = Configuration(apiKey: remoteConfig.fpApiKey, region: customDomain)
         let client = FingerprintProFactory.getInstance(configuration)
         let visitorId = try await client.getVisitorId()
         return visitorId
     } catch {
-        throw error
+        let configuration = Configuration(apiKey: remoteConfig.fpApiKey)
+        let client = FingerprintProFactory.getInstance(configuration)
+        let visitorId = try await client.getVisitorId()
+        return visitorId
     }
 }

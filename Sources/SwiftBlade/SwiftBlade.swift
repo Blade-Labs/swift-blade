@@ -59,7 +59,7 @@ public class SwiftBlade: NSObject {
    
                 if self.visitorId == "" {
                     self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
-                    self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
+                    self.visitorId = try await getVisitorId(remoteConfig!)
                     UserDefaults.standard.set(self.visitorId, forKey: "visitorId")
                     UserDefaults.standard.set(self.bladeEnv.rawValue, forKey: "visitorIdEnv")
                     UserDefaults.standard.set(Int(Date().timeIntervalSince1970), forKey: "visitorIdTimestamp")
