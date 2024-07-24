@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.28"
+    private let sdkVersion: String = "Swift@0.6.29"
 
     // MARK: - It's init time 🎬
 
@@ -59,7 +59,7 @@ public class SwiftBlade: NSObject {
    
                 if self.visitorId == "" {
                     self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
-                    self.visitorId = try await getVisitorId(fingerPrintApiKey: remoteConfig!.fpApiKey)
+                    self.visitorId = try await getVisitorId(remoteConfig!)
                     UserDefaults.standard.set(self.visitorId, forKey: "visitorId")
                     UserDefaults.standard.set(self.bladeEnv.rawValue, forKey: "visitorIdEnv")
                     UserDefaults.standard.set(Int(Date().timeIntervalSince1970), forKey: "visitorIdTimestamp")

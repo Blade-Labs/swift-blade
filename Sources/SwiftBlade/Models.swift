@@ -296,6 +296,7 @@ public struct CreateTokenData: Codable {
 
 public struct RemoteConfig: Codable {
     public var fpApiKey: String
+    public var fpSubdomain: String
 }
 
 struct CoinListResponse: Response, Codable {
