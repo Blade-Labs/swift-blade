@@ -10,12 +10,12 @@
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/Blade-Labs/swift-blade.git", from: "0.6.30")
+    .package(url: "https://github.com/Blade-Labs/swift-blade.git", from: "1.0.0")
 ]
 ```
 
 ```podfile
-pod 'SwiftBlade', :git => 'git@github.com:Blade-Labs/swift-blade.git', :tag => '0.6.30'
+pod 'SwiftBlade', :git => 'git@github.com:Blade-Labs/swift-blade.git', :tag => '1.0.0'
 ```
 
 {% hint style="info" %}
