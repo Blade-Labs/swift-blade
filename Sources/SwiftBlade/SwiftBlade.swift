@@ -1085,6 +1085,7 @@ public class SwiftBlade: NSObject {
             if error != nil {
                 return completion(nil, error)
             }
+
             do {
                 let response = try JSONDecoder().decode(decodeType, from: data!)
                 completion(response.data, nil)

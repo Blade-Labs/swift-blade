@@ -14,16 +14,19 @@ final class SwiftBladeTests: XCTestCase {
     let tokenName = "Swift Token SDK"
     let tokenSymbol = "Arr!"
     let secretNonce = "unity_test"
+    let associateOnDemandCampaignName = "drop1"
 
     let hederaAccountId1 = "0.0.1443"
     let hederaPrivateKey1 = "3030020100300706052b8104000a04220420ebccecef769bb5597d0009123a0fd96d2cdbe041c2a2da937aaf8bdc8731799b"
     let hederaPublicKey1 = "302d300706052b8104000a032200029dc73991b0d9cdbb59b2cd0a97a0eaff6de801726cb39804ea9461df6be2dd30"
-    let hederaContractId = "0.0.4437600"
-    let hederaTokenAddress = "0.0.2216053"
     let hederaAccountId2 = "0.0.1881"
     let hederaPrivateKey2 = "3030020100300706052b8104000a042204200e65ab47c5f66cd0db9d1517f43c415e13f16dc1bcf30d85da1c73e58fc5366d"
     let hederaMnemonic = "purity slab doctor swamp tackle rebuild summer bean craft toddler blouse switch"
-
+    let hederaContractId = "0.0.4437600"
+    let hederaTokenAddress = "0.0.2216053"
+    let hederaTokenAddress2 = "0.0.5365"
+    let hederaNftAddress = "0.0.4488252"
+    
     let ethereumAddress = "0x11f8D856FF2aF6700CCda4999845B2ed4502d8fB"
     let ethereumPrivateKey = "ebccecef769bb5597d0009123a0fd96d2cdbe041c2a2da937aaf8bdc8731799b"
     let ethereumPublicKey = ""
@@ -32,6 +35,8 @@ final class SwiftBladeTests: XCTestCase {
     let ethereumMnemonic = "boring slice orange recycle crew aunt fat meadow solid quality wasp visual"
     let ethereumContractAddress = "0xd36b5b8b408bad51009bd2748c3bc130c68948d2"
     let ethereumTokenAddress = "0xc72073559B3430ed97ecaCa7111B25d7CBa4E91A"
+    let ethereumTokenAddress2 = "0xc72073559B3430ed97ecaCa7111B25d7CBa4E91A"
+    let ethereumNftAddress = ""
     
     var accountAddress = ""
     var accountPrivateKey = ""
@@ -41,6 +46,8 @@ final class SwiftBladeTests: XCTestCase {
     var accountMnemonic = ""
     var contractAddress = ""
     var tokenAddress = ""
+    var tokenAddress2 = ""
+    var nftAddress = ""
 
     override func setUp() {
         super.setUp()
@@ -197,8 +204,7 @@ final class SwiftBladeTests: XCTestCase {
                     XCTAssertNil(result, "DropTokens should not produce a result")
                     expectation2.fulfill()
 
-                    self.swiftBlade.setUser(accountProvider: AccountProvider.PrivateKey, accountIdOrEmail: createdAccountData.accountAddress!, privateKey: createdAccountData.privateKey) { result, error in
-                    
+                    self.swiftBlade.setUser(accountProvider: AccountProvider.PrivateKey, accountIdOrEmail: createdAccountData.accountAddress, privateKey: createdAccountData.privateKey) { result, error in
                         XCTAssertNil(error, "setUser should not produce an error")
                         XCTAssertNotNil(result, "setUser should produce a result")
                         expectation3.fulfill()
@@ -375,57 +381,6 @@ final class SwiftBladeTests: XCTestCase {
         wait(for: [expectation], timeout: 60.0)
     }
 
-    func testDeleteAccount() {
-        let expectation1 = XCTestExpectation(description: "DeleteAccount should fail as user not set yet")
-        let expectation2 = XCTestExpectation(description: "setUser should complete")
-        let expectation3 = XCTestExpectation(description: "DeleteAccount should complete")
-
-        swiftBlade.createAccount("", deviceId: "") { result, error in
-            XCTAssertNotNil(result, "CreateAccount should produce a result")
-
-            if let createdAccountData = result {
-                self.swiftBlade.deleteAccount(
-                    deleteAccountAddress: createdAccountData.accountAddress!,
-                    deletePrivateKey: createdAccountData.privateKey,
-                    transferAccountAddress: self.accountAddress
-                ) { result, error in
-                    XCTAssertNotNil(error, "DeleteHederaAccount should not produce an error")
-                    XCTAssertNil(result, "DeleteHederaAccount should produce a result")
-                    expectation1.fulfill()
-                    
-                    self.swiftBlade.setUser(
-                        accountProvider: .PrivateKey,
-                        accountIdOrEmail: self.accountAddress,
-                        privateKey: self.accountPrivateKey
-                    ) { result, error in
-                        XCTAssertNil(error, "setUser should not produce an error")
-                        XCTAssertNotNil(result, "setUser should produce a result")
-
-                        expectation2.fulfill()
-                        
-                        self.swiftBlade.deleteAccount(
-                            deleteAccountAddress: createdAccountData.accountAddress!,
-                            deletePrivateKey: createdAccountData.privateKey,
-                            transferAccountAddress: self.accountAddress
-                        ) { result, error in
-                            XCTAssertNil(error, "DeleteHederaAccount should not produce an error")
-                            XCTAssertNotNil(result, "DeleteHederaAccount should produce a result")
-
-                            if let transactionReceiptData = result {
-                                XCTAssertEqual(transactionReceiptData.status, "SUCCESS", "TransactionReceiptData should have a 'SUCCESS' status")
-                            } else {
-                                XCTFail("Result should be a String (transaction ID)")
-                            }
-
-                            expectation3.fulfill()
-                        }
-                    }
-                }
-            }
-        }
-        wait(for: [expectation1, expectation2, expectation3], timeout: 80.0)
-    }
-
     func testGetAccountInfo() {
         let expectation = XCTestExpectation(description: "GetAccountInfo should complete")
 
@@ -450,65 +405,57 @@ final class SwiftBladeTests: XCTestCase {
         wait(for: [expectation], timeout: 10.0)
     }
     
-    func testStakeAccount() { // hedera only
-        let expectation1 = XCTestExpectation(description: "GetNodeList should complete")
-        let expectation2 = XCTestExpectation(description: "StakeAccount should fail as no user set")
-        let expectation3 = XCTestExpectation(description: "setUser should complete")
-        let expectation4 = XCTestExpectation(description: "StakeAccount should complete")
+    func testDeleteAccount() {
+        let expectation1 = XCTestExpectation(description: "DeleteAccount should fail as user not set yet")
+        let expectation2 = XCTestExpectation(description: "setUser should complete")
+        let expectation3 = XCTestExpectation(description: "DeleteAccount should complete")
 
-        swiftBlade.getNodeList() { result, error in
-            XCTAssertNil(error, "getNodeList should not produce an error")
-            XCTAssertNotNil(result, "getNodeList should produce a result")
-            
-            if let nodeListData = result {
-                XCTAssertNotNil(nodeListData.nodes, "NodeList should have a nodes")
-                XCTAssertGreaterThan(nodeListData.nodes.count, 0, "NodeList should have some nodes")
-                XCTAssertNotNil(nodeListData.nodes[0].description, "NodeInfo should have a description")
-                XCTAssertNotNil(nodeListData.nodes[0].max_stake, "NodeInfo should have a max_stake")
-                XCTAssertNotNil(nodeListData.nodes[0].min_stake, "NodeInfo should have a min_stake")
-                XCTAssertNotNil(nodeListData.nodes[0].node_id, "NodeInfo should have a node_id")
-            } else {
-                XCTFail("Result should be of type NodesData")
-            }
+        swiftBlade.createAccount("", deviceId: "") { result, error in
+            XCTAssertNotNil(result, "CreateAccount should produce a result")
 
-            expectation1.fulfill()
-            
-            
-            self.swiftBlade.stakeToNode(nodeId: -1) { result, error in
-                XCTAssertNotNil(error, "stakeToNode should produce an error")
-                XCTAssertNil(result, "stakeToNode should not produce a result")
+            if let createdAccountData = result {
+                self.swiftBlade.deleteAccount(
+                    deleteAccountAddress: createdAccountData.accountAddress,
+                    deletePrivateKey: createdAccountData.privateKey,
+                    transferAccountAddress: self.accountAddress
+                ) { result, error in
+                    XCTAssertNotNil(error, "DeleteHederaAccount should not produce an error")
+                    XCTAssertNil(result, "DeleteHederaAccount should produce a result")
+                    expectation1.fulfill()
+                    
+                    self.swiftBlade.setUser(
+                        accountProvider: .PrivateKey,
+                        accountIdOrEmail: self.accountAddress,
+                        privateKey: self.accountPrivateKey
+                    ) { result, error in
+                        XCTAssertNil(error, "setUser should not produce an error")
+                        XCTAssertNotNil(result, "setUser should produce a result")
 
-             
-                self.swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: self.accountAddress, privateKey: self.accountPrivateKey) { result, error in
-                    XCTAssertNil(error, "setUser should not produce an error")
-                    XCTAssertNotNil(result, "setUser should produce a result")
+                        expectation2.fulfill()
+                        
+                        self.swiftBlade.deleteAccount(
+                            deleteAccountAddress: createdAccountData.accountAddress,
+                            deletePrivateKey: createdAccountData.privateKey,
+                            transferAccountAddress: self.accountAddress
+                        ) { result, error in
+                            XCTAssertNil(error, "DeleteHederaAccount should not produce an error")
+                            XCTAssertNotNil(result, "DeleteHederaAccount should produce a result")
 
-                    self.swiftBlade.stakeToNode(nodeId: -1) { result, error in
-                        XCTAssertNil(error, "stakeToNode should not produce an error")
-                        XCTAssertNotNil(result, "stakeToNode should produce a result")
+                            if let transactionReceiptData = result {
+                                XCTAssertEqual(transactionReceiptData.status, "SUCCESS", "TransactionReceiptData should have a 'SUCCESS' status")
+                            } else {
+                                XCTFail("Result should be a String (transaction ID)")
+                            }
 
-                        if let transferData = result as TransactionReceiptData? {
-                            XCTAssertNotNil(transferData.status, "TransferData should have status")
-                            XCTAssertNil(transferData.contractId, "TransferData should have contractId")
-                            XCTAssertNotNil(transferData.topicSequenceNumber, "TransferData should have topicSequenceNumber")
-                            XCTAssertNotNil(transferData.totalSupply, "TransferData should have totalSupply")
-                            XCTAssertNotNil(transferData.serials, "TransferData should have serials")
-                        } else {
-                            XCTFail("Result should be of type TransferData")
+                            expectation3.fulfill()
                         }
-
-                        expectation4.fulfill()
                     }
-                    expectation3.fulfill()
                 }
-                
-                
-                expectation2.fulfill()
             }
         }
-        wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 30.0)
+        wait(for: [expectation1, expectation2, expectation3], timeout: 80.0)
     }
-    
+
     func testSearchAccounts() {
         let expectation = XCTestExpectation(description: "SearchAccounts should complete")
 
@@ -529,6 +476,362 @@ final class SwiftBladeTests: XCTestCase {
             }
         }
         wait(for: [expectation], timeout: 20.0)
+    }
+    
+    func testGetTransactions() {
+        let expectation = XCTestExpectation(description: "GetTransactions should complete")
+
+        swiftBlade.getTransactions(accountAddress: accountAddress, transactionType: "", nextPage: "", transactionsLimit: 5) { result, error in
+            XCTAssertNil(error, "GetTransactions should not produce an error")
+            XCTAssertNotNil(result, "GetTransactions should produce a result")
+
+            if let transactionsHistoryData = result {
+                XCTAssertNotNil(transactionsHistoryData.nextPage, "transactionsHistoryData nextPage should not be nil")
+                XCTAssertEqual(transactionsHistoryData.transactions.count, 5, "transactionsHistoryData transactions count should be as in params")
+                XCTAssertNotNil(transactionsHistoryData.transactions[0].transactionId, "transactions[].transactionId should not be nil")
+                XCTAssertNotNil(transactionsHistoryData.transactions[0].type, "transactions[].type should not be nil")
+                XCTAssertNotNil(transactionsHistoryData.transactions[0].time, "transactions[].time should not be nil")
+                XCTAssertNotNil(transactionsHistoryData.transactions[0].transfers, "transactions[].transfers should not be nil")
+                XCTAssertNotNil(transactionsHistoryData.transactions[0].nftTransfers, "transactions[].nftTransfers should not be nil")
+                XCTAssertNotNil(transactionsHistoryData.transactions[0].memo, "transactions[].memo should not be nil")
+                XCTAssertNotNil(transactionsHistoryData.transactions[0].fee, "transactions[].fee should not be nil")
+                XCTAssertNotNil(transactionsHistoryData.transactions[0].consensusTimestamp, "transactions[].consensusTimestamp should not be nil")
+            } else {
+                XCTFail("Result should be of type transactionsHistoryData")
+            }
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 10.0)
+    }
+    
+    func testAssociateToken() {
+        let expectation1 = XCTestExpectation(description: "CreateAccount should complete")
+        let expectation2 = XCTestExpectation(description: "setUser should complete")
+        let expectation3 = XCTestExpectation(description: "transferBalance should complete")
+        let expectation4 = XCTestExpectation(description: "setUser should complete")
+        let expectation5 = XCTestExpectation(description: "associateToken should complete")
+        let expectation6 = XCTestExpectation(description: "associateToken (on demand) should complete")
+        
+        swiftBlade.createAccount("", deviceId: "") { result, error in
+            XCTAssertNil(error, "CreateAccount should not produce an error")
+            XCTAssertNotNil(result, "CreateAccount should produce a result")
+
+            if let createdAccountData = result {
+                self.swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: self.accountAddress, privateKey: self.accountPrivateKey) { result, error in
+                    XCTAssertNil(error, "setUser should not produce an error")
+                    XCTAssertNotNil(result, "setUser should produce a result")
+                    
+                    self.swiftBlade.transferBalance(
+                        receiverAddress: createdAccountData.accountAddress,
+                        amount: "1",
+                        memo: "for association test"
+                    ) { result, error in
+                        XCTAssertNil(error, "transferBalance should not produce an error")
+                        XCTAssertNotNil(result, "transferBalance should produce a result")
+                        
+                        self.swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: createdAccountData.accountAddress, privateKey: createdAccountData.privateKey) { result, error in
+                            XCTAssertNil(error, "setUser should not produce an error")
+                            XCTAssertNotNil(result, "setUser should produce a result")
+                            
+                            self.swiftBlade.associateToken(
+                                tokenIdOrCampaign: self.tokenAddress2
+                            ) { [self] result, error in
+                                XCTAssertNil(error, "associateToken should not produce an error")
+                                XCTAssertNotNil(result, "associateToken should produce a result")
+                                
+                                if let tokenAssociateData = result {
+                                    XCTAssertNotNil(tokenAssociateData.status, "tokenAssociateData.status should present")
+                                    XCTAssertNil(tokenAssociateData.contractId, "tokenAssociateData.contractId should present")
+                                    XCTAssertNotNil(tokenAssociateData.topicSequenceNumber, "tokenAssociateData.topicSequenceNumber should present")
+                                    XCTAssertNotNil(tokenAssociateData.totalSupply, "tokenAssociateData.totalSupply should present")
+                                    XCTAssertNotNil(tokenAssociateData.serials, "tokenAssociateData.serials should present")
+                                    
+                                    self.swiftBlade.associateToken(
+                                        tokenIdOrCampaign: self.associateOnDemandCampaignName
+                                    ) { [self] result, error in
+                                        XCTAssertNil(error, "associateToken should not produce an error")
+                                        XCTAssertNotNil(result, "associateToken should produce a result")
+                                        expectation6.fulfill()
+                                    }
+                                } else {
+                                    XCTFail("no tokenAssociateData")
+                                }
+                                expectation5.fulfill()
+                            }
+                            expectation4.fulfill()
+                        }
+                        expectation3.fulfill()
+                    }
+                    expectation2.fulfill()
+                }
+            } else {
+                XCTFail("Result should be of type CreatedAccountData")
+            }
+            expectation1.fulfill()
+        }
+        wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 60.0)
+    }
+    
+    func testNFT() {
+        let expectation1 = XCTestExpectation(description: "setUser1 should complete")
+        let expectation2 = XCTestExpectation(description: "createToken should complete")
+        let expectation3 = XCTestExpectation(description: "nftMint should complete")
+        let expectation4 = XCTestExpectation(description: "setUser2 should complete")
+        let expectation5 = XCTestExpectation(description: "associateToken should complete")
+        let expectation6 = XCTestExpectation(description: "setUser1 should complete")
+        let expectation7 = XCTestExpectation(description: "transferTokens should complete")
+
+        swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: accountAddress, privateKey: accountPrivateKey) { [self] result, error in
+            XCTAssertNil(error, "setUser should not produce an error")
+            XCTAssertNotNil(result, "setUser should produce a result")
+
+            let keys = [
+                KeyRecord(privateKey: accountPrivateKey2, type: KeyType.admin)
+            ]
+            
+            swiftBlade.createToken(
+                tokenName: tokenName,
+                tokenSymbol: tokenSymbol,
+                isNft: true,
+                keys: keys,
+                decimals: 0,
+                initialSupply: 0,
+                maxSupply: 250
+            ) { [self] result, error in
+                XCTAssertNil(error, "createToken should not produce an error")
+                XCTAssertNotNil(result, "createToken should produce a result")
+
+                if let tokenData = result {
+                    XCTAssertNotNil(tokenData.tokenId, "tokenData.tokenId should present")
+                } else {
+                    XCTFail("no tokenData.tokenId")
+                }
+                
+                let tokenId = result!.tokenId
+
+                swiftBlade.nftMint(
+                    tokenAddress: tokenId,
+                    file: "data:image/png;base64,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",
+                    metadata: [
+                        "name": "NFTitle",
+                        "score": "10",
+                        "power": "4",
+                        "intelligence": "6",
+                        "speed": "10"
+                    ],
+                    storageConfig: NFTStorageConfig(
+                        provider: NFTStorageProvider.nftStorage,
+                        apiKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDZFNzY0ZmM0ZkZFOEJhNjdCNjc1NDk1Q2NEREFiYjk0NTE4Njk0QjYiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTcwNDQ2NDUxODQ2MiwibmFtZSI6IkJsYWRlU0RLLXRlc3RrZXkifQ.t1wCiEuiTvcYOwssdZgiYaug4aF8ZrvMBdkTASojWGU"
+                    )
+                ) { [self] result, error in
+                    XCTAssertNil(error, "nftMint should not produce an error")
+                    XCTAssertNotNil(result, "nftMint should produce a result")
+
+                    if let tokenMintData = result {
+                        XCTAssertNotNil(tokenMintData.status, "tokenMintData.status should present")
+                        XCTAssertNil(tokenMintData.contractId, "tokenMintData.contractId should present")
+                        XCTAssertNotNil(tokenMintData.topicSequenceNumber, "tokenMintData.topicSequenceNumber should present")
+                        XCTAssertNotNil(tokenMintData.totalSupply, "tokenMintData.totalSupply should present")
+                        XCTAssertNotNil(tokenMintData.serials, "tokenMintData.serials should present")
+                    } else {
+                        XCTFail("no tokenMintData")
+                    }
+
+                    swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: accountAddress2, privateKey: accountPrivateKey2) { [self] result, error in
+                        XCTAssertNil(error, "setUser should not produce an error")
+                        XCTAssertNotNil(result, "setUser should produce a result")
+                        
+                        swiftBlade.associateToken(
+                            tokenIdOrCampaign: tokenId
+                        ) { [self] result, error in
+                            XCTAssertNil(error, "associateToken should not produce an error")
+                            XCTAssertNotNil(result, "associateToken should produce a result")
+
+                            if let tokenAssociateData = result {
+                                XCTAssertNotNil(tokenAssociateData.status, "tokenAssociateData.status should present")
+                                XCTAssertNil(tokenAssociateData.contractId, "tokenAssociateData.contractId should present")
+                                XCTAssertNotNil(tokenAssociateData.topicSequenceNumber, "tokenAssociateData.topicSequenceNumber should present")
+                                XCTAssertNotNil(tokenAssociateData.totalSupply, "tokenAssociateData.totalSupply should present")
+                                XCTAssertNotNil(tokenAssociateData.serials, "tokenAssociateData.serials should present")
+                            } else {
+                                XCTFail("no tokenAssociateData")
+                            }
+                            
+                            swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: accountAddress, privateKey: accountPrivateKey) { [self] result, error in
+                                XCTAssertNil(error, "setUser should not produce an error")
+                                XCTAssertNotNil(result, "setUser should produce a result")
+                                
+                                swiftBlade.transferTokens(
+                                    tokenAddress: tokenId,
+                                    receiverAddress: accountAddress2,
+                                    amountOrSerial: "1",
+                                    memo: "transfer NFT in Test"
+                                ) { result, error in
+                                    XCTAssertNil(error, "transferTokens should not produce an error")
+                                    XCTAssertNotNil(result, "GetTradeUrl should produce a result")
+
+                                    expectation7.fulfill()
+                                }
+                                expectation6.fulfill()
+                            }
+                            expectation5.fulfill()
+                        }
+                        expectation4.fulfill()
+                    }
+                    expectation3.fulfill()
+                }
+                expectation2.fulfill()
+            }
+            expectation1.fulfill()
+        }
+        
+        wait(for: [expectation1, expectation2, expectation3, expectation4, expectation5, expectation6, expectation7], timeout: 120.0)
+    }
+    
+    func testCreateContractFunctionParameters() {
+        let expectation = XCTestExpectation(description: "CreateContractFunctionParameters should complete")
+
+        let tuple0 = SwiftBlade.shared.createContractFunctionParameters()
+            .addInt64(value: 16)
+            .addInt64(value: 32)
+
+        let tuple1 = SwiftBlade.shared.createContractFunctionParameters()
+            .addInt64(value: 5)
+            .addInt64(value: 10)
+
+        let tuple2 = SwiftBlade.shared.createContractFunctionParameters()
+            .addInt64(value: 50)
+            .addTupleArray(value: [tuple0, tuple1])
+
+        let parameters = swiftBlade.createContractFunctionParameters()
+            .addString(value: "Hello, Backend")
+            .addBytes32(value: [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F])
+            .addAddressArray(value: ["0.0.48738539", "0.0.48738538", "0.0.48738537"])
+            .addAddress(value: "0.0.48850466")
+            .addAddress(value: "0.0.499326")
+            .addAddress(value: "0.0.48801688")
+            .addInt64(value: 1)
+            .addUInt8(value: 123)
+            .addUInt64Array(value: [1, 2, 3])
+            .addUInt256Array(value: [1, 2, 3])
+            .addTuple(value: tuple1)
+            .addTuple(value: tuple2)
+            .addTupleArray(value: [tuple0, tuple1])
+            .addTupleArray(value: [tuple2, tuple2])
+            .addAddress(value: "0.0.12345")
+            .addUInt64(value: 56_784_645_645)
+            .addUInt256(value: 12345)
+
+        XCTAssertEqual(parameters.encode(), "W3sidHlwZSI6InN0cmluZyIsInZhbHVlIjpbIkhlbGxvLCBCYWNrZW5kIl19LHsidHlwZSI6ImJ5dGVzMzIiLCJ2YWx1ZSI6WyJXekFzTVN3eUxETXNOQ3cxTERZc055dzRMRGtzTVRBc01URXNNVElzTVRNc01UUXNNVFVzTVRZc01UY3NNVGdzTVRrc01qQXNNakVzTWpJc01qTXNNalFzTWpVc01qWXNNamNzTWpnc01qa3NNekFzTXpGZCJdfSx7InR5cGUiOiJhZGRyZXNzW10iLCJ2YWx1ZSI6WyIwLjAuNDg3Mzg1MzkiLCIwLjAuNDg3Mzg1MzgiLCIwLjAuNDg3Mzg1MzciXX0seyJ0eXBlIjoiYWRkcmVzcyIsInZhbHVlIjpbIjAuMC40ODg1MDQ2NiJdfSx7InR5cGUiOiJhZGRyZXNzIiwidmFsdWUiOlsiMC4wLjQ5OTMyNiJdfSx7InR5cGUiOiJhZGRyZXNzIiwidmFsdWUiOlsiMC4wLjQ4ODAxNjg4Il19LHsidHlwZSI6ImludDY0IiwidmFsdWUiOlsiMSJdfSx7InR5cGUiOiJ1aW50OCIsInZhbHVlIjpbIjEyMyJdfSx7InR5cGUiOiJ1aW50NjRbXSIsInZhbHVlIjpbIjEiLCIyIiwiMyJdfSx7InR5cGUiOiJ1aW50MjU2W10iLCJ2YWx1ZSI6WyIxIiwiMiIsIjMiXX0seyJ0eXBlIjoidHVwbGUiLCJ2YWx1ZSI6WyJXM3NpZEhsd1pTSTZJbWx1ZERZMElpd2lkbUZzZFdVaU9sc2lOU0pkZlN4N0luUjVjR1VpT2lKcGJuUTJOQ0lzSW5aaGJIVmxJanBiSWpFd0lsMTlYUT09Il19LHsidHlwZSI6InR1cGxlIiwidmFsdWUiOlsiVzNzaWRIbHdaU0k2SW1sdWREWTBJaXdpZG1Gc2RXVWlPbHNpTlRBaVhYMHNleUowZVhCbElqb2lkSFZ3YkdWYlhTSXNJblpoYkhWbElqcGJJbGN6YzJsa1NHeDNXbE5KTmtsdGJIVmtSRmt3U1dsM2FXUnRSbk5rVjFWcFQyeHphVTFVV1dsWVdEQnpaWGxLTUdWWVFteEphbTlwWVZjMU1FNXFVV2xNUTBveVdWZDRNVnBUU1RaWGVVbDZUV2xLWkdaV01EMGlMQ0pYTTNOcFpFaHNkMXBUU1RaSmJXeDFaRVJaTUVscGQybGtiVVp6WkZkVmFVOXNjMmxPVTBwa1psTjROMGx1VWpWalIxVnBUMmxLY0dKdVVUSk9RMGx6U1c1YWFHSklWbXhKYW5CaVNXcEZkMGxzTVRsWVVUMDlJbDE5WFE9PSJdfSx7InR5cGUiOiJ0dXBsZVtdIiwidmFsdWUiOlsiVzNzaWRIbHdaU0k2SW1sdWREWTBJaXdpZG1Gc2RXVWlPbHNpTVRZaVhYMHNleUowZVhCbElqb2lhVzUwTmpRaUxDSjJZV3gxWlNJNld5SXpNaUpkZlYwPSIsIlczc2lkSGx3WlNJNkltbHVkRFkwSWl3aWRtRnNkV1VpT2xzaU5TSmRmU3g3SW5SNWNHVWlPaUpwYm5RMk5DSXNJblpoYkhWbElqcGJJakV3SWwxOVhRPT0iXX0seyJ0eXBlIjoidHVwbGVbXSIsInZhbHVlIjpbIlczc2lkSGx3WlNJNkltbHVkRFkwSWl3aWRtRnNkV1VpT2xzaU5UQWlYWDBzZXlKMGVYQmxJam9pZEhWd2JHVmJYU0lzSW5aaGJIVmxJanBiSWxjemMybGtTR3gzV2xOSk5rbHRiSFZrUkZrd1NXbDNhV1J0Um5Oa1YxVnBUMnh6YVUxVVdXbFlXREJ6WlhsS01HVllRbXhKYW05cFlWYzFNRTVxVVdsTVEwb3lXVmQ0TVZwVFNUWlhlVWw2VFdsS1pHWldNRDBpTENKWE0zTnBaRWhzZDFwVFNUWkpiV3gxWkVSWk1FbHBkMmxrYlVaelpGZFZhVTlzYzJsT1UwcGtabE40TjBsdVVqVmpSMVZwVDJsS2NHSnVVVEpPUTBselNXNWFhR0pJVm14SmFuQmlTV3BGZDBsc01UbFlVVDA5SWwxOVhRPT0iLCJXM3NpZEhsd1pTSTZJbWx1ZERZMElpd2lkbUZzZFdVaU9sc2lOVEFpWFgwc2V5SjBlWEJsSWpvaWRIVndiR1ZiWFNJc0luWmhiSFZsSWpwYklsY3pjMmxrU0d4M1dsTkpOa2x0YkhWa1JGa3dTV2wzYVdSdFJuTmtWMVZwVDJ4emFVMVVXV2xZV0RCelpYbEtNR1ZZUW14SmFtOXBZVmMxTUU1cVVXbE1RMG95V1ZkNE1WcFRTVFpYZVVsNlRXbEtaR1pXTUQwaUxDSlhNM05wWkVoc2QxcFRTVFpKYld4MVpFUlpNRWxwZDJsa2JVWnpaRmRWYVU5c2MybE9VMHBrWmxONE4wbHVValZqUjFWcFQybEtjR0p1VVRKT1EwbHpTVzVhYUdKSVZteEphbkJpU1dwRmQwbHNNVGxZVVQwOUlsMTlYUT09Il19LHsidHlwZSI6ImFkZHJlc3MiLCJ2YWx1ZSI6WyIwLjAuMTIzNDUiXX0seyJ0eXBlIjoidWludDY0IiwidmFsdWUiOlsiNTY3ODQ2NDU2NDUiXX0seyJ0eXBlIjoidWludDI1NiIsInZhbHVlIjpbIjEyMzQ1Il19XQ==", "Encoded params should be equal this result")
+        expectation.fulfill()
+        wait(for: [expectation], timeout: 10.0)
+    }
+
+    func testContractCallFunction() {
+        let expectation1 = XCTestExpectation(description: "ContractCallFunction should fail as no user set")
+        let expectation2 = XCTestExpectation(description: "setUser should complete")
+        let expectation3 = XCTestExpectation(description: "ContractCallFunction should complete")
+
+        var contractFunctionName = "set_message"
+        if (chainId == .ETHEREUM_SEPOLIA) {
+            contractFunctionName = "setMood"
+        }
+            
+        let parameters = swiftBlade.createContractFunctionParameters().addString(value: "Hello Swift test")
+        swiftBlade.contractCallFunction(
+            contractAddress: contractAddress, functionName: contractFunctionName, params: parameters, gas: 1_000_000, usePaymaster: false
+        ) { result, error in
+            XCTAssertNotNil(error, "ContractCallFunction should produce an error")
+            XCTAssertNil(result, "ContractCallFunction should not produce a result")
+
+            self.swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: self.accountAddress, privateKey: self.accountPrivateKey) { result, error in
+                XCTAssertNil(error, "setUser should not produce an error")
+                XCTAssertNotNil(result, "setUser should produce a result")
+        
+                self.swiftBlade.contractCallFunction(
+                    contractAddress: self.contractAddress, functionName: contractFunctionName, params: parameters, gas: 1_000_000, usePaymaster: false
+                ) { result, error in
+                    XCTAssertNil(error, "ContractCallFunction should not produce an error")
+                    XCTAssertNotNil(result, "ContractCallFunction should produce a result")
+
+                    
+                    if let transactionReceiptData = result {
+                        XCTAssertEqual(transactionReceiptData.status, "SUCCESS", "TransactionReceiptData should have a 'SUCCESS' status")
+                    } else {
+                        XCTFail("Result should be a String (transaction ID)")
+                    }
+                    expectation3.fulfill()
+                }
+                expectation2.fulfill()
+            }
+            expectation1.fulfill()
+        }
+
+        wait(for: [expectation1, expectation2, expectation3], timeout: 20.0)
+    }
+
+    func testContractCallQueryFunction() {
+        let expectation1 = XCTestExpectation(description: "ContractCallQueryFunction should not complete")
+        let expectation2 = XCTestExpectation(description: "setUser should complete")
+        let expectation3 = XCTestExpectation(description: "ContractCallFunction should complete")
+        let expectation4 = XCTestExpectation(description: "ContractCallQueryFunction should complete")
+        
+        var contractFunctionName = "set_message"
+        var contractQueryFunctionName = "get_message"
+        if (chainId == .ETHEREUM_SEPOLIA) {
+            contractFunctionName = "setMood"
+            contractQueryFunctionName = "getMood"
+        }
+        
+        let randString = randomString(length: 10)
+
+        swiftBlade.contractCallQueryFunction(
+            contractAddress: contractAddress, functionName: contractQueryFunctionName, params: swiftBlade.createContractFunctionParameters(), gas: 150_000, usePaymaster: false, returnTypes: ["string", "int32"]
+        ) { result, error in
+            XCTAssertNotNil(error, "ContractCallQueryFunction should produce an error")
+            XCTAssertNil(result, "ContractCallQueryFunction should not produce a result")
+
+            self.swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: self.accountAddress, privateKey: self.accountPrivateKey) { result, error in
+                XCTAssertNil(error, "setUser should not produce an error")
+                XCTAssertNotNil(result, "setUser should produce a result")
+                
+                let parameters = self.swiftBlade.createContractFunctionParameters().addString(value: randString)
+                self.swiftBlade.contractCallFunction(
+                    contractAddress: self.contractAddress, functionName: contractFunctionName, params: parameters, gas: 1_000_000, usePaymaster: false
+                ) { result, error in
+                    XCTAssertNil(error, "ContractCallFunction should not produce an error")
+                    XCTAssertNotNil(result, "ContractCallFunction should produce a result")
+
+                    if let transactionReceiptData = result {
+                        XCTAssertEqual(transactionReceiptData.status, "SUCCESS", "TransactionReceiptData should have a 'SUCCESS' status")
+                        
+                        self.swiftBlade.contractCallQueryFunction(
+                            contractAddress: self.contractAddress, functionName: contractQueryFunctionName, params: self.swiftBlade.createContractFunctionParameters(), gas: 150_000, usePaymaster: false, returnTypes: ["string", "int32"]
+                        ) { result, error in
+                            XCTAssertNil(error, "ContractCallQueryFunction should not produce an error")
+                            XCTAssertNotNil(result, "ContractCallQueryFunction should produce a result")
+
+                            if let contractQueryData = result {
+                                XCTAssertGreaterThan(contractQueryData.gasUsed, 0, "Used gas should be grater than 0")
+                                XCTAssertEqual(contractQueryData.values.count, 2, "Should return 2 values")
+                                XCTAssertEqual(contractQueryData.values[0].type, "string", "Should equeal returnTypes")
+                                XCTAssertEqual(contractQueryData.values[0].value, randString, "Should be exact string what we set before")
+                                XCTAssertEqual(contractQueryData.values[1].type, "int32", "Should equeal returnTypes")
+                            } else {
+                                XCTFail("Result should be a String (transaction ID)")
+                            }
+                            expectation4.fulfill()
+                        }
+                    } else {
+                        XCTFail("Result should be a String (transaction ID)")
+                    }
+                    expectation3.fulfill()
+                }
+                expectation2.fulfill()
+            }
+            expectation1.fulfill()
+        }
+        wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 30.0)
     }
     
     func testSign() {
@@ -621,89 +924,42 @@ final class SwiftBladeTests: XCTestCase {
         wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 20.0)
     }
 
-    func testCreateContractFunctionParameters() {
-        let expectation = XCTestExpectation(description: "CreateContractFunctionParameters should complete")
-
-        let tuple0 = SwiftBlade.shared.createContractFunctionParameters()
-            .addInt64(value: 16)
-            .addInt64(value: 32)
-
-        let tuple1 = SwiftBlade.shared.createContractFunctionParameters()
-            .addInt64(value: 5)
-            .addInt64(value: 10)
-
-        let tuple2 = SwiftBlade.shared.createContractFunctionParameters()
-            .addInt64(value: 50)
-            .addTupleArray(value: [tuple0, tuple1])
+    func testGetParamsSignature() {
+        let expectation1 = XCTestExpectation(description: "setUser should complete")
+        let expectation2 = XCTestExpectation(description: "GetParamsSignature should complete")
 
         let parameters = swiftBlade.createContractFunctionParameters()
-            .addString(value: "Hello, Backend")
-            .addBytes32(value: [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F])
-            .addAddressArray(value: ["0.0.48738539", "0.0.48738538", "0.0.48738537"])
-            .addAddress(value: "0.0.48850466")
-            .addAddress(value: "0.0.499326")
-            .addAddress(value: "0.0.48801688")
-            .addInt64(value: 1)
-            .addUInt8(value: 123)
-            .addUInt64Array(value: [1, 2, 3])
-            .addUInt256Array(value: [1, 2, 3])
-            .addTuple(value: tuple1)
-            .addTuple(value: tuple2)
-            .addTupleArray(value: [tuple0, tuple1])
-            .addTupleArray(value: [tuple2, tuple2])
-            .addAddress(value: "0.0.12345")
-            .addUInt64(value: 56_784_645_645)
-            .addUInt256(value: 12345)
+            .addAddress(value: accountAddress)
+            .addUInt64Array(value: [300_000, 300_000])
+            .addUInt64Array(value: [6])
+            .addUInt64Array(value: [2])
 
-        XCTAssertEqual(parameters.encode(), "W3sidHlwZSI6InN0cmluZyIsInZhbHVlIjpbIkhlbGxvLCBCYWNrZW5kIl19LHsidHlwZSI6ImJ5dGVzMzIiLCJ2YWx1ZSI6WyJXekFzTVN3eUxETXNOQ3cxTERZc055dzRMRGtzTVRBc01URXNNVElzTVRNc01UUXNNVFVzTVRZc01UY3NNVGdzTVRrc01qQXNNakVzTWpJc01qTXNNalFzTWpVc01qWXNNamNzTWpnc01qa3NNekFzTXpGZCJdfSx7InR5cGUiOiJhZGRyZXNzW10iLCJ2YWx1ZSI6WyIwLjAuNDg3Mzg1MzkiLCIwLjAuNDg3Mzg1MzgiLCIwLjAuNDg3Mzg1MzciXX0seyJ0eXBlIjoiYWRkcmVzcyIsInZhbHVlIjpbIjAuMC40ODg1MDQ2NiJdfSx7InR5cGUiOiJhZGRyZXNzIiwidmFsdWUiOlsiMC4wLjQ5OTMyNiJdfSx7InR5cGUiOiJhZGRyZXNzIiwidmFsdWUiOlsiMC4wLjQ4ODAxNjg4Il19LHsidHlwZSI6ImludDY0IiwidmFsdWUiOlsiMSJdfSx7InR5cGUiOiJ1aW50OCIsInZhbHVlIjpbIjEyMyJdfSx7InR5cGUiOiJ1aW50NjRbXSIsInZhbHVlIjpbIjEiLCIyIiwiMyJdfSx7InR5cGUiOiJ1aW50MjU2W10iLCJ2YWx1ZSI6WyIxIiwiMiIsIjMiXX0seyJ0eXBlIjoidHVwbGUiLCJ2YWx1ZSI6WyJXM3NpZEhsd1pTSTZJbWx1ZERZMElpd2lkbUZzZFdVaU9sc2lOU0pkZlN4N0luUjVjR1VpT2lKcGJuUTJOQ0lzSW5aaGJIVmxJanBiSWpFd0lsMTlYUT09Il19LHsidHlwZSI6InR1cGxlIiwidmFsdWUiOlsiVzNzaWRIbHdaU0k2SW1sdWREWTBJaXdpZG1Gc2RXVWlPbHNpTlRBaVhYMHNleUowZVhCbElqb2lkSFZ3YkdWYlhTSXNJblpoYkhWbElqcGJJbGN6YzJsa1NHeDNXbE5KTmtsdGJIVmtSRmt3U1dsM2FXUnRSbk5rVjFWcFQyeHphVTFVV1dsWVdEQnpaWGxLTUdWWVFteEphbTlwWVZjMU1FNXFVV2xNUTBveVdWZDRNVnBUU1RaWGVVbDZUV2xLWkdaV01EMGlMQ0pYTTNOcFpFaHNkMXBUU1RaSmJXeDFaRVJaTUVscGQybGtiVVp6WkZkVmFVOXNjMmxPVTBwa1psTjROMGx1VWpWalIxVnBUMmxLY0dKdVVUSk9RMGx6U1c1YWFHSklWbXhKYW5CaVNXcEZkMGxzTVRsWVVUMDlJbDE5WFE9PSJdfSx7InR5cGUiOiJ0dXBsZVtdIiwidmFsdWUiOlsiVzNzaWRIbHdaU0k2SW1sdWREWTBJaXdpZG1Gc2RXVWlPbHNpTVRZaVhYMHNleUowZVhCbElqb2lhVzUwTmpRaUxDSjJZV3gxWlNJNld5SXpNaUpkZlYwPSIsIlczc2lkSGx3WlNJNkltbHVkRFkwSWl3aWRtRnNkV1VpT2xzaU5TSmRmU3g3SW5SNWNHVWlPaUpwYm5RMk5DSXNJblpoYkhWbElqcGJJakV3SWwxOVhRPT0iXX0seyJ0eXBlIjoidHVwbGVbXSIsInZhbHVlIjpbIlczc2lkSGx3WlNJNkltbHVkRFkwSWl3aWRtRnNkV1VpT2xzaU5UQWlYWDBzZXlKMGVYQmxJam9pZEhWd2JHVmJYU0lzSW5aaGJIVmxJanBiSWxjemMybGtTR3gzV2xOSk5rbHRiSFZrUkZrd1NXbDNhV1J0Um5Oa1YxVnBUMnh6YVUxVVdXbFlXREJ6WlhsS01HVllRbXhKYW05cFlWYzFNRTVxVVdsTVEwb3lXVmQ0TVZwVFNUWlhlVWw2VFdsS1pHWldNRDBpTENKWE0zTnBaRWhzZDFwVFNUWkpiV3gxWkVSWk1FbHBkMmxrYlVaelpGZFZhVTlzYzJsT1UwcGtabE40TjBsdVVqVmpSMVZwVDJsS2NHSnVVVEpPUTBselNXNWFhR0pJVm14SmFuQmlTV3BGZDBsc01UbFlVVDA5SWwxOVhRPT0iLCJXM3NpZEhsd1pTSTZJbWx1ZERZMElpd2lkbUZzZFdVaU9sc2lOVEFpWFgwc2V5SjBlWEJsSWpvaWRIVndiR1ZiWFNJc0luWmhiSFZsSWpwYklsY3pjMmxrU0d4M1dsTkpOa2x0YkhWa1JGa3dTV2wzYVdSdFJuTmtWMVZwVDJ4emFVMVVXV2xZV0RCelpYbEtNR1ZZUW14SmFtOXBZVmMxTUU1cVVXbE1RMG95V1ZkNE1WcFRTVFpYZVVsNlRXbEtaR1pXTUQwaUxDSlhNM05wWkVoc2QxcFRTVFpKYld4MVpFUlpNRWxwZDJsa2JVWnpaRmRWYVU5c2MybE9VMHBrWmxONE4wbHVValZqUjFWcFQybEtjR0p1VVRKT1EwbHpTVzVhYUdKSVZteEphbkJpU1dwRmQwbHNNVGxZVVQwOUlsMTlYUT09Il19LHsidHlwZSI6ImFkZHJlc3MiLCJ2YWx1ZSI6WyIwLjAuMTIzNDUiXX0seyJ0eXBlIjoidWludDY0IiwidmFsdWUiOlsiNTY3ODQ2NDU2NDUiXX0seyJ0eXBlIjoidWludDI1NiIsInZhbHVlIjpbIjEyMzQ1Il19XQ==", "Encoded params should be equal this result")
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 10.0)
+        swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: accountAddress, privateKey: accountPrivateKey) { result, error in
+            XCTAssertNil(error, "setUser should not produce an error")
+            XCTAssertNotNil(result, "setUser should produce a result")
+            
+            
+            self.swiftBlade.getParamsSignature(
+                params: parameters
+            ) { result, error in
+                XCTAssertNil(error, "GetParamsSignature should not produce an error")
+                XCTAssertNotNil(result, "GetParamsSignature should produce a result")
+                
+                if let splitSignatureData = result {
+                    XCTAssertEqual(splitSignatureData.v, 27, "SplitSignatureData should be valid v")
+                    XCTAssertEqual(splitSignatureData.r, "0x0c6e8f0487709cfc1ebbc41e47ce56aee5cf5bc933a4cd6cb2695b098dbe4ee4", "SplitSignatureData should be valid r")
+                    XCTAssertEqual(splitSignatureData.s, "0x22d0b6351670c37eb112ebd80123452237cb5c893767510a9356214189f6fe86", "SplitSignatureData should be valid s")
+                } else {
+                    XCTFail("Result should be of type SignMessageData")
+                }
+                
+                expectation2.fulfill()
+            }
+            expectation1.fulfill()
+        }
+
+        wait(for: [expectation1, expectation2], timeout: 20.0)
     }
-
-//    func testContractCallFunction() {
-//        let expectation = XCTestExpectation(description: "ContractCallFunction should complete")
-//
-//        let parameters = swiftBlade.createContractFunctionParameters().addString(value: "Hello Swift test")
-//        swiftBlade.contractCallFunction(
-//            contractId: contractId, functionName: "set_message", params: parameters, accountId: accountId, accountPrivateKey: privateKeyHex, gas: 1_000_000, usePaymaster: false
-//        ) { result, error in
-//            XCTAssertNil(error, "ContractCallFunction should not produce an error")
-//            XCTAssertNotNil(result, "ContractCallFunction should produce a result")
-//
-//            if let transactionReceiptData = result {
-//                XCTAssertEqual(transactionReceiptData.status, "SUCCESS", "TransactionReceiptData should have a 'SUCCESS' status")
-//            } else {
-//                XCTFail("Result should be a String (transaction ID)")
-//            }
-//            expectation.fulfill()
-//        }
-//
-//        wait(for: [expectation], timeout: 10.0)
-//    }
-
-//    func testContractCallQueryFunction() {
-//        let expectation = XCTestExpectation(description: "ContractCallQueryFunction should complete")
-//
-//        swiftBlade.contractCallQueryFunction(
-//            contractId: contractId, functionName: "get_message", params: swiftBlade.createContractFunctionParameters(), accountId: accountId, accountPrivateKey: privateKeyHex, gas: 150_000, usePaymaster: false, returnTypes: ["string", "int32"]
-//        ) { result, error in
-//            XCTAssertNil(error, "ContractCallQueryFunction should not produce an error")
-//            XCTAssertNotNil(result, "ContractCallQueryFunction should produce a result")
-//
-//            if let contractQueryData = result {
-//                XCTAssertGreaterThan(contractQueryData.gasUsed, 0, "Used gas should be grater than 0")
-//                XCTAssertEqual(contractQueryData.values.count, 2, "Should return 2 values")
-//                XCTAssertEqual(contractQueryData.values[0].type, "string", "Should equeal returnTypes")
-//                XCTAssertEqual(contractQueryData.values[0].value.count > 0, true, "Should be not empty string")
-//                XCTAssertEqual(contractQueryData.values[1].type, "int32", "Should equeal returnTypes")
-//            } else {
-//                XCTFail("Result should be a String (transaction ID)")
-//            }
-//            expectation.fulfill()
-//        }
-//
-//        wait(for: [expectation], timeout: 10.0)
-//    }
 
     func testSplitSignature() {
         let expectation1 = XCTestExpectation(description: "setUser should complete")
@@ -746,78 +1002,186 @@ final class SwiftBladeTests: XCTestCase {
         wait(for: [expectation1, expectation2, expectation3], timeout: 20.0)
     }
 
-    func testGetParamsSignature() {
+    func testSchedule() {
         let expectation1 = XCTestExpectation(description: "setUser should complete")
-        let expectation2 = XCTestExpectation(description: "GetParamsSignature should complete")
-
-        let parameters = swiftBlade.createContractFunctionParameters()
-            .addAddress(value: accountAddress)
-            .addUInt64Array(value: [300_000, 300_000])
-            .addUInt64Array(value: [6])
-            .addUInt64Array(value: [2])
-
-        swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: accountAddress, privateKey: accountPrivateKey) { result, error in
+        let expectation2 = XCTestExpectation(description: "createScheduleTransaction should complete")
+        let expectation3 = XCTestExpectation(description: "signScheduleId should complete")
+        
+        swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: self.accountAddress, privateKey: self.accountPrivateKey) { result, error in
             XCTAssertNil(error, "setUser should not produce an error")
             XCTAssertNotNil(result, "setUser should produce a result")
             
-            
-            self.swiftBlade.getParamsSignature(
-                params: parameters
-            ) { result, error in
-                XCTAssertNil(error, "GetParamsSignature should not produce an error")
-                XCTAssertNotNil(result, "GetParamsSignature should produce a result")
+            self.swiftBlade.createScheduleTransaction(
+                type: .TRANSFER,
+                transfers: [
+                    ScheduleTransactionTransferHbar(sender: self.accountAddress, receiver: self.accountAddress2, value: Int.random(in: 100000...1000000)),
+                    ScheduleTransactionTransferToken(sender: self.accountAddress, receiver: self.accountAddress2, tokenId: self.tokenAddress, value: 3)
+                ],
+                usePaymaster: false
+            ) { (result: CreateScheduleData?, error: BladeJSError?) in
+                XCTAssertNil(error, "createScheduleTransaction should not produce an error")
+                XCTAssertNotNil(result, "createScheduleTransaction should produce a result")
                 
-                if let splitSignatureData = result {
-                    XCTAssertEqual(splitSignatureData.v, 27, "SplitSignatureData should be valid v")
-                    XCTAssertEqual(splitSignatureData.r, "0x0c6e8f0487709cfc1ebbc41e47ce56aee5cf5bc933a4cd6cb2695b098dbe4ee4", "SplitSignatureData should be valid r")
-                    XCTAssertEqual(splitSignatureData.s, "0x22d0b6351670c37eb112ebd80123452237cb5c893767510a9356214189f6fe86", "SplitSignatureData should be valid s")
+                if let resultData = result {
+                    XCTAssertNotNil(resultData.scheduleId, "scheduleId should present")
+                    
+                    self.swiftBlade.signScheduleId(
+                        scheduleId: resultData.scheduleId,
+                        receiverAccountAddress: "",
+                        usePaymaster: false
+                    ) { [self] result, error in
+                        XCTAssertNotNil(error, "signScheduleId should produce an error")
+                        XCTAssertNil(result, "signScheduleId should not produce a result")
+                        expectation3.fulfill()
+                    }
                 } else {
-                    XCTFail("Result should be of type SignMessageData")
+                    XCTFail("no scheduleId")
                 }
+                expectation2.fulfill()
+            }
+            expectation1.fulfill()
+        }
+        wait(for: [expectation1, expectation2, expectation3], timeout: 30.0)
+    }
+    
+    func testStakeAccount() { // hedera only
+        let expectation1 = XCTestExpectation(description: "GetNodeList should complete")
+        let expectation2 = XCTestExpectation(description: "StakeAccount should fail as no user set")
+        let expectation3 = XCTestExpectation(description: "setUser should complete")
+        let expectation4 = XCTestExpectation(description: "StakeAccount should complete")
+
+        swiftBlade.getNodeList() { result, error in
+            XCTAssertNil(error, "getNodeList should not produce an error")
+            XCTAssertNotNil(result, "getNodeList should produce a result")
+            
+            if let nodeListData = result {
+                XCTAssertNotNil(nodeListData.nodes, "NodeList should have a nodes")
+                XCTAssertGreaterThan(nodeListData.nodes.count, 0, "NodeList should have some nodes")
+                XCTAssertNotNil(nodeListData.nodes[0].description, "NodeInfo should have a description")
+                XCTAssertNotNil(nodeListData.nodes[0].max_stake, "NodeInfo should have a max_stake")
+                XCTAssertNotNil(nodeListData.nodes[0].min_stake, "NodeInfo should have a min_stake")
+                XCTAssertNotNil(nodeListData.nodes[0].node_id, "NodeInfo should have a node_id")
+            } else {
+                XCTFail("Result should be of type NodesData")
+            }
+
+            self.swiftBlade.stakeToNode(nodeId: -1) { result, error in
+                XCTAssertNotNil(error, "stakeToNode should produce an error")
+                XCTAssertNil(result, "stakeToNode should not produce a result")
+
+                self.swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: self.accountAddress, privateKey: self.accountPrivateKey) { result, error in
+                    XCTAssertNil(error, "setUser should not produce an error")
+                    XCTAssertNotNil(result, "setUser should produce a result")
+
+                    self.swiftBlade.stakeToNode(nodeId: -1) { result, error in
+                        XCTAssertNil(error, "stakeToNode should not produce an error")
+                        XCTAssertNotNil(result, "stakeToNode should produce a result")
+
+                        if let transferData = result as TransactionReceiptData? {
+                            XCTAssertNotNil(transferData.status, "TransferData should have status")
+                            XCTAssertNil(transferData.contractId, "TransferData should have contractId")
+                            XCTAssertNotNil(transferData.topicSequenceNumber, "TransferData should have topicSequenceNumber")
+                            XCTAssertNotNil(transferData.totalSupply, "TransferData should have totalSupply")
+                            XCTAssertNotNil(transferData.serials, "TransferData should have serials")
+                        } else {
+                            XCTFail("Result should be of type TransferData")
+                        }
+
+                        expectation4.fulfill()
+                    }
+                    expectation3.fulfill()
+                }
+                expectation2.fulfill()
+            }
+            expectation1.fulfill()
+        }
+        wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 30.0)
+    }
+    
+    func testGetTokenInfo() {
+        let expectation1 = XCTestExpectation(description: "GetTokenInfo (nft) should complete")
+        let expectation2 = XCTestExpectation(description: "GetTokenInfo (ft) should complete")
+
+        swiftBlade.getTokenInfo(tokenAddress: nftAddress, serial: "1") { result, error in
+            XCTAssertNil(error, "getTokenInfo should not produce an error")
+            XCTAssertNotNil(result, "getTokenInfo should produce a result")
+
+            if let tokenInfoData = result {
+                XCTAssertNotNil(tokenInfoData.token, "tokenInfoData token should not be nil")
+                XCTAssertNotNil(tokenInfoData.nft, "tokenInfoData nft should not be nil")
+                XCTAssertNotNil(tokenInfoData.metadata, "tokenInfoData metadata should not be nil")
+                XCTAssertNotNil(tokenInfoData.nft?.token_id, "tokenInfoData.nft.token_id should not be nil")
+                XCTAssertNotNil(tokenInfoData.nft?.serial_number, "tokenInfoData.nft.serial_number should not be nil")
+                XCTAssertNotNil(tokenInfoData.metadata?.author, "tokenInfoData.metadata.author should not be nil")
+                XCTAssertEqual(tokenInfoData.metadata?.author, "GaryDu", "tokenInfoData.metadata.author should match")
                 
+                self.swiftBlade.getTokenInfo(tokenAddress: self.tokenAddress, serial: "") { result, error in
+                    XCTAssertNil(error, "getTokenInfo should not produce an error")
+                    XCTAssertNotNil(result, "getTokenInfo should produce a result")
+
+                    if let tokenInfoData = result {
+                        XCTAssertNotNil(tokenInfoData.token, "tokenInfoData token should not be nil")
+                        XCTAssertNil(tokenInfoData.nft, "tokenInfoData nft should not be nil")
+                        XCTAssertNil(tokenInfoData.metadata, "tokenInfoData metadata should not be nil")
+                        XCTAssertEqual(tokenInfoData.token.token_id, self.tokenAddress, "tokenInfoData.nft.token_id should not be nil")
+                    } else {
+                        XCTFail("Result should be of type tokenInfoData")
+                    }
+                    expectation2.fulfill()
+                }
+            } else {
+                XCTFail("Result should be of type tokenInfoData")
+            }
+            expectation1.fulfill()
+        }
+        wait(for: [expectation1, expectation2], timeout: 20.0)
+    }
+    
+    func testSwapTokens() {
+        let expectation1 = XCTestExpectation(description: "setUser should complete")
+        let expectation2 = XCTestExpectation(description: "SwapTokens should complete")
+        let expectation3 = XCTestExpectation(description: "SwapTokens should fail")
+
+        self.swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: self.accountAddress2, privateKey: self.accountPrivateKey2) { result, error in
+            XCTAssertNil(error, "setUser should not produce an error")
+            XCTAssertNotNil(result, "setUser should produce a result")
+            
+            self.swiftBlade.swapTokens(
+                sourceCode: "HBAR",
+                sourceAmount: 1,
+                targetCode: "SAUCE",
+                slippage: 0.5,
+                serviceId: "saucerswap"
+            ) { result, error in
+                XCTAssertNil(error, "SwapTokens should not produce an error")
+                XCTAssertNotNil(result, "SwapTokens should produce a result")
+
+                if let resultData = result {
+                    XCTAssertNotNil(resultData.success, "resultData.success should present")
+                    XCTAssertEqual(resultData.success, true, "resultData.success should be true")
+                } else {
+                    XCTFail("no resultData.success")
+                }
+
+                self.swiftBlade.swapTokens(
+                    sourceCode: "USDC",
+                    sourceAmount: 0.00001,
+                    targetCode: "HBAR",
+                    slippage: 0.5,
+                    serviceId: "unknown-service"
+                ) { result, error in
+                    XCTAssertNotNil(error, "SwapTokens should produce an error")
+                    XCTAssertNil(result, "SwapTokens should not produce a result")
+
+                    expectation3.fulfill()
+                }
                 expectation2.fulfill()
             }
             expectation1.fulfill()
         }
 
-        wait(for: [expectation1, expectation2], timeout: 20.0)
+        wait(for: [expectation1, expectation2, expectation3], timeout: 30.0)
     }
-//
-//    func testGetTransactions() {
-//        let expectation = XCTestExpectation(description: "GetTransactions should complete")
-//
-//        swiftBlade.getTransactions(accountId: accountId, transactionType: "", nextPage: "", transactionsLimit: 5) { result, error in
-//            XCTAssertNil(error, "GetTransactions should not produce an error")
-//            XCTAssertNotNil(result, "GetTransactions should produce a result")
-//
-//            if let transactionsHistoryData = result {
-//                XCTAssertNotNil(transactionsHistoryData.nextPage, "transactionsHistoryData nextPage should not be nil")
-//                XCTAssertEqual(transactionsHistoryData.transactions.count, 5, "transactionsHistoryData transactions count should be as in params")
-//            } else {
-//                XCTFail("Result should be of type transactionsHistoryData")
-//            }
-//            expectation.fulfill()
-//        }
-//        wait(for: [expectation], timeout: 10.0)
-//    }
-
-//    func testGetC14url() {
-//        let expectation = XCTestExpectation(description: "GetC14url should complete")
-//
-//        swiftBlade.getC14url(asset: "KARATE", account: accountId, amount: "1234") { result, error in
-//            XCTAssertNil(error, "GetC14url should not produce an error")
-//            XCTAssertNotNil(result, "GetC14url should produce a result")
-//
-//            if let integrationUrlData = result {
-//                XCTAssertEqual(integrationUrlData.url, "https://pay.c14.money/?clientId=00ce2e0a-ee66-4971-a0e9-b9d627d106b0&targetAssetId=057d6b35-1af5-4827-bee2-c12842faa49e&targetAssetIdLock=true&sourceAmount=1234&quoteAmountLock=true&targetAddress=0.0.1443&targetAddressLock=true", "url should be like that")
-//            } else {
-//                XCTFail("Result should be of type transactionsHistoryData")
-//            }
-//            expectation.fulfill()
-//        }
-//
-//        wait(for: [expectation], timeout: 10.0)
-//    }
 
     func testExchangeGetQuotes() {
         let expectation1 = XCTestExpectation(description: "ExchangeGetQuotes BUY should complete")
@@ -882,59 +1246,15 @@ final class SwiftBladeTests: XCTestCase {
         wait(for: [expectation1, expectation2, expectation3], timeout: 30.0)
     }
 
-//    func testSwapTokens() {
-//        let expectation1 = XCTestExpectation(description: "SwapTokens should complete")
-//        let expectation2 = XCTestExpectation(description: "SwapTokens should fail")
-//
-//        swiftBlade.swapTokens(
-//            accountId: accountIdEd25519,
-//            accountPrivateKey: privateKeyHexEd25519,
-//            sourceCode: "HBAR",
-//            sourceAmount: 1,
-//            targetCode: "SAUCE",
-//            slippage: 0.5,
-//            serviceId: "saucerswap"
-//        ) { [self] result, error in
-//            XCTAssertNil(error, "SwapTokens should not produce an error")
-//            XCTAssertNotNil(result, "SwapTokens should produce a result")
-//
-//            if let resultData = result {
-//                XCTAssertNotNil(resultData.success, "resultData.success should present")
-//                XCTAssertEqual(resultData.success, true, "resultData.success should be true")
-//            } else {
-//                XCTFail("no resultData.success")
-//            }
-//
-//            expectation1.fulfill()
-//
-//            swiftBlade.swapTokens(
-//                accountId: accountIdEd25519,
-//                accountPrivateKey: privateKeyHexEd25519,
-//                sourceCode: "USDC",
-//                sourceAmount: 0.00001,
-//                targetCode: "HBAR",
-//                slippage: 0.5,
-//                serviceId: "unknown-service"
-//            ) { result, error in
-//                XCTAssertNotNil(error, "SwapTokens should produce an error")
-//                XCTAssertNil(result, "SwapTokens should not produce a result")
-//
-//                expectation2.fulfill()
-//            }
-//        }
-//
-//        wait(for: [expectation1, expectation2], timeout: 30.0)
-//    }
-
     func testGetTradeUrl() {
         let expectation1 = XCTestExpectation(description: "GetTradeUrl should complete")
         let expectation2 = XCTestExpectation(description: "GetTradeUrl should complete")
         let expectation3 = XCTestExpectation(description: "GetTradeUrl should fail")
+        let expectation4 = XCTestExpectation(description: "GetTradeUrl (like deprecated getC14url) should complete")
 
         swiftBlade.initialize(apiKey: apiKeyMainnet, dAppCode: dAppCode, chainId: .HEDERA_MAINNET, bladeEnv: bladeEnv, force: true) { [self] result, error in
             XCTAssertNil(error, "Initialization should not produce an error")
             XCTAssertNotNil(result, "Initialization should produce a result")
-
             var redirectUrl = "redirect-url-here"
             
             swiftBlade.getTradeUrl(
@@ -972,8 +1292,6 @@ final class SwiftBladeTests: XCTestCase {
                     XCTAssertNil(error, "GetTradeUrl should not produce an error")
                     XCTAssertNotNil(result, "GetTradeUrl should produce a result")
 
-                    print(result)
-                    
                     if let integrationUrlData = result {
                         XCTAssertNotNil(integrationUrlData.url, "integrationUrlData.url should present")
                         XCTAssertGreaterThanOrEqual(integrationUrlData.url.count, 1, "integrationUrlData.url should not be empty")
@@ -999,168 +1317,37 @@ final class SwiftBladeTests: XCTestCase {
 
                         // Add assertions for the result properties if needed
                         expectation3.fulfill()
+                        
+                        // buy like deprecated method getC14url
+                        self.swiftBlade.getTradeUrl(
+                            strategy: CryptoFlowServiceStrategy.BUY,
+                            accountAddress: self.accountAddress,
+                            sourceCode: "USD",
+                            sourceAmount: 1234,
+                            targetCode: "KARATE",
+                            slippage: 1,
+                            serviceId: "c14"
+                        ) { result, error in
+                            XCTAssertNil(error, "GetTradeUrl should not produce an error")
+                            XCTAssertNotNil(result, "GetTradeUrl should produce a result")
+                            
+                            if let integrationUrlData = result {
+                                XCTAssertEqual(integrationUrlData.url, "https://pay.c14.money/?clientId=00ce2e0a-ee66-4971-a0e9-b9d627d106b0&targetAssetId=057d6b35-1af5-4827-bee2-c12842faa49e&targetAssetIdLock=false&sourceCurrencyCode=USD&sourceAmount=1234&quoteAmountLock=false&targetAddress=0.0.1443&targetAddressLock=false", "url should be like that")
+                            } else {
+                                XCTFail("Result should be of type transactionsHistoryData")
+                            }
+                            expectation4.fulfill()
+                        }
                     }
                 }
             }
         }
 
-        wait(for: [expectation1, expectation2, expectation3], timeout: 30.0)
-    }
-
-//    func testNFT() {
-//        let expectationCreateToken = XCTestExpectation(description: "testNFT should complete expectationCreateToken")
-//        let expectationAssociateToken = XCTestExpectation(description: "testNFT should complete expectationAssociateToken")
-//        let expectationMintToken = XCTestExpectation(description: "testNFT should complete expectationMintToken")
-//        let expectationTransferNFT = XCTestExpectation(description: "testNFT should complete expectationTransferNFT")
-//
-//        swiftBlade.initialize(apiKey: apiKeyMainnet, dAppCode: dAppCode, network: HederaNetwork.TESTNET, bladeEnv: env, force: true) { [self] result, error in
-//            XCTAssertNil(error, "Initialization should not produce an error")
-//            XCTAssertNotNil(result, "Initialization should produce a result")
-//
-//            let keys = [
-//                KeyRecord(privateKey: privateKeyHexEd25519, type: KeyType.admin)
-//            ]
-//            
-//            swiftBlade.createToken(
-//                treasuryAccountId: accountId, 
-//                supplyPrivateKey: privateKeyHex,
-//                tokenName: tokenName,
-//                tokenSymbol: tokenSymbol,
-//                isNft: true,
-//                keys: keys,
-//                decimals: 0,
-//                initialSupply: 0,
-//                maxSupply: 250
-//            ) { [self] result, error in
-//                XCTAssertNil(error, "createToken should not produce an error")
-//                XCTAssertNotNil(result, "createToken should produce a result")
-//
-//                if let tokenData = result {
-//                    XCTAssertNotNil(tokenData.tokenId, "tokenData.tokenId should present")
-//                } else {
-//                    XCTFail("no tokenData.tokenId")
-//                }
-//                expectationCreateToken.fulfill()
-//                let tokenId = result!.tokenId
-//
-//                swiftBlade.associateToken(
-//                    tokenIdOrCampaign: tokenId,
-//                    accountId: accountIdEd25519,
-//                    accountPrivateKey: privateKeyHexEd25519
-//                ) { [self] result, error in
-//                    XCTAssertNil(error, "associateToken should not produce an error")
-//                    XCTAssertNotNil(result, "associateToken should produce a result")
-//
-//                    if let tokenAssociateData = result {
-//                        XCTAssertNotNil(tokenAssociateData.status, "tokenAssociateData.status should present")
-//                        XCTAssertNil(tokenAssociateData.contractId, "tokenAssociateData.contractId should present")
-//                        XCTAssertNotNil(tokenAssociateData.topicSequenceNumber, "tokenAssociateData.topicSequenceNumber should present")
-//                        XCTAssertNotNil(tokenAssociateData.totalSupply, "tokenAssociateData.totalSupply should present")
-//                        XCTAssertNotNil(tokenAssociateData.serials, "tokenAssociateData.serials should present")
-//                    } else {
-//                        XCTFail("no tokenAssociateData")
-//                    }
-//                    
-//                    expectationAssociateToken.fulfill()
-//                    
-//                    swiftBlade.nftMint(
-//                        tokenId: tokenId,
-//                        supplyAccountId: accountId,
-//                        supplyPrivateKey: privateKeyHex,
-//                        file: "data:image/png;base64,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",
-//                        metadata: [
-//                            "name": "NFTitle",
-//                            "score": "10",
-//                            "power": "4",
-//                            "intelligence": "6",
-//                            "speed": "10"
-//                        ],
-//                        storageConfig: NFTStorageConfig(
-//                            provider: NFTStorageProvider.nftStorage,
-//                            apiKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDZFNzY0ZmM0ZkZFOEJhNjdCNjc1NDk1Q2NEREFiYjk0NTE4Njk0QjYiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTcwNDQ2NDUxODQ2MiwibmFtZSI6IkJsYWRlU0RLLXRlc3RrZXkifQ.t1wCiEuiTvcYOwssdZgiYaug4aF8ZrvMBdkTASojWGU"
-//                        )
-//                    ) { [self] result, error in
-//                        XCTAssertNil(error, "nftMint should not produce an error")
-//                        XCTAssertNotNil(result, "nftMint should produce a result")
-//
-//                        if let tokenMintData = result {
-//                            XCTAssertNotNil(tokenMintData.status, "tokenMintData.status should present")
-//                            XCTAssertNil(tokenMintData.contractId, "tokenMintData.contractId should present")
-//                            XCTAssertNotNil(tokenMintData.topicSequenceNumber, "tokenMintData.topicSequenceNumber should present")
-//                            XCTAssertNotNil(tokenMintData.totalSupply, "tokenMintData.totalSupply should present")
-//                            XCTAssertNotNil(tokenMintData.serials, "tokenMintData.serials should present")
-//                        } else {
-//                            XCTFail("no tokenMintData")
-//                        }
-//
-//                        // Add assertions for the result properties if needed
-//                        expectationMintToken.fulfill()
-//
-//                        swiftBlade.transferTokens(
-//                            tokenId: tokenId,
-//                            accountId: accountId,
-//                            accountPrivateKey: privateKeyHex,
-//                            receiverId: accountIdEd25519,
-//                            amountOrSerial: 1,
-//                            memo: "transfer NFT in Test"
-//                        ) { result, error in
-//                            XCTAssertNil(error, "transferTokens should not produce an error")
-//                            XCTAssertNotNil(result, "GetTradeUrl should produce a result")
-//
-//                            // Add assertions for the result properties if needed
-//                            expectationTransferNFT.fulfill()
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        
-//        wait(for: [expectationCreateToken, expectationAssociateToken, expectationMintToken, expectationTransferNFT], timeout: 120.0)
-//    }
-    
-    func testSchedule() {
-        let expectation1 = XCTestExpectation(description: "setUser should complete")
-        let expectation2 = XCTestExpectation(description: "createScheduleTransaction should complete")
-        let expectation3 = XCTestExpectation(description: "signScheduleId should complete")
-        
-        swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: self.accountAddress, privateKey: self.accountPrivateKey) { result, error in
-            XCTAssertNil(error, "setUser should not produce an error")
-            XCTAssertNotNil(result, "setUser should produce a result")
-            
-            self.swiftBlade.createScheduleTransaction(
-                type: .TRANSFER,
-                transfers: [
-                    ScheduleTransactionTransferHbar(sender: self.accountAddress, receiver: self.accountAddress2, value: Int.random(in: 100000...1000000)),
-                    ScheduleTransactionTransferToken(sender: self.accountAddress, receiver: self.accountAddress2, tokenId: self.tokenAddress, value: 3)
-                ],
-                usePaymaster: false
-            ) { (result: CreateScheduleData?, error: BladeJSError?) in
-                XCTAssertNil(error, "createScheduleTransaction should not produce an error")
-                XCTAssertNotNil(result, "createScheduleTransaction should produce a result")
-                
-                if let resultData = result {
-                    XCTAssertNotNil(resultData.scheduleId, "scheduleId should present")
-                    
-                    self.swiftBlade.signScheduleId(
-                        scheduleId: resultData.scheduleId,
-                        receiverAccountAddress: "",
-                        usePaymaster: false
-                    ) { [self] result, error in
-                        XCTAssertNotNil(error, "signScheduleId should produce an error")
-                        XCTAssertNil(result, "signScheduleId should not produce a result")
-                        expectation3.fulfill()
-                    }
-                } else {
-                    XCTFail("no scheduleId")
-                }
-                expectation2.fulfill()
-            }
-            expectation1.fulfill()
-        }
-        wait(for: [expectation1, expectation2, expectation3], timeout: 30.0)
+        wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 40.0)
     }
     
     private func setTestDataByChainId(chainId: KnownChainIds) {
+        self.chainId = chainId
         switch chainId {
             case KnownChainIds.ETHEREUM_SEPOLIA:
                 accountAddress = ethereumAddress
@@ -1171,6 +1358,8 @@ final class SwiftBladeTests: XCTestCase {
                 accountMnemonic = ethereumMnemonic
                 contractAddress = ethereumContractAddress
                 tokenAddress = ethereumTokenAddress
+                tokenAddress2 = ethereumTokenAddress2
+                nftAddress = ethereumNftAddress
             case KnownChainIds.HEDERA_TESTNET:
                 accountAddress = hederaAccountId1
                 accountPrivateKey = hederaPrivateKey1
@@ -1180,6 +1369,8 @@ final class SwiftBladeTests: XCTestCase {
                 accountMnemonic = hederaMnemonic
                 contractAddress = hederaContractId
                 tokenAddress = hederaTokenAddress
+                tokenAddress2 = hederaTokenAddress2
+                nftAddress = hederaNftAddress
             default:
                 accountAddress = ""
                 accountPrivateKey = ""
@@ -1189,6 +1380,13 @@ final class SwiftBladeTests: XCTestCase {
                 accountMnemonic = ""
                 contractAddress = ""
                 tokenAddress = ""
+                tokenAddress2 = ""
+                nftAddress = ""
         }
+    }
+    
+    private func randomString(length: Int) -> String {
+        let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        return String((0..<length).map { _ in letters.randomElement()! })
     }
 }

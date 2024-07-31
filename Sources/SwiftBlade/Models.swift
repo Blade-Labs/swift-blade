@@ -119,7 +119,7 @@ public struct CreatedAccountData: Codable {
     public var seedPhrase: String
     public var publicKey: String
     public var privateKey: String
-    public var accountAddress: String?
+    public var accountAddress: String
     public var evmAddress: String
     public var status: String
 }
@@ -233,7 +233,7 @@ public struct NftMetadata: Codable {
     public var type: String
     public var creator: String
     public var author: String
-    public var properties: [String: String]
+    public var properties: [String: String]?
     public var image: String
 }
 
@@ -288,7 +288,6 @@ public struct TransactionData: Codable {
     public var nftTransfers: [NftTransferData]?
     public var memo: String?
     public var fee: Double?
-    public var showDetailed: Bool?
     public var plainData: TransactionHistoryPlainData?
     public var consensusTimestamp: String
 }
