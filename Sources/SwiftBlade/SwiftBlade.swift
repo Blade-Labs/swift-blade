@@ -18,24 +18,24 @@ public class SwiftBlade: NSObject {
 
     // MARK: - It's init time 🎬
 
-    /// Init instance of SwiftBlade for correct work with Blade API and Hedera network.
+    /// Init instance of BladeSDK for correct work with Blade API and other endpoints.
     ///
     /// - Parameters:
     ///   - apiKey: Unique key for API provided by Blade team.
-    ///   - dAppCode: your dAppCode - request specific one by contacting Bladelabs team
-    ///   - chainId: chainId one of supported chains from KnownChainIds
-    ///   - bladeEnv: `.CI` or `.PROD` field to set BladeAPI environment. Prod used by default.
+    ///   - chainId: one of supported chains from KnownChainIds
+    ///   - dAppCode: your dAppCode - request specific one by contacting BladeLabs team
+    ///   - bladeEnv: environment to choose BladeAPI server (`.CI` or `.PROD`) field to set BladeAPI environment. Prod used by default.
     ///   - force: optional field to force init. Will not crash if already initialized
     ///   - completion: completion closure that will be executed after webView is fully loaded and rendered, and result with `InfoData` type
     ///
     /// ```
-    /// SwiftBlade.shared.initialize(apiKey: apiKey, dAppCode: apiKey, chainId: .HEDERA_TESTNET, bladeEnv: .Prod) { (result, error) in
+    /// SwiftBlade.shared.initialize(apiKey: apiKey, chainId: .HEDERA_TESTNET, dAppCode: apiKey, bladeEnv: .Prod) { (result, error) in
     ///     print(result ?? error)
     /// }
     /// ```
     ///
     /// - Returns `InfoData` - with information about Blade instance, including visitorId
-    public func initialize(apiKey: String, dAppCode: String, chainId: KnownChainIds, bladeEnv: BladeEnv = BladeEnv.Prod, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
+    public func initialize(apiKey: String, chainId: KnownChainIds, dAppCode: String, bladeEnv: BladeEnv = BladeEnv.Prod, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
         guard !webViewInitialized || force else {
             print("Error while doing double init of SwiftBlade")
             return completion(nil, BladeJSError(name: "Error", reason: "Error while doing double init of SwiftBlade"))
@@ -74,7 +74,7 @@ public class SwiftBlade: NSObject {
 
     // MARK: - Public methods 📢
 
-    /// Get SDK info and check if SDK initialized
+    /// Returns information about initialized instance of BladeSDK.
     ///
     /// - Parameters:
     ///   - completion: result with `InfoData` type
@@ -96,6 +96,22 @@ public class SwiftBlade: NSObject {
         )
     }
     
+    /// Set active user for further operations.
+    ///
+    /// - Parameters:
+    ///   - accountProvider: one of supported providers: PrivateKey or Magic
+    ///   - accountIdOrEmail: account id (0.0.xxxxx, 0xABCDEF..., EMAIL) or empty string for some ChainId
+    ///   - privateKey: private key for account (hex encoded privateKey with DER-prefix or 0xABCDEF...) In case of Magic provider - empty string
+    ///   - completion: result with `UserInfoData` type
+    ///
+    /// ```
+    /// // Set account for PrivateKey provider
+    /// SwiftBlade.shared.setUser(AccountProvider.PrivateKey, "0.0.45467464", "302e020100300506032b6570042204204323472EA5374E80B07346243234DEADBEEF25235235...") { (result, error) in
+    ///   print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `UserInfoData` - with information about account
     public func setUser(accountProvider: AccountProvider, accountIdOrEmail: String, privateKey: String, completion: @escaping (_ result: UserInfoData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("setUser")
         performRequest(
@@ -106,6 +122,18 @@ public class SwiftBlade: NSObject {
         )
     }
     
+    /// Clear active user from SDK instance.
+    ///
+    /// - Parameters:
+    ///   - completion: result with `UserInfoData` type
+    ///
+    /// ```
+    /// SwiftBlade.shared.resetUser { result, error in
+    ///   print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `UserInfoData` - with information about account
     public func resetUser(completion: @escaping (_ result: UserInfoData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("resetUser")
         performRequest(
@@ -139,17 +167,17 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Send HBAR/ETH to specific account.
+    /// Send account balance (HBAR/ETH) to specific account.
     ///
     /// - Parameters:
     ///   - receiverAddress: receiver address (0.0.xxxxx, 0x123456789abcdef...)
-    ///   - amount: amount of currency to send (decimal string)
-    ///   - memo: memo (limited to 100 characters)
+    ///   - amount: amount of currency to send, as a string representing a decimal number (e.g., "211.3424324")
+    ///   - memo: transaction memo (limited to 100 characters)
     ///   - completion: result with `TransactionResponseData` type
     ///
     /// ```
     /// let receiverAddress = "0.0.10002"
-    /// let amount: Decimal = "7"
+    /// let amount = "7.2"
     /// let memo = "transferBalance tests Swift"
     ///
     /// SwiftBlade.shared.transferBalance(
@@ -161,7 +189,7 @@ public class SwiftBlade: NSObject {
     /// }
     /// ```
     ///
-    /// - Returns: `TransactionResponseData` receipt
+    /// - Returns: `TransactionResponseData` response
     public func transferBalance(receiverAddress: String, amount: String, memo: String, completion: @escaping (_ result: TransactionResponseData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferBalance")
         performRequest(
@@ -177,8 +205,8 @@ public class SwiftBlade: NSObject {
     /// - Parameters:
     ///   - tokenAddress: token address to send (0.0.xxxxx or 0x123456789abcdef...)
     ///   - receiverAddress: receiver account address (0.0.xxxxx or 0x123456789abcdef...)
-    ///   - amountOrSerial: amount of fungible tokens to send (with token-decimals correction) on NFT serial number. (e.g. amount 0.01337 when token decimals 8 will send 1337000 units of token)
-    ///   - memo: memo (limited to 100 characters)
+    ///   - amountOrSerial: amount of fungible tokens to send (with token-decimals correction) or NFT serial number. (e.g. amount "0.01337" when token decimals 8 will send 1337000 units of token)
+    ///   - memo: transaction memo (limited to 100 characters)
     ///   - usePaymaster: if true, Paymaster account will pay fee transaction, for dApp configured fungible-token
     ///   - completion: result with `TransactionResponseData` type
     ///
@@ -188,8 +216,8 @@ public class SwiftBlade: NSObject {
     /// let amount = "5"
     ///
     /// SwiftBlade.shared.transferTokens(
-    ///     tokenAddress: tokenId,
-    ///     receiverAddress: receiverId,
+    ///     tokenAddress: tokenAddress,
+    ///     receiverAddress: receiverAddress,
     ///     amountOrSerial: amount,
     ///     memo: "transferTokens tests Swift (paid)",
     ///     usePaymaster: false
@@ -198,7 +226,7 @@ public class SwiftBlade: NSObject {
     /// }
     /// ```
     ///
-    /// - Returns: `TransactionReceiptData` receipt
+    /// - Returns: `TransactionResponseData` response
     public func transferTokens(tokenAddress: String, receiverAddress: String, amountOrSerial: String, memo: String, usePaymaster: Bool = true, completion: @escaping (_ result: TransactionResponseData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("transferTokens")
         performRequest(
@@ -235,8 +263,8 @@ public class SwiftBlade: NSObject {
     /// In addition to the price in USD, the price in the currency you specified is returned
     ///
     /// - Parameters:
-    ///   - search: CoinGecko coinId, or address in one of the coin platforms or `hbar` (default, alias for `hedera-hashgraph`)
-    ///   - currency: result currency for price field
+    ///   - search: coinId (e.g. "hbar", "hedera-hashgraph"). You can get valid one using .getCoinList() method
+    ///   - currency: currency to get price in (e.g. "uah", "pln", "usd")
     ///   - completion: result with CoinInfoData type
     ///
     /// ```
@@ -273,7 +301,7 @@ public class SwiftBlade: NSObject {
     /// Call contract function. Directly or via BladeAPI using paymaster account (fee will be paid by Paymaster account), depending on your dApp configuration.
     ///
     /// - Parameters:
-    ///   - contractAddress: contract id (0.0.xxxxx)
+    ///   - contractAddress: contract address (0.0.xxxxx or 0x123456789abcdef...)
     ///   - functionName: name of the contract function to call
     ///   - params: function argument. Can be generated with `createContractFunctionParameters()` method
     ///   - gas: gas limit for transaction (default 100000)
@@ -288,7 +316,7 @@ public class SwiftBlade: NSObject {
     /// let usePaymaster = false
     ///
     /// SwiftBlade.shared.contractCallFunction(
-    ///     contractAddress: contractAddress, functionName: functionName, params: parameters, accountId: accountId, accountPrivateKey: accountPrivateKey, gas: gas, usePaymaster: usePaymaster
+    ///     contractAddress: contractAddress, functionName: functionName, params: parameters, gas: gas, usePaymaster: usePaymaster
     /// ) { result, error in
     ///     print(result ?? error)
     /// }
@@ -308,7 +336,7 @@ public class SwiftBlade: NSObject {
     /// Call query on contract function. Similar to  `contractCallFunction()` can be called directly or via BladeAPI using Paymaster account.
     ///
     /// - Parameters:
-    ///   -  contractAddress: contract id (0.0.xxxxx)
+    ///   -  contractAddress: contract address (0.0.xxxxx or 0x123456789abcdef...)
     ///   -  functionName: name of the contract function to call
     ///   -  params: function argument. Can be generated with `createContractFunctionParameters()` method
     ///   -  gas: gas limit for the transaction
@@ -453,7 +481,7 @@ public class SwiftBlade: NSObject {
 
 
 
-    /// Delete account. This method requires account private key and operator private key. Operator is the one who paying fees
+    /// Delete hedera account
     ///
     /// - Parameters:
     ///   - deleteAccountAddress: account address to delete
@@ -511,29 +539,29 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    /// Get Node list and use it for choosing account stacking node
+    /// Get Hedera node list available for stake
     ///
     /// - Parameters:
     ///   - completion: result with NodesData type
     ///
     /// ```
-    /// SwiftBlade.shared.getNodeList() { result, error in
+    /// SwiftBlade.shared.getNodeList { result, error in
     ///     print(result ?? error)
     /// }
     /// ```
     ///
     /// - Returns: `NodesData` node list
-    public func getNodeList(completion: @escaping (_ result: NodesData?, _ error: BladeJSError?) -> Void) {
+    public func getNodeList(completion: @escaping (_ result: NodeListData?, _ error: BladeJSError?) -> Void) {
         let completionKey = getCompletionKey("getNodeList")
         performRequest(
             completionKey: completionKey,
             js: "getNodeList('\(completionKey)')",
-            decodeType: NodesResponse.self,
+            decodeType: NodeListResponse.self,
             completion: completion
         )
     }
   
-    /// Stake/unstake account
+    /// Stake/unstake hedera account
     ///
     /// - Parameters:
     ///   - nodeId node id to stake to. If negative or null, account will be unstaked
@@ -558,7 +586,7 @@ public class SwiftBlade: NSObject {
     
     /// Get accounts list and keys from private key or mnemonic
     /// Supporting standard and legacy key derivation.
-    /// Every key with account will be returned.
+    /// Every key with account will be returned. Returned keys with DER header.
     ///
     /// - Parameters:
     ///   - keyOrMnemonic: BIP39 mnemonic, private key with DER header
@@ -648,7 +676,7 @@ public class SwiftBlade: NSObject {
     /// let originalString = "hello"
     /// let signedMessage = "27cb9d51434cf1e76d7ac515b19442c619f641e6fccddbf4a3756b14466becb6992dc1d2a82268018147141fc8d66ff9ade43b7f78c176d070a66372d655f942"
     /// let addressOrPublicKey = "302d300706052b8104000a032200029dc73991b0d9cdbb59b2cd0a97a0eaff6de801726cb39804ea9461df6be2dd30"
-    /// SwiftBlade.shared.signVerify(originalString: originalString, encoding: .utf8, signature: signedMessage, addressOrPublicKey: addressOrPublicKey) { result, error in
+    /// SwiftBlade.shared.signVerify(encodedMessage: originalString, encoding: .utf8, signature: signedMessage, addressOrPublicKey: addressOrPublicKey) { result, error in
     ///     print(result ?? error)
     /// }
     /// ```
@@ -701,7 +729,7 @@ public class SwiftBlade: NSObject {
     ///     .addUInt64Array(value: [6])
     ///     .addUInt64Array(value: [2])
     ///
-    /// SwiftBlade.shared.getParamsSignature(params: parameters, accountPrivateKey: privateKeyHex) { result, error in
+    /// SwiftBlade.shared.getParamsSignature(params: parameters) { result, error in
     ///     print(result ?? error)
     /// }
     /// ```
@@ -877,8 +905,6 @@ public class SwiftBlade: NSObject {
     /// Create token (NFT or Fungible Token)
     ///
     /// - Parameters:
-    ///   - treasuryAccountId: treasury account id
-    ///   -  supplyPrivateKey: supply account private key
     ///   -  tokenName: token name (string up to 100 bytes)
     ///   -  tokenSymbol: token symbol (string up to 100 bytes)
     ///   -  isNft: set token type NFT
@@ -894,8 +920,6 @@ public class SwiftBlade: NSObject {
     /// ]
     ///
     /// SwiftBlade.shared.createToken(
-    ///     treasuryAccountId: accountId,
-    ///     supplyPrivateKey: privateKey,
     ///     tokenName: "Blade Demo Token",
     ///     tokenSymbol: "GD",
     ///     isNft: true,
@@ -933,7 +957,7 @@ public class SwiftBlade: NSObject {
     }
    
     
-    /// Associate token to account. Association fee will be covered by PayMaster, if tokenId configured in dApp
+    /// Associate token to hedera account. Association fee will be covered by PayMaster, if tokenId configured in dApp
     ///
     /// - Parameters:
     ///   -  tokenIdOrCampaign: token id to associate. Empty to associate all tokens configured in dApp. Campaign name to associate on demand
@@ -1020,11 +1044,11 @@ public class SwiftBlade: NSObject {
         )
     }
     
-    /// Get token info
+    /// Get FT or NFT token info
     ///
     /// - Parameters:
-    ///   -  tokenAddress: token address
-    ///   -  serial: token serial (for NFT)
+    ///   -  tokenAddress: token address (0.0.xxxxx or 0x123456789abcdef...)
+    ///   -  serial: serial number in case of NFT token
     ///   -  completion: callback function, with result of TransactionReceiptData or BladeJSError
     ///
     /// ```

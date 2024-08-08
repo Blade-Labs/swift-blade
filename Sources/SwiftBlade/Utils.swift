@@ -9,7 +9,7 @@ func getRemoteConfig(dAppCode: String, sdkVersion: String, bladeEnv: BladeEnv) a
     )
     switch bladeEnv {
     case .Prod:
-        url = URL(string: "https://rest.prod.bladewallet.io/dapi/v8/public/sdk/config")!
+        url = URL(string: "https://dapi.prod.bladewallet.io/dapi/public/v8/sdk/config")!
         fallbackConfig.fpApiKey = "Li4RsMbgPldpOVfWjnaF"
         throw SwiftBladeError.initError("Prod env not available for v1.0.0 now")
     case .CI:

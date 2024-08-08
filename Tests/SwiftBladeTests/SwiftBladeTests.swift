@@ -19,8 +19,8 @@ class SwiftBladeTestsHedera: XCTestCase {
     let hederaAccountId1 = "0.0.1443"
     let hederaPrivateKey1 = "3030020100300706052b8104000a04220420ebccecef769bb5597d0009123a0fd96d2cdbe041c2a2da937aaf8bdc8731799b"
     let hederaPublicKey1 = "302d300706052b8104000a032200029dc73991b0d9cdbb59b2cd0a97a0eaff6de801726cb39804ea9461df6be2dd30"
-    let hederaAccountId2 = "0.0.1881"
-    let hederaPrivateKey2 = "3030020100300706052b8104000a042204200e65ab47c5f66cd0db9d1517f43c415e13f16dc1bcf30d85da1c73e58fc5366d"
+    let hederaAccountId2 = "0.0.1767"
+    let hederaPrivateKey2 = "302e020100300506032b657004220420c903827cacbaf81f105aa548db06a3ab8cbddd362f54be0a803430a4401f6b2c"
     let hederaMnemonic = "purity slab doctor swamp tackle rebuild summer bean craft toddler blouse switch"
     let hederaContractId = "0.0.4437600"
     let hederaTokenAddress = "0.0.2216053"
@@ -1181,16 +1181,41 @@ class SwiftBladeTestsHedera: XCTestCase {
         let expectation2 = XCTestExpectation(description: "SwapTokens should complete")
         let expectation3 = XCTestExpectation(description: "SwapTokens should fail")
 
-        self.swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: self.accountAddress2, privateKey: self.accountPrivateKey2) { result, error in
+        var accountIdOrEmail = ""
+        var privateKey = ""
+        var sourceCurrency = ""
+        var targetCurrency = ""
+        var amount: Double = 0
+        var serviceId = ""
+        
+        if (self.chainId == .HEDERA_TESTNET) {
+            accountIdOrEmail = self.accountAddress2;
+            privateKey = self.accountPrivateKey2;
+            sourceCurrency = "HBAR"
+            targetCurrency = "SAUCE"
+            amount = 0.01
+            serviceId = "saucerswap"
+        }
+        if (self.chainId == .ETHEREUM_SEPOLIA) {
+            accountIdOrEmail = self.accountAddress;
+            privateKey = self.accountPrivateKey;
+            sourceCurrency = "USDC"
+            targetCurrency = "EURC"
+            amount = 0.05
+            serviceId = "uniswap"
+        }
+        
+        
+        self.swiftBlade.setUser(accountProvider: .PrivateKey, accountIdOrEmail: accountIdOrEmail, privateKey: privateKey) { result, error in
             XCTAssertNil(error, "setUser should not produce an error")
             XCTAssertNotNil(result, "setUser should produce a result")
             
             self.swiftBlade.swapTokens(
-                sourceCode: "HBAR",
-                sourceAmount: 1,
-                targetCode: "SAUCE",
+                sourceCode: sourceCurrency,
+                sourceAmount: amount,
+                targetCode: targetCurrency,
                 slippage: 0.5,
-                serviceId: "saucerswap"
+                serviceId: serviceId
             ) { result, error in
                 XCTAssertNil(error, "SwapTokens should not produce an error")
                 XCTAssertNotNil(result, "SwapTokens should produce a result")

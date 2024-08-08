@@ -142,11 +142,11 @@ public struct StakingInfo: Codable {
     public var stakePeriodStart: String?
 }
 
-struct NodesResponse: Response, Codable {
-    var data: NodesData
+struct NodeListResponse: Response, Codable {
+    var data: NodeListData
 }
 
-public struct NodesData: Codable {
+public struct NodeListData: Codable {
     public var nodes: [NodeInfo]
 }
 
