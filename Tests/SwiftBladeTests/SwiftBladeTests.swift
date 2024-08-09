@@ -59,7 +59,7 @@ class SwiftBladeTestsHedera: XCTestCase {
         setTestDataByChainId(chainId: chainId);
         
         // Call swiftBlade.initialize and fulfill the expectation in its completion handler.
-        swiftBlade.initialize(apiKey: apiKey, dAppCode: dAppCode, chainId: chainId, bladeEnv: bladeEnv, force: false) { result, error in
+        swiftBlade.initialize(apiKey: apiKey, chainId: chainId, dAppCode: dAppCode, bladeEnv: bladeEnv, force: false) { result, error in
             XCTAssertNil(error, "Initialization should not produce an error")
             XCTAssertNotNil(result, "Initialization should produce a result")
             
@@ -1254,7 +1254,7 @@ class SwiftBladeTestsHedera: XCTestCase {
 
         let mainnetChain: KnownChainIds = chainId == .HEDERA_TESTNET ? .HEDERA_MAINNET : .ETHEREUM_MAINNET
         
-        swiftBlade.initialize(apiKey: apiKeyMainnet, dAppCode: dAppCode, chainId: mainnetChain, bladeEnv: bladeEnv, force: true) { [self] result, error in
+        swiftBlade.initialize(apiKey: apiKeyMainnet, chainId: mainnetChain, dAppCode: dAppCode, bladeEnv: bladeEnv, force: true) { [self] result, error in
             XCTAssertNil(error, "Initialization should not produce an error")
             XCTAssertNotNil(result, "Initialization should produce a result")
 
@@ -1323,7 +1323,7 @@ class SwiftBladeTestsHedera: XCTestCase {
         let amountByChain: Double = chainId == .HEDERA_TESTNET ? 2000 : 2
         
         
-        swiftBlade.initialize(apiKey: apiKeyMainnet, dAppCode: dAppCode, chainId: mainnetChain, bladeEnv: bladeEnv, force: true) { [self] result, error in
+        swiftBlade.initialize(apiKey: apiKeyMainnet, chainId: mainnetChain, dAppCode: dAppCode, bladeEnv: bladeEnv, force: true) { [self] result, error in
             XCTAssertNil(error, "Initialization should not produce an error")
             XCTAssertNotNil(result, "Initialization should produce a result")
             let redirectUrl = "redirect-url-here"
