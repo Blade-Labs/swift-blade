@@ -1,85 +1,88 @@
-# Response types
+# Data types
+
 
 ```swift
+import WebKit
+
+// MARK: - JS wrapper response types
+
 struct ResultRaw: Codable {
     var completionKey: String?
     var error: BladeJSError?
 }
-```
 
-```swift
 protocol Response: Codable {
     associatedtype DataType
     var data: DataType { get }
 }
-```
 
-```swift
 struct InfoResponse: Response, Codable {
     var data: InfoData
 }
-```
 
-```swift
 public struct InfoData: Codable {
     public var apiKey: String
     public var dAppCode: String
-    public var network: String
+    public var chainId: KnownChainIds
+    public var isTestnet: Bool
     public var visitorId: String
-    public var sdkEnvironment: String
+    public var sdkEnvironment: BladeEnv
     public var sdkVersion: String
     public var nonce: Int
+    public var user: UserInfoData
 }
-```
 
-```swift
+struct UserInfoResponse: Response, Codable {
+    var data: UserInfoData
+}
+
+public struct UserInfoData: Codable {
+    public var accountId: String
+    public var accountProvider: AccountProvider?
+    public var userPrivateKey: String
+    public var userPublicKey: String
+}
+
 struct BalanceResponse: Response, Codable {
     var data: BalanceData
 }
-```
 
-```swift
 public struct BalanceData: Codable {
-    public var hbars: Double
-    public var tokens: [BalanceDataToken]
+    public var balance: String
+    public var rawBalance: String
+    public var decimals: Int
+    public var tokens: [TokenBalanceData]
+    
 }
-```
 
-```swift
-public struct BalanceDataToken: Codable {
-    public var balance: Double
-    public var tokenId: String
+public struct TokenBalanceData: Codable {
+    public var balance: String
+    public var decimals: Int
+    public var name: String
+    public var symbol: String
+    public var address: String
+    public var rawBalance: String
 }
-```
 
-```swift
 struct PrivateKeyResponse: Response, Codable {
     var data: PrivateKeyData
 }
-```
 
-```swift
 public struct PrivateKeyData: Codable {
     public var privateKey: String
     public var publicKey: String
     public var accounts: [String]
     public var evmAddress: String
 }
-```
 
-```swift
 struct AccountPrivateResponse: Response, Codable {
     var data: AccountPrivateData
 }
-```
 
-```swift
 public struct AccountPrivateData: Codable {
     public var accounts: [AccountPrivateRecord]
 }
-```
 
-```swift
 public struct AccountPrivateRecord: Codable {
     public var privateKey: String
     public var publicKey: String
@@ -88,97 +91,69 @@ public struct AccountPrivateRecord: Codable {
     public var path: String
     public var keyType: CryptoKeyType
 }
-```
 
-```swift
 struct AccountAPIResponse: Codable {
     var id: String
     var network: String
     var associationPresetTokenStatus: String
     var transactionBytes: String
 }
-```
 
-```swift
 struct SignMessageResponse: Response, Codable {
     var data: SignMessageData
 }
-```
 
-```swift
 public struct SignMessageData: Codable {
     public var signedMessage: String
 }
-```
 
-```swift
 struct SignVerifyMessageResponse: Response, Codable {
     var data: SignVerifyMessageData
 }
-```
 
-```swift
 public struct SignVerifyMessageData: Codable {
     public var valid: Bool
 }
-```
 
-```swift
 struct CreatedAccountResponse: Response, Codable {
     var data: CreatedAccountData
 }
-```
 
-```swift
 public struct CreatedAccountData: Codable {
     public var seedPhrase: String
     public var publicKey: String
     public var privateKey: String
-    public var accountId: String?
+    public var accountAddress: String
     public var evmAddress: String
-    public var transactionId: String?
     public var status: String
-    public var queueNumber: Int?
 }
-```
 
-```swift
 struct AccountInfoResponse: Response, Codable {
     var data: AccountInfoData
 }
-```
 
-```swift
 public struct AccountInfoData: Codable {
-    public var accountId: String
-    public var evmAddress: String
-    public var calculatedEvmAddress: String
+    public var accountAddress: String
     public var publicKey: String
+    public var evmAddress: String
     public var stakingInfo: StakingInfo
+    public var calculatedEvmAddress: String
 }
-```
 
-```swift
 public struct StakingInfo: Codable {
     public var pendingReward: Int64
     public var stakedNodeId: Int64?
     public var stakePeriodStart: String?
 }
-```
 
-```swift
-struct NodesResponse: Response, Codable {
-    var data: NodesData
+struct NodeListResponse: Response, Codable {
+    var data: NodeListData
 }
-```
 
-```swift
-public struct NodesData: Codable {
+public struct NodeListData: Codable {
     public var nodes: [NodeInfo]
 }
-```
 
-```swift
 public struct NodeInfo: Codable {
     public var description: String
     public var max_stake: Int64
@@ -189,15 +164,12 @@ public struct NodeInfo: Codable {
     public var stake_not_rewarded: Int64
     public var stake_rewarded: Int64
 }
-```
 
-```swift
+
 struct TransactionReceiptResponse: Response, Codable {
     var data: TransactionReceiptData
 }
-```
 
-```swift
 public struct TransactionReceiptData: Codable {
     public var status: String
     public var contractId: String?
@@ -205,70 +177,125 @@ public struct TransactionReceiptData: Codable {
     public var totalSupply: String?
     public var serials: [String]
 }
-```
 
-```swift
-struct ContractQueryResponse: Response, Codable {
-    var data: ContractQueryData
+struct TokenInfoResponse: Response, Codable {
+    var data: TokenInfoData
 }
-```
 
-```swift
-public struct ContractQueryData: Codable {
+public struct HederaKey: Codable {
+    public var _type: CryptoKeyType
+    public var key: String
+}
+
+public struct TokenInfoData: Codable {
+    public var token: TokenInfo
+    public var nft: NftInfo?
+    public var metadata: NftMetadata?
+}
+
+public struct TokenInfo: Codable {
+    public var admin_key: HederaKey
+    public var created_timestamp: String
+    public var decimals: String
+    public var deleted: Bool
+    public var expiry_timestamp: Int64
+    public var fee_schedule_key: HederaKey?
+    public var freeze_default: Bool
+    public var freeze_key: HederaKey?
+    public var initial_supply: String
+    public var kyc_key: HederaKey?
+    public var max_supply: String
+    public var memo: String
+    public var modified_timestamp: String
+    public var name: String
+    public var pause_key: HederaKey?
+    public var pause_status: String
+    public var supply_key: HederaKey?
+    public var supply_type: String
+    public var symbol: String
+    public var token_id: String
+    public var total_supply: String
+    public var treasury_account_id: String
+    public var type: String
+    public var wipe_key: HederaKey?
+}
+
+public struct NftInfo: Codable {
+    public var account_id: String
+    public var token_id: String
+    public var delegating_spender: String?
+    public var spender_id: String?
+    public var created_timestamp: String
+    public var deleted: Bool
+    public var metadata: String
+    public var modified_timestamp: String
+    public var serial_number: Int64
+}
+
+public struct NftMetadata: Codable {
+    public var name: String
+    public var type: String
+    public var creator: String
+    public var author: String
+    public var properties: [String: String]?
+    public var image: String
+}
+
+
+struct TransactionResponseResponse: Response, Codable {
+    var data: TransactionResponseData
+}
+
+public struct TransactionResponseData: Codable {
+    public var transactionHash: String
+    public var transactionId: String
+}
+
+struct ContractCallQueryRecordsResponse: Response, Codable {
+    var data: ContractCallQueryRecordsData
+}
+
+public struct ContractCallQueryRecordsData: Codable {
     public var gasUsed: Int
-    public var values: [ContractQueryRecord]
+    public var values: [ContractCallQueryRecord]
 }
-```
 
-```swift
-public struct ContractQueryRecord: Codable {
+public struct ContractCallQueryRecord: Codable {
     public var type: String
     public var value: String
 }
-```
 
-```swift
 struct SplitSignatureResponse: Response, Codable {
     var data: SplitSignatureData
 }
-```
 
-```swift
 public struct SplitSignatureData: Codable {
     public var v: Int
     public var r: String
     public var s: String
 }
-```
 
-```swift
 struct TransactionsHistoryResponse: Response, Codable {
     var data: TransactionsHistoryData
 }
-```
 
-```swift
 public struct TransactionsHistoryData: Codable {
+    public var transactions: [TransactionData]
     public var nextPage: String?
-    public var transactions: [TransactionHistoryDetail]
 }
-```
 
-```swift
-public struct TransactionHistoryDetail: Codable {
-    public var fee: Double
-    public var memo: String
-    public var nftTransfers: [TransactionHistoryNftTransfer]?
-    public var time: String
+public struct TransactionData: Codable {
     public var transactionId: String
-    public var transfers: [TransactionHistoryTransfer]
     public var type: String
+    public var time: String
+    public var transfers: [TransferData]
+    public var nftTransfers: [NftTransferData]?
+    public var memo: String?
+    public var fee: Double?
     public var plainData: TransactionHistoryPlainData?
     public var consensusTimestamp: String
 }
-```
 
-```swift
 public struct TransactionHistoryPlainData: Codable {
     public var type: String
     public var token_id: String
@@ -276,51 +303,38 @@ public struct TransactionHistoryPlainData: Codable {
     public var senders: [String]
     public var receivers: [String]
 }
-```
 
-```swift
-public struct TransactionHistoryTransfer: Codable {
+public struct TransferData: Codable {
     public var account: String
     public var amount: Decimal
-    public var is_approval: Bool
+    public var tokenAddress: String?
+    public var asset: String
+    
 }
-```
 
-```swift
-public struct TransactionHistoryNftTransfer: Codable {
-    public var is_approval: Bool
-    public var receiver_account_id: String
-    public var sender_account_id: String
-    public var serial_number: Int
-    public var token_id: String
+public struct NftTransferData: Codable {
+    public var receiverAddress: String
+    public var senderAddress: String
+    public var serial: String
+    public var tokenAddress: String
 }
-```
 
-```swift
 struct IntegrationUrlResponse: Response, Codable {
     var data: IntegrationUrlData
 }
-```
 
-```swift
 public struct IntegrationUrlData: Codable {
     public var url: String
 }
-```
 
-```swift
 struct SwapQuotesResponse: Response, Codable {
     var data: SwapQuotesData
 }
-```
 
-```swift
 public struct SwapQuotesData: Codable {
     public var quotes: [ICryptoFlowQuote]
 }
-```
 
-```swift
 public struct ICryptoFlowQuote: Codable {
     public struct Service: Codable {
         public var id: String
@@ -336,105 +350,81 @@ public struct ICryptoFlowQuote: Codable {
     public var widgetUrl: String?
     public var paymentMethods: [String]?
 }
-```
 
-```swift
 public struct IAssetQuote: Codable {
     public var asset: ICryptoFlowAsset
     public var amountExpected: Double
     public var totalFee: Double?
 }
-```
 
-```swift
 public struct ICryptoFlowAsset: Codable {
     public var name: String
     public var code: String
     public var type: String
+    // crypto only
     public var address: String?
     public var chainId: Int?
     public var decimals: Int?
     public var minAmount: Double?
     public var maxAmount: Double?
+    // fiat only
     public var symbol: String?
+    // both
     public var imageUrl: String?
 }
-```
 
-```swift
 struct ResultResponse: Response, Codable {
     var data: ResultData
 }
-```
 
-```swift
 public struct ResultData: Codable {
     public var success: Bool
 }
-```
 
-```swift
 struct CreateTokenResponse: Response, Codable {
     var data: CreateTokenData
 }
-```
 
-```swift
 public struct CreateTokenData: Codable {
     public var tokenId: String
 }
-```
 
-```swift
 public struct RemoteConfig: Codable {
     public var fpApiKey: String
+    public var fpSubdomain: String
 }
-```
 
-```swift
 struct CoinListResponse: Response, Codable {
     var data: CoinListData
 }
-```
 
-```swift
 public struct CoinListData: Codable {
     public var coins: [CoinItem]
 }
-```
 
-```swift
 public struct CoinItem: Codable {
     public var id: String
     public var symbol: String
     public var name: String
     public var platforms: [CoinGeckoPlatform]
 }
-```
 
-```swift
 public struct CoinGeckoPlatform: Codable {
     public var name: String
     public var address: String
 }
-```
 
-```swift
 struct CoinInfoResponse: Response, Codable {
     var data: CoinInfoData
 }
-```
 
-```swift
 public struct CoinInfoData: Codable {
     public var coin: CoinData
     public var priceUsd: Double
     public var price: Double?
     public var currency: String
 }
-```
 
-```swift
 public struct CoinData: Codable {
     public var id: String
     public var symbol: String
@@ -445,29 +435,21 @@ public struct CoinData: Codable {
     public var market_data: CoinDataMarket
     public var platforms: [CoinGeckoPlatform]
 }
-```
 
-```swift
 public struct CoinDataDescription: Codable {
     public var en: String
 }
-```
 
-```swift
 public struct CoinDataImage: Codable {
     public var thumb: String
     public var small: String
     public var large: String
 }
-```
 
-```swift
 public struct CoinDataMarket: Codable {
     public var current_price: [String: Double]
 }
-```
 
-```swift
 public struct KeyRecord: Codable {
     public var privateKey: String
     public var type: KeyType
@@ -477,39 +459,36 @@ public struct KeyRecord: Codable {
         self.type = type
     }
 }
-```
 
-```swift
+public struct NFTStorageConfig: Encodable {
+    public var provider: NFTStorageProvider
+    public var apiKey: String
+    
+    public init(provider: NFTStorageProvider, apiKey: String) {
+        self.provider = provider
+        self.apiKey = apiKey
+    }
+}
+
 struct TokenDropResponse: Response, Codable {
     var data: TokenDropData
 }
-```
 
-```swift
 public struct TokenDropData: Codable {
     public var status: String
-    public var statusCode: Int
-    public var timestamp: String
-    public var executionStatus: String
-    public var requestId: String
-    public var accountId: String
+    public var accountAddress: String
+    public var dropStatuses: [String: DropStatus]
     public var redirectUrl: String
 }
-```
 
-```swift
 struct CreateScheduleResponse: Response, Codable {
     var data: CreateScheduleData
 }
-```
 
-```swift
 public struct CreateScheduleData: Codable {
     public var scheduleId: String
 }
-```
 
-```swift
 public protocol ScheduleTransactionTransfer: Codable {
     var type: ScheduleTransferType { get }
     var sender: String { get }
@@ -518,9 +497,7 @@ public protocol ScheduleTransactionTransfer: Codable {
     var tokenId: String { get set }
     var serial: Int { get }
 }
-```
 
-```swift
 public class ScheduleTransactionTransferHbar: ScheduleTransactionTransfer {
     public required init(sender: String, receiver: String, value: Int) {
         self.sender = sender
@@ -535,9 +512,7 @@ public class ScheduleTransactionTransferHbar: ScheduleTransactionTransfer {
     public var tokenId: String = ""
     public var serial: Int = 0
 }
-```
 
-```swift
 public class ScheduleTransactionTransferToken: ScheduleTransactionTransfer {
     public required init(sender: String, receiver: String, tokenId: String, value: Int) {
         self.sender = sender
@@ -553,9 +528,7 @@ public class ScheduleTransactionTransferToken: ScheduleTransactionTransfer {
     public var tokenId: String
     public var serial: Int = 0
 }
-```
 
-```swift
 public class ScheduleTransactionTransferNFT: ScheduleTransactionTransfer {
     public required init(sender: String, receiver: String, tokenId: String, serial: Int) {
         self.sender = sender
@@ -571,39 +544,99 @@ public class ScheduleTransactionTransferNFT: ScheduleTransactionTransfer {
     public var tokenId: String
     public var serial: Int
 }
-```
 
-```swift
-public struct NFTStorageConfig: Encodable {
-    public var provider: NFTStorageProvider
-    public var apiKey: String
-    
-    public init(provider: NFTStorageProvider, apiKey: String) {
-        self.provider = provider
-        self.apiKey = apiKey
-    }
-}
-```
+// MARK: - SwiftBlade errors
 
-```swift
 public enum SwiftBladeError: Error {
     case unknownJsError(String)
     case apiError(String)
     case initError(String)
 }
-```
 
-```swift
 public struct BladeJSError: Error, Codable {
     public var name: String
     public var reason: String
 }
-```
 
-```swift
 extension BladeJSError: LocalizedError {
     public var errorDescription: String? {
         NSLocalizedString("\(name): \(reason)", comment: reason)
     }
 }
+
+// MARK: - SwiftBlade enums
+
+public enum HederaNetwork: String {
+    case TESTNET
+    case MAINNET
+}
+
+public enum KnownChainIds: String, Codable {
+    case ETHEREUM_MAINNET = "1"
+    case ETHEREUM_SEPOLIA = "11155111"
+    case HEDERA_MAINNET = "295"
+    case HEDERA_TESTNET = "296"
+}
+
+public enum AccountProvider: String, Codable {
+    case PrivateKey = "PrivateKey"
+    case Magic = "Magic"
+}
+
+public enum BladeEnv: String, Codable {
+    case Prod
+    case CI
+}
+
+public enum CryptoFlowServiceStrategy: String {
+    case BUY = "Buy"
+    case SELL = "Sell"
+    case SWAP = "Swap"
+}
+
+public enum CryptoKeyType: String, Codable {
+    case ECDSA_SECP256K1 = "ECDSA_SECP256K1"
+    case ED25519 = "ED25519"
+}
+
+public enum KeyType: String, Codable {
+    case admin = "admin"
+    case kyc = "kyc"
+    case freeze = "freeze"
+    case wipe = "wipe"
+    case pause = "pause"
+    case feeSchedule = "feeSchedule"
+}
+
+public enum NFTStorageProvider: String, Encodable {
+    case nftStorage = "nftStorage"
+}
+
+public enum ScheduleTransactionType: String, Codable {
+    case TRANSFER = "TRANSFER"
+    // case SUBMIT_MESSAGE = "SUBMIT_MESSAGE"
+    // case APPROVE_ALLOWANCE = "APPROVE_ALLOWANCE"
+    // case TOKEN_MINT = "TOKEN_MINT"
+    // case TOKEN_BURN = "TOKEN_BURN"
+}
+
+public enum ScheduleTransferType: String, Codable {
+    case HBAR = "HBAR"
+    case FT = "FT"
+    case NFT = "NFT"
+}
+
+public enum SupportedEncoding: String, Codable {
+    case base64 = "base64"
+    case hex = "hex"
+    case utf8 = "utf8"
+}
+
+public enum DropStatus: String, Codable {
+    case SUCCESS = "SUCCESS"
+    case FAIL = "FAIL"
+}
+
 ```
+
+

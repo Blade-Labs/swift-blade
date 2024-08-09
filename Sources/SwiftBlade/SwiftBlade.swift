@@ -29,7 +29,7 @@ public class SwiftBlade: NSObject {
     ///   - completion: completion closure that will be executed after webView is fully loaded and rendered, and result with `InfoData` type
     ///
     /// ```
-    /// SwiftBlade.shared.initialize(apiKey: apiKey, chainId: .HEDERA_TESTNET, dAppCode: apiKey, bladeEnv: .Prod) { (result, error) in
+    /// SwiftBlade.shared.initialize(apiKey: apiKey, chainId: .HEDERA_TESTNET, dAppCode: "dAppCode", bladeEnv: .Prod) { (result, error) in
     ///     print(result ?? error)
     /// }
     /// ```
