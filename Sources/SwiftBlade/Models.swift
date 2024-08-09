@@ -19,11 +19,24 @@ struct InfoResponse: Response, Codable {
 public struct InfoData: Codable {
     public var apiKey: String
     public var dAppCode: String
-    public var network: String
+    public var chainId: KnownChainIds
+    public var isTestnet: Bool
     public var visitorId: String
-    public var sdkEnvironment: String
+    public var sdkEnvironment: BladeEnv
     public var sdkVersion: String
     public var nonce: Int
+    public var user: UserInfoData
+}
+
+struct UserInfoResponse: Response, Codable {
+    var data: UserInfoData
+}
+
+public struct UserInfoData: Codable {
+    public var accountId: String
+    public var accountProvider: AccountProvider?
+    public var userPrivateKey: String
+    public var userPublicKey: String
 }
 
 struct BalanceResponse: Response, Codable {
@@ -31,13 +44,20 @@ struct BalanceResponse: Response, Codable {
 }
 
 public struct BalanceData: Codable {
-    public var hbars: Double
-    public var tokens: [BalanceDataToken]
+    public var balance: String
+    public var rawBalance: String
+    public var decimals: Int
+    public var tokens: [TokenBalanceData]
+    
 }
 
-public struct BalanceDataToken: Codable {
-    public var balance: Double
-    public var tokenId: String
+public struct TokenBalanceData: Codable {
+    public var balance: String
+    public var decimals: Int
+    public var name: String
+    public var symbol: String
+    public var address: String
+    public var rawBalance: String
 }
 
 struct PrivateKeyResponse: Response, Codable {
@@ -99,11 +119,9 @@ public struct CreatedAccountData: Codable {
     public var seedPhrase: String
     public var publicKey: String
     public var privateKey: String
-    public var accountId: String?
+    public var accountAddress: String
     public var evmAddress: String
-    public var transactionId: String?
     public var status: String
-    public var queueNumber: Int?
 }
 
 struct AccountInfoResponse: Response, Codable {
@@ -111,11 +129,11 @@ struct AccountInfoResponse: Response, Codable {
 }
 
 public struct AccountInfoData: Codable {
-    public var accountId: String
-    public var evmAddress: String
-    public var calculatedEvmAddress: String
+    public var accountAddress: String
     public var publicKey: String
+    public var evmAddress: String
     public var stakingInfo: StakingInfo
+    public var calculatedEvmAddress: String
 }
 
 public struct StakingInfo: Codable {
@@ -124,11 +142,11 @@ public struct StakingInfo: Codable {
     public var stakePeriodStart: String?
 }
 
-struct NodesResponse: Response, Codable {
-    var data: NodesData
+struct NodeListResponse: Response, Codable {
+    var data: NodeListData
 }
 
-public struct NodesData: Codable {
+public struct NodeListData: Codable {
     public var nodes: [NodeInfo]
 }
 
@@ -156,16 +174,89 @@ public struct TransactionReceiptData: Codable {
     public var serials: [String]
 }
 
-struct ContractQueryResponse: Response, Codable {
-    var data: ContractQueryData
+struct TokenInfoResponse: Response, Codable {
+    var data: TokenInfoData
 }
 
-public struct ContractQueryData: Codable {
+public struct HederaKey: Codable {
+    public var _type: CryptoKeyType
+    public var key: String
+}
+
+public struct TokenInfoData: Codable {
+    public var token: TokenInfo
+    public var nft: NftInfo?
+    public var metadata: NftMetadata?
+}
+
+public struct TokenInfo: Codable {
+    public var admin_key: HederaKey
+    public var created_timestamp: String
+    public var decimals: String
+    public var deleted: Bool
+    public var expiry_timestamp: Int64
+    public var fee_schedule_key: HederaKey?
+    public var freeze_default: Bool
+    public var freeze_key: HederaKey?
+    public var initial_supply: String
+    public var kyc_key: HederaKey?
+    public var max_supply: String
+    public var memo: String
+    public var modified_timestamp: String
+    public var name: String
+    public var pause_key: HederaKey?
+    public var pause_status: String
+    public var supply_key: HederaKey?
+    public var supply_type: String
+    public var symbol: String
+    public var token_id: String
+    public var total_supply: String
+    public var treasury_account_id: String
+    public var type: String
+    public var wipe_key: HederaKey?
+}
+
+public struct NftInfo: Codable {
+    public var account_id: String
+    public var token_id: String
+    public var delegating_spender: String?
+    public var spender_id: String?
+    public var created_timestamp: String
+    public var deleted: Bool
+    public var metadata: String
+    public var modified_timestamp: String
+    public var serial_number: Int64
+}
+
+public struct NftMetadata: Codable {
+    public var name: String
+    public var type: String
+    public var creator: String
+    public var author: String
+    public var properties: [String: String]?
+    public var image: String
+}
+
+
+struct TransactionResponseResponse: Response, Codable {
+    var data: TransactionResponseData
+}
+
+public struct TransactionResponseData: Codable {
+    public var transactionHash: String
+    public var transactionId: String
+}
+
+struct ContractCallQueryRecordsResponse: Response, Codable {
+    var data: ContractCallQueryRecordsData
+}
+
+public struct ContractCallQueryRecordsData: Codable {
     public var gasUsed: Int
-    public var values: [ContractQueryRecord]
+    public var values: [ContractCallQueryRecord]
 }
 
-public struct ContractQueryRecord: Codable {
+public struct ContractCallQueryRecord: Codable {
     public var type: String
     public var value: String
 }
@@ -185,18 +276,18 @@ struct TransactionsHistoryResponse: Response, Codable {
 }
 
 public struct TransactionsHistoryData: Codable {
+    public var transactions: [TransactionData]
     public var nextPage: String?
-    public var transactions: [TransactionHistoryDetail]
 }
 
-public struct TransactionHistoryDetail: Codable {
-    public var fee: Double
-    public var memo: String
-    public var nftTransfers: [TransactionHistoryNftTransfer]?
-    public var time: String
+public struct TransactionData: Codable {
     public var transactionId: String
-    public var transfers: [TransactionHistoryTransfer]
     public var type: String
+    public var time: String
+    public var transfers: [TransferData]
+    public var nftTransfers: [NftTransferData]?
+    public var memo: String?
+    public var fee: Double?
     public var plainData: TransactionHistoryPlainData?
     public var consensusTimestamp: String
 }
@@ -209,19 +300,19 @@ public struct TransactionHistoryPlainData: Codable {
     public var receivers: [String]
 }
 
-public struct TransactionHistoryTransfer: Codable {
+public struct TransferData: Codable {
     public var account: String
     public var amount: Decimal
-    public var is_approval: Bool
-    public var token_id: String?
+    public var tokenAddress: String?
+    public var asset: String
+    
 }
 
-public struct TransactionHistoryNftTransfer: Codable {
-    public var is_approval: Bool
-    public var receiver_account_id: String
-    public var sender_account_id: String?
-    public var serial_number: Int
-    public var token_id: String
+public struct NftTransferData: Codable {
+    public var receiverAddress: String
+    public var senderAddress: String
+    public var serial: String
+    public var tokenAddress: String
 }
 
 struct IntegrationUrlResponse: Response, Codable {
@@ -381,11 +472,8 @@ struct TokenDropResponse: Response, Codable {
 
 public struct TokenDropData: Codable {
     public var status: String
-    public var statusCode: Int
-    public var timestamp: String
-    public var executionStatus: String
-    public var requestId: String
-    public var accountId: String
+    public var accountAddress: String
+    public var dropStatuses: [String: DropStatus]
     public var redirectUrl: String
 }
 
@@ -479,7 +567,19 @@ public enum HederaNetwork: String {
     case MAINNET
 }
 
-public enum BladeEnv: String {
+public enum KnownChainIds: String, Codable {
+    case ETHEREUM_MAINNET = "1"
+    case ETHEREUM_SEPOLIA = "11155111"
+    case HEDERA_MAINNET = "295"
+    case HEDERA_TESTNET = "296"
+}
+
+public enum AccountProvider: String, Codable {
+    case PrivateKey = "PrivateKey"
+    case Magic = "Magic"
+}
+
+public enum BladeEnv: String, Codable {
     case Prod
     case CI
 }
@@ -520,4 +620,15 @@ public enum ScheduleTransferType: String, Codable {
     case HBAR = "HBAR"
     case FT = "FT"
     case NFT = "NFT"
+}
+
+public enum SupportedEncoding: String, Codable {
+    case base64 = "base64"
+    case hex = "hex"
+    case utf8 = "utf8"
+}
+
+public enum DropStatus: String, Codable {
+    case SUCCESS = "SUCCESS"
+    case FAIL = "FAIL"
 }
