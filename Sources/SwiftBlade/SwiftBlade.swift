@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.30"
+    private let sdkVersion: String = "Swift@0.6.31"
 
     // MARK: - It's init time 🎬
 
@@ -1111,6 +1111,55 @@ public class SwiftBlade: NSObject {
              completionKey: completionKey,
              js: "associateToken('\(esc(tokenIdOrCampaign))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(completionKey)')",
              decodeType: TransactionReceiptResponse.self,
+             completion: completion
+         )
+     }
+    
+    /// Emergency balance transfer from broken mnemonic account to new account
+    /// Accounts with broken mnemonic sometimes were created because of hedera-sdk issue
+    /// To transfer funds from broken mnemonic account to new account a couple of steps required:
+    /// 1. Create new account
+    /// 2. Associate all tokens with new account that you want to transfer
+    /// 3. Call this method to transfer funds to new account
+    /// 4. Send some HBAR to broken mnemonic account to cover fees if needed
+    ///
+    /// - Parameters:
+    ///   - seedPhrase mnemonic from account
+    ///   - accountId account id (broken)
+    ///   - receiverId new account id
+    ///   - hbarAmount amount of HBAR to resque. Can be 0
+    ///   - tokenList list of token ids to transfer all tokens. Up to 9 at once. Can be empty
+    ///   - checkOnly if true, will only check if mnemonic is broken. No transfer will be made
+    ///   -  completion: callback function, with result of EmergencyTransferData or BladeJSError
+    ///
+    /// ```
+    /// SwiftBlade.shared.brokenMnemonicEmergencyTransfer(
+    ///     seedPhrase: "marriage bounce fiscal express wink wire trick allow faith mandate base bone",
+    ///     accountId: "0.0.10001",
+    ///     receiverId: "0.0.234567",
+    ///     hbarAmount: "0.5",
+    ///     tokenList: ["0.0.1337"],
+    ///     checkOnly: false
+    /// ) { result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `EmergencyTransferData`
+    public func brokenMnemonicEmergencyTransfer(
+        seedPhrase: String,
+        accountId: String,
+        receiverId: String,
+        hbarAmount: String,
+        tokenList: [String],
+        checkOnly: Bool,
+        completion: @escaping (_ result: EmergencyTransferData?, _ error: BladeJSError?) -> Void
+     ) {
+         let completionKey = getCompletionKey("brokenMnemonicEmergencyTransfer")
+         performRequest(
+             completionKey: completionKey,
+             js: "brokenMnemonicEmergencyTransfer('\(esc(seedPhrase))', '\(esc(accountId))', '\(esc(receiverId))', '\(esc(hbarAmount))', [\(tokenList.map { "'\(esc($0))'" }.joined(separator: ","))], \(checkOnly), '\(completionKey)')",
+             decodeType: EmergencyTransferResponse.self,
              completion: completion
          )
      }

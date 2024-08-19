@@ -156,6 +156,15 @@ public struct TransactionReceiptData: Codable {
     public var serials: [String]
 }
 
+struct EmergencyTransferResponse: Response, Codable {
+    var data: EmergencyTransferData
+}
+
+public struct EmergencyTransferData: Codable {
+    public var isValid: Bool
+    public var transferStatus: String
+}
+
 struct ContractQueryResponse: Response, Codable {
     var data: ContractQueryData
 }
