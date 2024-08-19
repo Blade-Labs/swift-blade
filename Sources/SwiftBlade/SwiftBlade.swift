@@ -1128,7 +1128,7 @@ public class SwiftBlade: NSObject {
     ///   - accountId account id (broken)
     ///   - receiverId new account id
     ///   - hbarAmount amount of HBAR to resque. Can be 0
-    ///   - tokenList list of token ids to transfer all tokens. Can be empty
+    ///   - tokenList list of token ids to transfer all tokens. Up to 9 at once. Can be empty
     ///   - checkOnly if true, will only check if mnemonic is broken. No transfer will be made
     ///   -  completion: callback function, with result of EmergencyTransferData or BladeJSError
     ///
