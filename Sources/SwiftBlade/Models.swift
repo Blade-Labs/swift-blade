@@ -374,13 +374,13 @@ public struct KeyRecord: Codable {
     }
 }
 
-public struct NFTStorageConfig: Encodable {
-    public var provider: NFTStorageProvider
-    public var apiKey: String
+public struct IPFSProviderConfig: Encodable {
+    public var provider: IPFSProvider
+    public var token: String
     
-    public init(provider: NFTStorageProvider, apiKey: String) {
+    public init(provider: IPFSProvider, token: String) {
         self.provider = provider
-        self.apiKey = apiKey
+        self.token = token
     }
 }
 
@@ -513,8 +513,8 @@ public enum KeyType: String, Codable {
     case feeSchedule = "feeSchedule"
 }
 
-public enum NFTStorageProvider: String, Encodable {
-    case nftStorage = "nftStorage"
+public enum IPFSProvider: String, Encodable {
+    case pinata = "pinata"
 }
 
 public enum ScheduleTransactionType: String, Codable {
