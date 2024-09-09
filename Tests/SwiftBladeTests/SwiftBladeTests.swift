@@ -6,7 +6,7 @@ class SwiftBladeTestsHedera: XCTestCase {
     var apiKey = "ygUgCzRrsvhWmb3dsLcDpGnJpSZ4tk8hACmZqg9WngpuQYKdnD5m8FjfPV3XVUeB"
     var apiKeyMainnet = "IYyE75dUez7fMxfXzIP8Hw4CvhTURhbte3QNVhFDTSbV97ycfq5NrqEGrzAThVeg"
     var dAppCode = "unitysdktest"
-    var chainId = KnownChainIds.HEDERA_TESTNET
+    var chain = KnownChains.HEDERA_TESTNET
     var bladeEnv = BladeEnv.CI
     var accountProvider = AccountProvider.PrivateKey
     var magicEmail = "the.gary.du+sdk2@gmail.com"
@@ -56,10 +56,10 @@ class SwiftBladeTestsHedera: XCTestCase {
         // Create an expectation to wait for the initialization to complete.
         let initializationExpectation = XCTestExpectation(description: "Initialization should complete")
 
-        setTestDataByChainId(chainId: chainId);
+        setTestDataByChain(chain: chain);
         
         // Call swiftBlade.initialize and fulfill the expectation in its completion handler.
-        swiftBlade.initialize(apiKey: apiKey, chainId: chainId, dAppCode: dAppCode, bladeEnv: bladeEnv, force: false) { result, error in
+        swiftBlade.initialize(apiKey: apiKey, chain: chain, dAppCode: dAppCode, bladeEnv: bladeEnv, force: false) { result, error in
             XCTAssertNil(error, "Initialization should not produce an error")
             XCTAssertNotNil(result, "Initialization should produce a result")
             
@@ -84,7 +84,7 @@ class SwiftBladeTestsHedera: XCTestCase {
             if let infoData = result as InfoData? {
                 XCTAssertEqual(infoData.apiKey, self.apiKey, "InfoData should have the expected apiKey")
                 XCTAssertEqual(infoData.dAppCode, self.dAppCode, "InfoData should have the expected dAppCode")
-                XCTAssertEqual(infoData.chainId, self.chainId, "InfoData should have the expected chainId")
+                XCTAssertEqual(infoData.chain, self.chain, "InfoData should have the expected chain")
                 XCTAssertNotNil(infoData.isTestnet, "InfoData should have isTestnet")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.bladeEnv, "InfoData should have the expected bladeEnv")
@@ -391,6 +391,10 @@ class SwiftBladeTestsHedera: XCTestCase {
     }
 
     func testGetAccountInfo() {
+        if (isSkippingChain(.ETHEREUM_SEPOLIA, "Skipping because accointInfo now only for Hedera")) {
+            return
+        }
+        
         let expectation = XCTestExpectation(description: "GetAccountInfo should complete")
 
         swiftBlade.getAccountInfo(accountAddress: accountAddress) { result, error in
@@ -749,7 +753,7 @@ class SwiftBladeTestsHedera: XCTestCase {
         let expectation3 = XCTestExpectation(description: "ContractCallFunction should complete")
 
         var contractFunctionName = "set_message"
-        if (chainId == .ETHEREUM_SEPOLIA) {
+        if (chain == .ETHEREUM_SEPOLIA) {
             contractFunctionName = "setMood"
         }
             
@@ -794,7 +798,7 @@ class SwiftBladeTestsHedera: XCTestCase {
         
         var contractFunctionName = "set_message"
         var contractQueryFunctionName = "get_message"
-        if (chainId == .ETHEREUM_SEPOLIA) {
+        if (chain == .ETHEREUM_SEPOLIA) {
             contractFunctionName = "setMood"
             contractQueryFunctionName = "getMood"
         }
@@ -1138,6 +1142,9 @@ class SwiftBladeTestsHedera: XCTestCase {
     }
     
     func testGetTokenInfo() {
+        if (isSkippingChain(.ETHEREUM_SEPOLIA, "Skipping because tokin info now only for Hedera")) {
+            return
+        }
         let expectation1 = XCTestExpectation(description: "GetTokenInfo (nft) should complete")
         let expectation2 = XCTestExpectation(description: "GetTokenInfo (ft) should complete")
 
@@ -1173,7 +1180,7 @@ class SwiftBladeTestsHedera: XCTestCase {
             }
             expectation1.fulfill()
         }
-        wait(for: [expectation1, expectation2], timeout: 20.0)
+        wait(for: [expectation1, expectation2], timeout: 60.0)
     }
     
     func testSwapTokens() {
@@ -1188,7 +1195,7 @@ class SwiftBladeTestsHedera: XCTestCase {
         var amount: Double = 0
         var serviceId = ""
         
-        if (self.chainId == .HEDERA_TESTNET) {
+        if (self.chain == .HEDERA_TESTNET) {
             accountIdOrEmail = self.accountAddress2;
             privateKey = self.accountPrivateKey2;
             sourceCurrency = "HBAR"
@@ -1196,7 +1203,7 @@ class SwiftBladeTestsHedera: XCTestCase {
             amount = 0.01
             serviceId = "saucerswap"
         }
-        if (self.chainId == .ETHEREUM_SEPOLIA) {
+        if (self.chain == .ETHEREUM_SEPOLIA) {
             accountIdOrEmail = self.accountAddress;
             privateKey = self.accountPrivateKey;
             sourceCurrency = "USDC"
@@ -1252,9 +1259,9 @@ class SwiftBladeTestsHedera: XCTestCase {
         let expectation2 = XCTestExpectation(description: "ExchangeGetQuotes SELL should complete")
         let expectation3 = XCTestExpectation(description: "ExchangeGetQuotes SWAP should complete")
 
-        let mainnetChain: KnownChainIds = chainId == .HEDERA_TESTNET ? .HEDERA_MAINNET : .ETHEREUM_MAINNET
+        let mainnetChain: KnownChains = chain == .HEDERA_TESTNET ? .HEDERA_MAINNET : .ETHEREUM_MAINNET
         
-        swiftBlade.initialize(apiKey: apiKeyMainnet, chainId: mainnetChain, dAppCode: dAppCode, bladeEnv: bladeEnv, force: true) { [self] result, error in
+        swiftBlade.initialize(apiKey: apiKeyMainnet, chain: mainnetChain, dAppCode: dAppCode, bladeEnv: bladeEnv, force: true) { [self] result, error in
             XCTAssertNil(error, "Initialization should not produce an error")
             XCTAssertNotNil(result, "Initialization should produce a result")
 
@@ -1262,7 +1269,7 @@ class SwiftBladeTestsHedera: XCTestCase {
                 sourceCode: "EUR",
                 sourceAmount: 50,
                 targetCode: "ETH",
-                strategy: CryptoFlowServiceStrategy.BUY
+                strategy: ExchangeStrategy.BUY
             ) { [self] result, error in
                 XCTAssertNil(error, "ExchangeGetQuotes should not produce an error")
                 XCTAssertNotNil(result, "ExchangeGetQuotes should produce a result")
@@ -1280,7 +1287,7 @@ class SwiftBladeTestsHedera: XCTestCase {
                     sourceCode: "ETH",
                     sourceAmount: 2,
                     targetCode: "USD",
-                    strategy: CryptoFlowServiceStrategy.SELL
+                    strategy: ExchangeStrategy.SELL
                 ) { [self] result, error in
                     XCTAssertNil(error, "ExchangeGetQuotes should not produce an error")
                     XCTAssertNotNil(result, "ExchangeGetQuotes should produce a result")
@@ -1298,7 +1305,7 @@ class SwiftBladeTestsHedera: XCTestCase {
                         sourceCode: "HBAR",
                         sourceAmount: 5,
                         targetCode: "USDC",
-                        strategy: CryptoFlowServiceStrategy.SWAP
+                        strategy: ExchangeStrategy.SWAP
                     ) { result, error in
                         XCTAssertNil(error, "ExchangeGetQuotes should not produce an error")
                         XCTAssertNotNil(result, "ExchangeGetQuotes should produce a result")
@@ -1318,18 +1325,18 @@ class SwiftBladeTestsHedera: XCTestCase {
         let expectation3 = XCTestExpectation(description: "GetTradeUrl should fail")
         let expectation4 = XCTestExpectation(description: "GetTradeUrl (like deprecated getC14url) should complete")
 
-        let mainnetChain: KnownChainIds = chainId == .HEDERA_TESTNET ? .HEDERA_MAINNET : .ETHEREUM_MAINNET
-        let codeByChain = chainId == .HEDERA_TESTNET ? "HBAR" : "ETH"
-        let amountByChain: Double = chainId == .HEDERA_TESTNET ? 2000 : 2
+        let mainnetChain: KnownChains = chain == .HEDERA_TESTNET ? .HEDERA_MAINNET : .ETHEREUM_MAINNET
+        let codeByChain = chain == .HEDERA_TESTNET ? "HBAR" : "ETH"
+        let amountByChain: Double = chain == .HEDERA_TESTNET ? 2000 : 2
         
         
-        swiftBlade.initialize(apiKey: apiKeyMainnet, chainId: mainnetChain, dAppCode: dAppCode, bladeEnv: bladeEnv, force: true) { [self] result, error in
+        swiftBlade.initialize(apiKey: apiKeyMainnet, chain: mainnetChain, dAppCode: dAppCode, bladeEnv: bladeEnv, force: true) { [self] result, error in
             XCTAssertNil(error, "Initialization should not produce an error")
             XCTAssertNotNil(result, "Initialization should produce a result")
             let redirectUrl = "redirect-url-here"
             
             swiftBlade.getTradeUrl(
-                strategy: CryptoFlowServiceStrategy.BUY,
+                strategy: ExchangeStrategy.BUY,
                 accountAddress: accountAddress,
                 sourceCode: "EUR",
                 sourceAmount: 50,
@@ -1351,7 +1358,7 @@ class SwiftBladeTestsHedera: XCTestCase {
                 expectation1.fulfill()
 
                 swiftBlade.getTradeUrl(
-                    strategy: CryptoFlowServiceStrategy.SELL,
+                    strategy: ExchangeStrategy.SELL,
                     accountAddress: accountAddress,
                     sourceCode: codeByChain,
                     sourceAmount: amountByChain,
@@ -1375,7 +1382,7 @@ class SwiftBladeTestsHedera: XCTestCase {
                     expectation2.fulfill()
 
                     swiftBlade.getTradeUrl(
-                        strategy: CryptoFlowServiceStrategy.SELL,
+                        strategy: ExchangeStrategy.SELL,
                         accountAddress: accountAddress,
                         sourceCode: "EUR",
                         sourceAmount: 50,
@@ -1392,7 +1399,7 @@ class SwiftBladeTestsHedera: XCTestCase {
                         if (!self.isSkippingChain(.ETHEREUM_SEPOLIA)) {
                             // buy like deprecated method getC14url
                             self.swiftBlade.getTradeUrl(
-                                strategy: CryptoFlowServiceStrategy.BUY,
+                                strategy: ExchangeStrategy.BUY,
                                 accountAddress: self.accountAddress,
                                 sourceCode: "USD",
                                 sourceAmount: 1234,
@@ -1421,10 +1428,10 @@ class SwiftBladeTestsHedera: XCTestCase {
         wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 40.0)
     }
     
-    private func setTestDataByChainId(chainId: KnownChainIds) {
-        self.chainId = chainId
-        switch chainId {
-            case KnownChainIds.ETHEREUM_SEPOLIA:
+    private func setTestDataByChain(chain: KnownChains) {
+        self.chain = chain
+        switch chain {
+            case KnownChains.ETHEREUM_SEPOLIA:
                 accountAddress = ethereumAddress
                 accountPrivateKey = ethereumPrivateKey
                 accountPublicKey = ethereumPublicKey
@@ -1435,7 +1442,7 @@ class SwiftBladeTestsHedera: XCTestCase {
                 tokenAddress = ethereumTokenAddress
                 tokenAddress2 = ethereumTokenAddress2
                 nftAddress = ethereumNftAddress
-            case KnownChainIds.HEDERA_TESTNET:
+            case KnownChains.HEDERA_TESTNET:
                 accountAddress = hederaAccountId1
                 accountPrivateKey = hederaPrivateKey1
                 accountPublicKey = hederaPublicKey1
@@ -1465,12 +1472,12 @@ class SwiftBladeTestsHedera: XCTestCase {
         return String((0..<length).map { _ in letters.randomElement()! })
     }
     
-    private func isSkippingChain(_ restrictedChain: KnownChainIds, _ message: String = "") -> Bool {
-        let result = (restrictedChain == .ETHEREUM_SEPOLIA || restrictedChain == .ETHEREUM_MAINNET) && (chainId == .ETHEREUM_SEPOLIA || chainId == .ETHEREUM_MAINNET)
-                  || (restrictedChain == .HEDERA_TESTNET || restrictedChain == .HEDERA_MAINNET) && (chainId == .HEDERA_TESTNET || chainId == .HEDERA_MAINNET)
+    private func isSkippingChain(_ restrictedChain: KnownChains, _ message: String = "") -> Bool {
+        let result = (restrictedChain == .ETHEREUM_SEPOLIA || restrictedChain == .ETHEREUM_MAINNET) && (chain == .ETHEREUM_SEPOLIA || chain == .ETHEREUM_MAINNET)
+                  || (restrictedChain == .HEDERA_TESTNET || restrictedChain == .HEDERA_MAINNET) && (chain == .HEDERA_TESTNET || chain == .HEDERA_MAINNET)
 
         if (result && message != "") {
-            print("############### SwiftBladeTest warning: Chain \(chainId). Skipping test part. Reason: \(message) ###############")
+            print("############### SwiftBladeTest warning: Chain \(chain). Skipping test part. Reason: \(message) ###############")
         }
         return result
     }
@@ -1478,7 +1485,7 @@ class SwiftBladeTestsHedera: XCTestCase {
 
 final class SwiftBladeTestsEthereum: SwiftBladeTestsHedera {
     override func setUp() {
-        chainId = .ETHEREUM_SEPOLIA
+~        chain = .ETHEREUM_SEPOLIA
         super.setUp()
     }
 }

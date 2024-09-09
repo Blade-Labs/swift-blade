@@ -19,7 +19,7 @@ struct InfoResponse: Response, Codable {
 public struct InfoData: Codable {
     public var apiKey: String
     public var dAppCode: String
-    public var chainId: KnownChainIds
+    public var chain: KnownChains
     public var isTestnet: Bool
     public var visitorId: String
     public var sdkEnvironment: BladeEnv
@@ -33,10 +33,10 @@ struct UserInfoResponse: Response, Codable {
 }
 
 public struct UserInfoData: Codable {
-    public var accountId: String
+    public var address: String
     public var accountProvider: AccountProvider?
-    public var userPrivateKey: String
-    public var userPublicKey: String
+    public var privateKey: String
+    public var publicKey: String
 }
 
 struct BalanceResponse: Response, Codable {
@@ -328,10 +328,10 @@ struct SwapQuotesResponse: Response, Codable {
 }
 
 public struct SwapQuotesData: Codable {
-    public var quotes: [ICryptoFlowQuote]
+    public var quotes: [ExchangeQuote]
 }
 
-public struct ICryptoFlowQuote: Codable {
+public struct ExchangeQuote: Codable {
     public struct Service: Codable {
         public var id: String
         public var name: String
@@ -348,12 +348,12 @@ public struct ICryptoFlowQuote: Codable {
 }
 
 public struct IAssetQuote: Codable {
-    public var asset: ICryptoFlowAsset
+    public var asset: ExchangeAsset
     public var amountExpected: Double
     public var totalFee: Double?
 }
 
-public struct ICryptoFlowAsset: Codable {
+public struct ExchangeAsset: Codable {
     public var name: String
     public var code: String
     public var type: String
@@ -567,11 +567,11 @@ public enum HederaNetwork: String {
     case MAINNET
 }
 
-public enum KnownChainIds: String, Codable {
-    case ETHEREUM_MAINNET = "1"
-    case ETHEREUM_SEPOLIA = "11155111"
-    case HEDERA_MAINNET = "295"
-    case HEDERA_TESTNET = "296"
+public enum KnownChains: String, Codable {
+    case ETHEREUM_MAINNET = "eip155:1"
+    case ETHEREUM_SEPOLIA = "eip155:11155111"
+    case HEDERA_MAINNET = "hedera:295"
+    case HEDERA_TESTNET = "hedera:296"
 }
 
 public enum AccountProvider: String, Codable {
@@ -584,7 +584,7 @@ public enum BladeEnv: String, Codable {
     case CI
 }
 
-public enum CryptoFlowServiceStrategy: String {
+public enum ExchangeStrategy: String {
     case BUY = "Buy"
     case SELL = "Sell"
     case SWAP = "Swap"

@@ -8,7 +8,7 @@ public class SwiftBlade: NSObject {
     private let sdkVersion: String = "Swift@1.0.0"
     private var apiKey: String? = nil
     private var visitorId: String = ""
-    private var chainId: KnownChainIds = .HEDERA_TESTNET
+    private var chain: KnownChains = .HEDERA_TESTNET
     private var dAppCode: String?
     private var bladeEnv: BladeEnv = .Prod
     private var webViewInitialized = false
@@ -22,20 +22,20 @@ public class SwiftBlade: NSObject {
     ///
     /// - Parameters:
     ///   - apiKey: Unique key for API provided by Blade team.
-    ///   - chainId: one of supported chains from KnownChainIds
+    ///   - chain: one of supported chains from KnownChains
     ///   - dAppCode: your dAppCode - request specific one by contacting BladeLabs team
     ///   - bladeEnv: environment to choose BladeAPI server (`.CI` or `.PROD`) field to set BladeAPI environment. Prod used by default.
     ///   - force: optional field to force init. Will not crash if already initialized
     ///   - completion: completion closure that will be executed after webView is fully loaded and rendered, and result with `InfoData` type
     ///
     /// ```
-    /// SwiftBlade.shared.initialize(apiKey: apiKey, chainId: .HEDERA_TESTNET, dAppCode: "dAppCode", bladeEnv: .Prod) { (result, error) in
+    /// SwiftBlade.shared.initialize(apiKey: apiKey, chain: .HEDERA_TESTNET, dAppCode: "dAppCode", bladeEnv: .Prod) { (result, error) in
     ///     print(result ?? error)
     /// }
     /// ```
     ///
     /// - Returns `InfoData` - with information about Blade instance, including visitorId
-    public func initialize(apiKey: String, chainId: KnownChainIds, dAppCode: String, bladeEnv: BladeEnv = BladeEnv.Prod, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
+    public func initialize(apiKey: String, chain: KnownChains, dAppCode: String, bladeEnv: BladeEnv = BladeEnv.Prod, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void) {
         guard !webViewInitialized || force else {
             print("Error while doing double init of SwiftBlade")
             return completion(nil, BladeJSError(name: "Error", reason: "Error while doing double init of SwiftBlade"))
@@ -44,7 +44,7 @@ public class SwiftBlade: NSObject {
         initCompletion = completion
         self.apiKey = apiKey
         self.dAppCode = dAppCode
-        self.chainId = chainId
+        self.chain = chain
         self.bladeEnv = bladeEnv
 
         Task {
@@ -100,7 +100,7 @@ public class SwiftBlade: NSObject {
     ///
     /// - Parameters:
     ///   - accountProvider: one of supported providers: PrivateKey or Magic
-    ///   - accountIdOrEmail: account id (0.0.xxxxx, 0xABCDEF..., EMAIL) or empty string for some ChainId
+    ///   - accountIdOrEmail: account id (0.0.xxxxx, 0xABCDEF..., EMAIL) or empty string for some chains
     ///   - privateKey: private key for account (hex encoded privateKey with DER-prefix or 0xABCDEF...) In case of Magic provider - empty string
     ///   - completion: result with `UserInfoData` type
     ///
@@ -799,7 +799,7 @@ public class SwiftBlade: NSObject {
         sourceCode: String,
         sourceAmount: Double,
         targetCode: String,
-        strategy: CryptoFlowServiceStrategy,
+        strategy: ExchangeStrategy,
         completion: @escaping (_ result: SwapQuotesData?, _ error: BladeJSError?) -> Void
     ) {
         let completionKey = getCompletionKey("exchangeGetQuotes")
@@ -840,7 +840,7 @@ public class SwiftBlade: NSObject {
     ///
     /// - Returns: `IntegrationUrlData` url to open
     public func getTradeUrl(
-        strategy: CryptoFlowServiceStrategy,
+        strategy: ExchangeStrategy,
         accountAddress: String,
         sourceCode: String,
         sourceAmount: Double,
@@ -1164,7 +1164,7 @@ public class SwiftBlade: NSObject {
         // Setting up and loading webview
         webView = WKWebView()
 
-        if bladeEnv == .CI && chainId == .HEDERA_TESTNET {
+        if bladeEnv == .CI && chain == .HEDERA_TESTNET {
             if #available(iOS 16.4, *) {
                 // self.webView!.isInspectable = true
             }
@@ -1188,7 +1188,7 @@ public class SwiftBlade: NSObject {
         let completionKey = getCompletionKey("initBladeSdkJS")
         performRequest(
             completionKey: completionKey,
-            js: "init('\(esc(apiKey!))', '\(esc(chainId.rawValue))', '\(esc(dAppCode!))',  '\(visitorId)', '\(bladeEnv)', '\(esc(sdkVersion))', '\(completionKey)')",
+            js: "init('\(esc(apiKey!))', '\(esc(chain.rawValue))', '\(esc(dAppCode!))',  '\(visitorId)', '\(bladeEnv)', '\(esc(sdkVersion))', '\(completionKey)')",
             decodeType: InfoResponse.self,
             completion: initCompletion!
         )
