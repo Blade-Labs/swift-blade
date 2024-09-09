@@ -41,14 +41,14 @@
 
 Init instance of BladeSDK for correct work with Blade API and other endpoints.
 
-`initialize(apiKey: String, chainId: KnownChainIds, dAppCode: String, bladeEnv: BladeEnv = BladeEnv.Prod, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void)`
+`initialize(apiKey: String, chain: KnownChains, dAppCode: String, bladeEnv: BladeEnv = BladeEnv.Prod, force: Bool = false, completion: @escaping (_ result: InfoData?, _ error: BladeJSError?) -> Void)`
 
 #### Parameters
 
 | Name | Type | Description |
 |------|------| ----------- |
 | `apiKey` | `String` | Unique key for API provided by Blade team. |
-| `chainId` | `KnownChainIds` | one of supported chains from KnownChainIds |
+| `chain` | `KnownChains` | one of supported chains from KnownChains |
 | `dAppCode` | `String` | your dAppCode - request specific one by contacting BladeLabs team |
 | `bladeEnv` | `BladeEnv = BladeEnv.Prod` | environment to choose BladeAPI server (`.CI` or `.PROD`) field to set BladeAPI environment. Prod used by default. |
 | `force` | `Bool = false` | optional field to force init. Will not crash if already initialized |
@@ -61,7 +61,7 @@ Init instance of BladeSDK for correct work with Blade API and other endpoints.
 #### Example
 
 ```swift
-SwiftBlade.shared.initialize(apiKey: apiKey, chainId: .HEDERA_TESTNET, dAppCode: apiKey, bladeEnv: .Prod) { (result, error) in
+SwiftBlade.shared.initialize(apiKey: apiKey, chain: .HEDERA_TESTNET, dAppCode: "dAppCode", bladeEnv: .Prod) { (result, error) in
     print(result ?? error)
 }
 ```
@@ -101,7 +101,7 @@ Set active user for further operations.
 | Name | Type | Description |
 |------|------| ----------- |
 | `accountProvider` | `AccountProvider` | one of supported providers: PrivateKey or Magic |
-| `accountIdOrEmail` | `String` | account id (0.0.xxxxx, 0xABCDEF..., EMAIL) or empty string for some ChainId |
+| `accountIdOrEmail` | `String` | account id (0.0.xxxxx, 0xABCDEF..., EMAIL) or empty string for some chains |
 | `privateKey` | `String` | private key for account (hex encoded privateKey with DER-prefix or 0xABCDEF...) In case of Magic provider - empty string |
 | `completion` | `@escaping (_ result: UserInfoData?, _ error: BladeJSError?) -> Void` | result with `UserInfoData` type |
 
@@ -826,7 +826,7 @@ Get quotes from different services for buy, sell or swap
         sourceCode: String,
         sourceAmount: Double,
         targetCode: String,
-        strategy: CryptoFlowServiceStrategy,
+        strategy: ExchangeStrategy,
         completion: @escaping (_ result: SwapQuotesData?, _ error: BladeJSError?) -> Void
     )`
 
@@ -837,7 +837,7 @@ Get quotes from different services for buy, sell or swap
 | `sourceCode` | `String` | name (HBAR, KARATE, other token code) |
 | `sourceAmount` | `Double` | amount to swap, buy or sell |
 | `targetCode` | `String` | name (HBAR, KARATE, USDC, other token code) |
-| `strategy` | `CryptoFlowServiceStrategy` | one of enum CryptoFlowServiceStrategy (Buy, Sell, Swap) |
+| `strategy` | `ExchangeStrategy` | one of enum CryptoFlowServiceStrategy (Buy, Sell, Swap) |
 | `completion` | `@escaping (_ result: SwapQuotesData?, _ error: BladeJSError?) -> Void` | result with SwapQuotesData type |
 
 #### Returns
@@ -862,7 +862,7 @@ SwiftBlade.shared.exchangeGetQuotes(
 Get configured url to buy or sell tokens or fiat
 
 `getTradeUrl(
-        strategy: CryptoFlowServiceStrategy,
+        strategy: ExchangeStrategy,
         accountAddress: String,
         sourceCode: String,
         sourceAmount: Double,
@@ -877,7 +877,7 @@ Get configured url to buy or sell tokens or fiat
 
 | Name | Type | Description |
 |------|------| ----------- |
-| `strategy` | `CryptoFlowServiceStrategy` | Buy / Sell |
+| `strategy` | `ExchangeStrategy` | Buy / Sell |
 | `accountAddress` | `String` | account id |
 | `sourceCode` | `String` | name (HBAR, KARATE, USDC, other token code) |
 | `sourceAmount` | `Double` | amount to buy/sell |

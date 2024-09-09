@@ -29,12 +29,12 @@ During initialization, Swift Blade will fetch all required data from Blade serve
 ```swift
 import SwiftBlade
 
-SwiftBlade.shared.initialize(apiKey: "API_KEY", chainId: .HEDERA_TESTNET, dAppCode: "dAppCode", bladeEnv: .Prod) { (result, error) in
+SwiftBlade.shared.initialize(apiKey: "API_KEY", chain: .HEDERA_TESTNET, dAppCode: "dAppCode", bladeEnv: .Prod) { (result, error) in
     // ready to use SwiftBlade
     print(result ?? error)
 }
 
-// Get balance by hedera id
+// Get balance by hedera account id
 SwiftBlade.shared.getBalance("0.0.8235") { (result, error) in
     print(result)
 }
