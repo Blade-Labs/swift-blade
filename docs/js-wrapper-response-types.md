@@ -574,13 +574,13 @@ public class ScheduleTransactionTransferNFT: ScheduleTransactionTransfer {
 ```
 
 ```swift
-public struct NFTStorageConfig: Encodable {
-    public var provider: NFTStorageProvider
-    public var apiKey: String
+public struct IPFSProviderConfig: Encodable {
+    public var provider: IPFSProvider
+    public var token: String
     
-    public init(provider: NFTStorageProvider, apiKey: String) {
+    public init(provider: IPFSProvider, token: String) {
         self.provider = provider
-        self.apiKey = apiKey
+        self.token = token
     }
 }
 ```

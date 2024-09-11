@@ -1188,9 +1188,9 @@ public class SwiftBlade: NSObject {
     ///         "intelligence": "6",
     ///         "speed": "10"
     ///     ],
-    ///     storageConfig: NFTStorageConfig(
-    ///         provider: NFTStorageProvider.nftStorage,
-    ///         apiKey: "eyJhbGciOiJIUzI1NiIsI.................cYOwssdZgiYaug4aF8ZrvMBdkTASojWGU"
+    ///     storageConfig: IPFSProviderConfig(
+    ///         provider: IPFSProvider.pinata,
+    ///         token: "eyJhbGciOiJIUzI1NiIsI.................cYOwssdZgiYaug4aF8ZrvMBdkTASojWGU"
     ///     )
     /// ) { result, error in
     ///     print(result ?? error)
@@ -1204,7 +1204,7 @@ public class SwiftBlade: NSObject {
          supplyPrivateKey: String,
          file: String,
          metadata: [String: String],
-         storageConfig: NFTStorageConfig,
+         storageConfig: IPFSProviderConfig,
          completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void
      ) {
          let completionKey = getCompletionKey("nftMint")
