@@ -1184,7 +1184,7 @@ Mint one NFT
          supplyPrivateKey: String,
          file: String,
          metadata: [String: String],
-         storageConfig: NFTStorageConfig,
+         storageConfig: IPFSProviderConfig,
          completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void
      )`
 
@@ -1197,7 +1197,7 @@ Mint one NFT
 | `supplyPrivateKey` | `String` | token supply private key |
 | `file` | `String` | image to mint (base64 DataUrl image, eg.: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAA...) |
 | `metadata` | `[String: String]` | NFT metadata |
-| `storageConfig` | `NFTStorageConfig` | IPFS provider config |
+| `storageConfig` | `IPFSProviderConfig` | IPFS provider config |
 | `completion` | `@escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void` | callback function, with result of CreateTokenData or BladeJSError |
 
 #### Returns
@@ -1219,9 +1219,9 @@ SwiftBlade.shared.nftMint(
         "intelligence": "6",
         "speed": "10"
     ],
-    storageConfig: NFTStorageConfig(
-        provider: NFTStorageProvider.nftStorage,
-        apiKey: "eyJhbGciOiJIUzI1NiIsI.................cYOwssdZgiYaug4aF8ZrvMBdkTASojWGU"
+    storageConfig: IPFSProviderConfig(
+        provider: IPFSProvider.pinata,
+        token: "eyJhbGciOiJIUzI1NiIsI.................cYOwssdZgiYaug4aF8ZrvMBdkTASojWGU"
     )
 ) { result, error in
     print(result ?? error)

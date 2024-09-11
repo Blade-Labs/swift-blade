@@ -57,8 +57,8 @@ public enum KeyType: String, Codable {
 ```
 
 ```swift
-public enum NFTStorageProvider: String, Encodable {
-    case nftStorage = "nftStorage"
+public enum IPFSProvider: String, Encodable {
+    case pinata = "pinata"
 }
 ```
 
