@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.34"
+    private let sdkVersion: String = "Swift@0.6.35"
 
     // MARK: - It's init time 🎬
 
@@ -979,7 +979,7 @@ public class SwiftBlade: NSObject {
     ///   - targetCode: name (HBAR, KARATE, other token code)
     ///   - slippage: slippage in percents. Transaction will revert if the price changes unfavorably by more than this percentage.
     ///   - serviceId: service id to use for swap (saucerswap, etc)
-    ///   - completion: result with ResultData type
+    ///   - completion: result with SwapResultData type
     ///
     /// ```
     /// let accountId = "0.0.10001"
@@ -1000,7 +1000,7 @@ public class SwiftBlade: NSObject {
     /// }
     /// ```
     ///
-    /// - Returns: `ResultData` swap result
+    /// - Returns: `SwapResultData` swap result
     public func swapTokens(
         accountId: String,
         accountPrivateKey: String,
@@ -1009,13 +1009,13 @@ public class SwiftBlade: NSObject {
         targetCode: String,
         slippage: Double,
         serviceId: String,
-        completion: @escaping (_ result: ResultData?, _ error: BladeJSError?) -> Void
+        completion: @escaping (_ result: SwapResultData?, _ error: BladeJSError?) -> Void
     ) {
         let completionKey = getCompletionKey("swapTokens")
         performRequest(
             completionKey: completionKey,
             js: "swapTokens('\(esc(accountId))', '\(esc(accountPrivateKey))', '\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', \(slippage), '\(esc(serviceId))', '\(completionKey)')",
-            decodeType: ResultResponse.self,
+            decodeType: SwapResultResponse.self,
             completion: completion
         )
     }

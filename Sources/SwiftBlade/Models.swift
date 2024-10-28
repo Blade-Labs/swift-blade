@@ -295,6 +295,18 @@ public struct ResultData: Codable {
     public var success: Bool
 }
 
+struct SwapResultResponse: Response, Codable {
+    var data: SwapResultData
+}
+
+public struct SwapResultData: Codable {
+    public var success: Bool
+    public var sourceAddress: String
+    public var targetAddress: String
+    public var balance: BalanceData
+}
+
+
 struct CreateTokenResponse: Response, Codable {
     var data: CreateTokenData
 }
