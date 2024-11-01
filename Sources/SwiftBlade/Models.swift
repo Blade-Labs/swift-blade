@@ -306,6 +306,101 @@ public struct SwapResultData: Codable {
     public var balance: BalanceData
 }
 
+struct TransakOrderInfoResponse: Response, Codable {
+    var data: TransakOrderInfoData
+}
+
+public struct TransakOrderInfoData: Codable {
+    public var meta: Meta
+    public var data: Data
+
+    public struct Meta: Codable {
+        public var orderId: String
+    }
+
+    public struct Data: Codable {
+        public var id: String
+        public var createdAt: String
+        public var status: String
+        public var fiatCurrency: String
+        public var cryptoCurrency: String
+        public var isBuyOrSell: String
+        public var fiatAmount: Double
+        public var amountPaid: Double
+        public var paymentOptionId: String
+        public var quoteId: String
+        public var network: String
+        public var conversionPriceData: ConversionPriceData
+        public var autoExpiresAt: String
+        public var stateCode: String
+        public var orderChannelType: String
+        public var userKycType: String
+        public var cardId: String
+        public var conversionPrice: Double
+        public var cryptoAmount: Double
+        public var totalFeeInFiat: Double
+        public var fiatAmountInUsd: Double
+        public var countryCode: String
+        public var cryptoPaymentData: CryptoPaymentData
+        public var cardDetails: CardDetails
+        public var statusHistories: [StatusHistory]
+
+        public struct ConversionPriceData: Codable {
+            public var conversionPrice: Double
+            public var cryptoAmount: Double
+            public var fiatAmountInUsd: Double
+            public var id: String
+            public var createdAt: String
+            public var fiatCurrency: String
+            public var cryptoCurrency: String
+            public var paymentMethod: String
+            public var fiatAmount: Double
+            public var network: String
+            public var isBuyOrSell: String
+            public var marketConversionPrice: Double
+            public var slippage: Double
+            public var cryptoLiquidityProvider: String
+            public var sourceTokenAmount: Double
+            public var sourceToken: String
+            public var fiatFeeAmount: Double
+            public var feeDecimal: Double
+            public var internalFees: [InternalFee]
+
+            public struct InternalFee: Codable {
+                public var name: String
+                public var id: String
+                public var value: Double
+            }
+        }
+
+        public struct CryptoPaymentData: Codable {
+            public var paymentAddress: String
+        }
+
+        public struct CardDetails: Codable {
+            public var _id: String
+            public var userId: String
+            public var id: String
+            public var issuer: String
+            public var issuer_country: String
+            public var scheme: String
+            public var last4: String
+            public var card_type: String
+            public var expiry_month: Int
+            public var expiry_year: Int
+            public var moneyTransferType: String
+            public var isPayoutAllowed: Bool
+        }
+
+        public struct StatusHistory: Codable {
+            public var status: String
+            public var createdAt: String
+            public var message: String
+            public var isEmailSentToUser: Bool
+            public var partnerEventId: String
+        }
+    }
+}
 
 struct CreateTokenResponse: Response, Codable {
     var data: CreateTokenData
