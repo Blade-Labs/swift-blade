@@ -30,9 +30,11 @@
 * [getC14url](usage.md#getc14url)
 * [exchangeGetQuotes](usage.md#exchangegetquotes)
 * [getTradeUrl](usage.md#gettradeurl)
+* [getExchangeStatus](usage.md#getexchangestatus)
 * [swapTokens](usage.md#swaptokens)
 * [createToken](usage.md#createtoken)
 * [associateToken](usage.md#associatetoken)
+* [brokenMnemonicEmergencyTransfer](usage.md#brokenmnemonicemergencytransfer)
 * [nftMint](usage.md#nftmint)
 * [cleanup](usage.md#cleanup)
 
@@ -1027,6 +1029,39 @@ SwiftBlade.shared.getTradeUrl(
 }
 ```
 
+## getExchangeStatus
+
+Get exchange order status
+
+`getExchangeStatus(
+        serviceId: String,
+        orderId: String,
+        completion: @escaping (_ result: TransakOrderInfoData?, _ error: BladeJSError?) -> Void
+    )`
+
+#### Parameters
+
+| Name | Type | Description |
+|------|------| ----------- |
+| `serviceId` | `String` | service id to use for swap (saucerswap, onmeta, etc) |
+| `orderId` | `String` | order id of operation |
+| `completion` | `@escaping (_ result: TransakOrderInfoData?, _ error: BladeJSError?) -> Void` | result with TransakOrderInfoData type |
+
+#### Returns
+
+`TransakOrderInfoData`
+
+#### Example
+
+```swift
+SwiftBlade.shared.getExchangeStatus(
+    serviceId: "transak",
+    orderId: "abaf28be-609f-49f4-a09a-e8e7ea7c8bd9"
+) { [self] result, error in
+    print(result ?? error)
+}
+```
+
 ## swapTokens
 
 Swap tokens
@@ -1039,7 +1074,7 @@ Swap tokens
         targetCode: String,
         slippage: Double,
         serviceId: String,
-        completion: @escaping (_ result: ResultData?, _ error: BladeJSError?) -> Void
+        completion: @escaping (_ result: SwapResultData?, _ error: BladeJSError?) -> Void
     )`
 
 #### Parameters
@@ -1053,11 +1088,11 @@ Swap tokens
 | `targetCode` | `String` | name (HBAR, KARATE, other token code) |
 | `slippage` | `Double` | slippage in percents. Transaction will revert if the price changes unfavorably by more than this percentage. |
 | `serviceId` | `String` | service id to use for swap (saucerswap, etc) |
-| `completion` | `@escaping (_ result: ResultData?, _ error: BladeJSError?) -> Void` | result with ResultData type |
+| `completion` | `@escaping (_ result: SwapResultData?, _ error: BladeJSError?) -> Void` | result with SwapResultData type |
 
 #### Returns
 
-`ResultData` swap result
+`SwapResultData` swap result
 
 #### Example
 
@@ -1143,7 +1178,7 @@ SwiftBlade.shared.createToken(
 Associate token to account. Association fee will be covered by PayMaster, if tokenId configured in dApp
 
 `associateToken(
-         tokenId: String,
+        tokenIdOrCampaign: String,
          accountId: String,
          accountPrivateKey: String,
          completion: @escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void
@@ -1153,7 +1188,7 @@ Associate token to account. Association fee will be covered by PayMaster, if tok
 
 | Name | Type | Description |
 |------|------| ----------- |
-| `tokenId` | `String` |  |
+| `tokenIdOrCampaign` | `String` |  |
 | `accountId` | `String` |  |
 | `accountPrivateKey` | `String` |  |
 | `completion` | `@escaping (_ result: TransactionReceiptData?, _ error: BladeJSError?) -> Void` |  |
@@ -1166,9 +1201,66 @@ Associate token to account. Association fee will be covered by PayMaster, if tok
 
 ```swift
 SwiftBlade.shared.associateToken(
-    tokenId: "0.0.1337",
+    tokenIdOrCampaign: "0.0.1337",
     accountId: "0.0.10001",
     accountPrivateKey: "302d300706052b8104000a032200029dc73991b0d9cd..."
+) { result, error in
+    print(result ?? error)
+}
+```
+
+## brokenMnemonicEmergencyTransfer
+
+Emergency balance transfer from broken mnemonic account to new account
+
+Accounts with broken mnemonic sometimes were created because of hedera-sdk issue
+
+To transfer funds from broken mnemonic account to new account a couple of steps required:
+
+1. Create new account
+
+2. Associate all tokens with new account that you want to transfer
+
+3. Call this method to transfer funds to new account
+
+4. Send some HBAR to broken mnemonic account to cover fees if needed
+
+`brokenMnemonicEmergencyTransfer(
+        seedPhrase: String,
+        accountId: String,
+        receiverId: String,
+        hbarAmount: String,
+        tokenList: [String],
+        checkOnly: Bool,
+        completion: @escaping (_ result: EmergencyTransferData?, _ error: BladeJSError?) -> Void
+     )`
+
+#### Parameters
+
+| Name | Type | Description |
+|------|------| ----------- |
+| `seedPhrase` | `String` | mnemonic from account |
+| `accountId` | `String` | account id (broken) |
+| `receiverId` | `String` | new account id |
+| `hbarAmount` | `String` | amount of HBAR to resque. Can be 0 |
+| `tokenList` | `[String]` | list of token ids to transfer all tokens. Up to 9 at once. Can be empty |
+| `checkOnly` | `Bool` | if true, will only check if mnemonic is broken. No transfer will be made |
+| `completion` | `@escaping (_ result: EmergencyTransferData?, _ error: BladeJSError?) -> Void` |  |
+
+#### Returns
+
+`EmergencyTransferData`
+
+#### Example
+
+```swift
+SwiftBlade.shared.brokenMnemonicEmergencyTransfer(
+    seedPhrase: "marriage bounce fiscal express wink wire trick allow faith mandate base bone",
+    accountId: "0.0.10001",
+    receiverId: "0.0.234567",
+    hbarAmount: "0.5",
+    tokenList: ["0.0.1337"],
+    checkOnly: false
 ) { result, error in
     print(result ?? error)
 }

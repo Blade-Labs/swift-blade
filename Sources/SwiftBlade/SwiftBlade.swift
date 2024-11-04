@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.35"
+    private let sdkVersion: String = "Swift@0.6.36"
 
     // MARK: - It's init time 🎬
 
@@ -965,6 +965,37 @@ public class SwiftBlade: NSObject {
             completionKey: completionKey,
             js: "getTradeUrl('\(strategy.rawValue)', '\(esc(accountId))', '\(esc(sourceCode))', \(sourceAmount), '\(esc(targetCode))', \(slippage), '\(esc(serviceId))', '\(esc(redirectUrl))', '\(completionKey)')",
             decodeType: IntegrationUrlResponse.self,
+            completion: completion
+        )
+    }
+    
+    /// Get exchange order status
+    ///
+    /// - Parameters:
+    ///   - serviceId: service id to use for swap (saucerswap, onmeta, etc)
+    ///   - orderId: order id of operation
+    ///   - completion: result with TransakOrderInfoData type
+    ///
+    /// ```
+    /// SwiftBlade.shared.getExchangeStatus(
+    ///     serviceId: "transak",
+    ///     orderId: "abaf28be-609f-49f4-a09a-e8e7ea7c8bd9"
+    /// ) { [self] result, error in
+    ///     print(result ?? error)
+    /// }
+    /// ```
+    ///
+    /// - Returns: `TransakOrderInfoData`
+    public func getExchangeStatus(
+        serviceId: String,
+        orderId: String,
+        completion: @escaping (_ result: TransakOrderInfoData?, _ error: BladeJSError?) -> Void
+    ) {
+        let completionKey = getCompletionKey("getExchangeStatus")
+        performRequest(
+            completionKey: completionKey,
+            js: "getExchangeStatus('\(esc(serviceId))', '\(esc(orderId))', '\(completionKey)')",
+            decodeType: TransakOrderInfoResponse.self,
             completion: completion
         )
     }

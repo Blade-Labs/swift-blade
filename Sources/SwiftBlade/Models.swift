@@ -306,6 +306,28 @@ public struct SwapResultData: Codable {
     public var balance: BalanceData
 }
 
+struct TransakOrderInfoResponse: Response, Codable {
+    var data: TransakOrderInfoData
+}
+
+public struct TransakOrderInfoData: Codable {
+    public var orderId: String
+    public var status: String
+    public var walletAddress: String?
+    public var createdAt: String
+    public var autoExpiresAt: String
+    public var isBuyOrSell: String
+    public var network: String
+    public var notes: [String]
+    public var fiatCurrency: String
+    public var fiatAmount: Double
+    public var cryptoCurrency: String
+    public var cryptoAmount: Double
+    public var conversionPrice: Double?
+    public var slippage: Double?
+    public var totalFeeInFiat: Double
+    public var totalFee: Double?
+}
 
 struct CreateTokenResponse: Response, Codable {
     var data: CreateTokenData

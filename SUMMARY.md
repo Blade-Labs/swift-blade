@@ -3,7 +3,5 @@
 * [Introduction](README.md)
 * [Getting Started](docs/getting-started.md)
 * [Usage](docs/usage.md)
-  * [Response types](docs/js-wrapper-response-types.md)
-  * [SwiftBlade errors](docs/swiftblade-errors.md)
-  * [SwiftBlade enums](docs/swiftblade-enums.md)
+* [Data types](docs/data-types.md)
 * [License](docs/license.md)
