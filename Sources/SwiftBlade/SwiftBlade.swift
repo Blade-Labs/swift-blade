@@ -15,7 +15,7 @@ public class SwiftBlade: NSObject {
     private var network: HederaNetwork = .TESTNET
     private var bladeEnv: BladeEnv = .Prod
     private var dAppCode: String?
-    private let sdkVersion: String = "Swift@0.6.36"
+    private let sdkVersion: String = "Swift@0.6.38"
 
     // MARK: - It's init time 🎬
 
@@ -56,7 +56,7 @@ public class SwiftBlade: NSObject {
                 ) {
                     self.visitorId = UserDefaults.standard.string(forKey: "visitorId") ?? ""
                 }
-   
+
                 if self.visitorId == "" {
                     self.remoteConfig = try await getRemoteConfig(network: network, dAppCode: dAppCode, sdkVersion: self.sdkVersion, bladeEnv: bladeEnv)
                     self.visitorId = try await getVisitorId(remoteConfig!)
@@ -248,7 +248,7 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-    
+
     /// Create scheduled transaction
     ///
     /// - Parameters:
@@ -313,7 +313,7 @@ public class SwiftBlade: NSObject {
     ///   - receiverAccountId account id of receiver for additional validation in case of dApp freeSchedule transactions configured
     ///   - usePaymaster if true, Paymaster account will pay transaction fee (also dApp had to be configured for free schedules)
     ///   - completion: result with `TransactionReceiptData` type
-    /// 
+    ///
     /// ```
     /// let senderId = "0.0.10001"
     /// let senderKey = "302d300706052b8104000a032200029dc73991b00001..."
@@ -349,7 +349,7 @@ public class SwiftBlade: NSObject {
         )
     }
 
-    
+
     /// Create new Hedera account (ECDSA). Only for configured dApps. Depending on dApp config Blade create account, associate tokens, etc.
     /// In case of not using pre-created accounts pool and network high load, this method can return transactionId and no accountId.
     /// In that case account creation added to queue, and you should wait some time and call `getPendingAccount()` method.
@@ -481,7 +481,7 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-  
+
     /// Stake/unstake account
     ///
     /// - Parameters:
@@ -506,7 +506,7 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-    
+
     /// Get private key and accountId from mnemonic. Supported standard and legacy key derivation.
     /// If account not found, standard ECDSA key will be returned.
     /// Keys returned with DER header. EvmAddress computed from Public key.
@@ -534,7 +534,7 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-    
+
     /// Get accounts list and keys from private key or mnemonic
     /// Supporting standard and legacy key derivation.
     /// Every key with account will be returned.
@@ -968,7 +968,7 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-    
+
     /// Get exchange order status
     ///
     /// - Parameters:
@@ -1050,7 +1050,7 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-     
+
     /// Create token (NFT or Fungible Token)
     ///
     /// - Parameters:
@@ -1110,8 +1110,8 @@ public class SwiftBlade: NSObject {
             completion: completion
         )
     }
-   
-    
+
+
     /// Associate token to account. Association fee will be covered by PayMaster, if tokenId configured in dApp
     ///
     /// - Parameters:
@@ -1142,55 +1142,6 @@ public class SwiftBlade: NSObject {
              completionKey: completionKey,
              js: "associateToken('\(esc(tokenIdOrCampaign))', '\(esc(accountId))', '\(esc(accountPrivateKey))', '\(completionKey)')",
              decodeType: TransactionReceiptResponse.self,
-             completion: completion
-         )
-     }
-    
-    /// Emergency balance transfer from broken mnemonic account to new account
-    /// Accounts with broken mnemonic sometimes were created because of hedera-sdk issue
-    /// To transfer funds from broken mnemonic account to new account a couple of steps required:
-    /// 1. Create new account
-    /// 2. Associate all tokens with new account that you want to transfer
-    /// 3. Call this method to transfer funds to new account
-    /// 4. Send some HBAR to broken mnemonic account to cover fees if needed
-    ///
-    /// - Parameters:
-    ///   - seedPhrase mnemonic from account
-    ///   - accountId account id (broken)
-    ///   - receiverId new account id
-    ///   - hbarAmount amount of HBAR to resque. Can be 0
-    ///   - tokenList list of token ids to transfer all tokens. Up to 9 at once. Can be empty
-    ///   - checkOnly if true, will only check if mnemonic is broken. No transfer will be made
-    ///   -  completion: callback function, with result of EmergencyTransferData or BladeJSError
-    ///
-    /// ```
-    /// SwiftBlade.shared.brokenMnemonicEmergencyTransfer(
-    ///     seedPhrase: "marriage bounce fiscal express wink wire trick allow faith mandate base bone",
-    ///     accountId: "0.0.10001",
-    ///     receiverId: "0.0.234567",
-    ///     hbarAmount: "0.5",
-    ///     tokenList: ["0.0.1337"],
-    ///     checkOnly: false
-    /// ) { result, error in
-    ///     print(result ?? error)
-    /// }
-    /// ```
-    ///
-    /// - Returns: `EmergencyTransferData`
-    public func brokenMnemonicEmergencyTransfer(
-        seedPhrase: String,
-        accountId: String,
-        receiverId: String,
-        hbarAmount: String,
-        tokenList: [String],
-        checkOnly: Bool,
-        completion: @escaping (_ result: EmergencyTransferData?, _ error: BladeJSError?) -> Void
-     ) {
-         let completionKey = getCompletionKey("brokenMnemonicEmergencyTransfer")
-         performRequest(
-             completionKey: completionKey,
-             js: "brokenMnemonicEmergencyTransfer('\(esc(seedPhrase))', '\(esc(accountId))', '\(esc(receiverId))', '\(esc(hbarAmount))', [\(tokenList.map { "'\(esc($0))'" }.joined(separator: ","))], \(checkOnly), '\(completionKey)')",
-             decodeType: EmergencyTransferResponse.self,
              completion: completion
          )
      }
@@ -1245,7 +1196,7 @@ public class SwiftBlade: NSObject {
          do {
              let metadataJsonData = try encoder.encode(metadata)
              metadataJson = String(data: metadataJsonData, encoding: .utf8) ?? "{}"
-             
+
              let storageConfigJsonData = try encoder.encode(storageConfig)
              storageConfigJson = String(data: storageConfigJsonData, encoding: .utf8) ?? "{}"
          } catch {
@@ -1353,14 +1304,14 @@ public class SwiftBlade: NSObject {
             }
         }
         webView!.navigationDelegate = self
-        
-        
+
+
         guard let resourceBundleURL = Bundle(for: SwiftBlade.self).url(forResource: "SwiftBlade_SwiftBlade", withExtension: "bundle")
             else { fatalError("SwiftBlade_SwiftBlade.bundle not found!") }
 
         guard let resourceBundle = Bundle(url: resourceBundleURL)
             else { fatalError("Cannot access SwiftBlade_SwiftBlade.bundle!") }
-        
+
         if let url = resourceBundle.url(forResource: "index", withExtension: "html") {
             webView!.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }

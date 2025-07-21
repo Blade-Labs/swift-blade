@@ -56,7 +56,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertEqual(infoData.network.uppercased(), self.network.rawValue, "InfoData should have the expected network")
                 XCTAssertNotNil(infoData.visitorId, "InfoData should have visitorId")
                 XCTAssertEqual(infoData.sdkEnvironment, self.env.rawValue, "InfoData should have the expected bladeEnv")
-                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.36", "InfoData should have the expected sdkVersion")
+                XCTAssertEqual(infoData.sdkVersion, "Swift@0.6.38", "InfoData should have the expected sdkVersion")
             } else {
                 XCTFail("Result should be of type InfoData")
             }
@@ -122,7 +122,7 @@ final class SwiftBladeTests: XCTestCase {
                 XCTAssertNotNil(coinPriceData.price, "Coin price should have a price value")
                 XCTAssertNotNil(coinPriceData.currency, "Coin price should have a currency value")
                 XCTAssertEqual(coinPriceData.currency, "uah", "Currency should match")
-                
+
                 let coin = coinPriceData.coin
                 XCTAssertEqual(coin.id, "hedera-hashgraph", "Coin id should match")
                 XCTAssertEqual(coin.symbol, "hbar", "Coin symbol should match")
@@ -293,7 +293,7 @@ final class SwiftBladeTests: XCTestCase {
 
         wait(for: [expectation], timeout: 10.0)
     }
-    
+
     func testStakeAccount() {
         let expectationNodeList = XCTestExpectation(description: "GetNodeList should complete")
         let expectationStakeAccount = XCTestExpectation(description: "StakeAccount should complete")
@@ -301,7 +301,7 @@ final class SwiftBladeTests: XCTestCase {
         swiftBlade.getNodeList() { result, error in
             XCTAssertNil(error, "GetAccountInfo should not produce an error")
             XCTAssertNotNil(result, "GetAccountInfo should produce a result")
-            
+
             if let nodeListData = result {
                 XCTAssertNotNil(nodeListData.nodes, "NodeList should have a nodes")
                 XCTAssertGreaterThan(nodeListData.nodes.count, 0, "NodeList should have some nodes")
@@ -314,8 +314,8 @@ final class SwiftBladeTests: XCTestCase {
             }
 
             expectationNodeList.fulfill()
-            
-            
+
+
             self.swiftBlade.stakeToNode(accountId: self.accountId, accountPrivateKey: self.privateKeyHex, nodeId: -1) { result, error in
                 XCTAssertNil(error, "GetAccountInfo should not produce an error")
                 XCTAssertNotNil(result, "GetAccountInfo should produce a result")
@@ -360,7 +360,7 @@ final class SwiftBladeTests: XCTestCase {
 
         wait(for: [expectation], timeout: 10.0)
     }
-    
+
     func testSearchAccounts() {
         let expectation = XCTestExpectation(description: "SearchAccounts should complete")
 
@@ -384,7 +384,7 @@ final class SwiftBladeTests: XCTestCase {
 
         wait(for: [expectation], timeout: 10.0)
     }
-    
+
     func testDropTokens() {
         let expectation1 = XCTestExpectation(description: "CreateHederaAccount should complete")
         let expectation2 = XCTestExpectation(description: "DropTokens should complete")
@@ -396,7 +396,7 @@ final class SwiftBladeTests: XCTestCase {
 
             if let createdAccountData = result {
                 expectation1.fulfill()
-                
+
                 self.swiftBlade.dropTokens(
                     accountId: createdAccountData.accountId ?? "",
                     accountPrivateKey: createdAccountData.privateKey ?? "",
@@ -419,7 +419,7 @@ final class SwiftBladeTests: XCTestCase {
             } else {
                 XCTFail("Result should be of type CreatedAccountData")
             }
-            
+
         }
 
         wait(for: [expectation1, expectation2, expectation3], timeout: 60.0)
@@ -799,7 +799,7 @@ final class SwiftBladeTests: XCTestCase {
             XCTAssertNotNil(result, "Initialization should produce a result")
 
             var redirectUrl = "redirect-url-here"
-            
+
             swiftBlade.getTradeUrl(
                 strategy: CryptoFlowServiceStrategy.BUY,
                 accountId: accountId,
@@ -836,7 +836,7 @@ final class SwiftBladeTests: XCTestCase {
                     XCTAssertNotNil(result, "GetTradeUrl should produce a result")
 
                     print(result)
-                    
+
                     if let integrationUrlData = result {
                         XCTAssertNotNil(integrationUrlData.url, "integrationUrlData.url should present")
                         XCTAssertGreaterThanOrEqual(integrationUrlData.url.count, 1, "integrationUrlData.url should not be empty")
@@ -869,8 +869,8 @@ final class SwiftBladeTests: XCTestCase {
 
         wait(for: [expectation1, expectation2, expectation3], timeout: 30.0)
     }
-    
-    
+
+
     func testNFT() {
         let expectationCreateToken = XCTestExpectation(description: "testNFT should complete expectationCreateToken")
         let expectationAssociateToken = XCTestExpectation(description: "testNFT should complete expectationAssociateToken")
@@ -884,9 +884,9 @@ final class SwiftBladeTests: XCTestCase {
             let keys = [
                 KeyRecord(privateKey: privateKeyHexEd25519, type: KeyType.admin)
             ]
-            
+
             swiftBlade.createToken(
-                treasuryAccountId: accountId, 
+                treasuryAccountId: accountId,
                 supplyPrivateKey: privateKeyHex,
                 tokenName: tokenName,
                 tokenSymbol: tokenSymbol,
@@ -924,9 +924,9 @@ final class SwiftBladeTests: XCTestCase {
                     } else {
                         XCTFail("no tokenAssociateData")
                     }
-                    
+
                     expectationAssociateToken.fulfill()
-                    
+
                     swiftBlade.nftMint(
                         tokenId: tokenId,
                         supplyAccountId: accountId,
@@ -978,14 +978,14 @@ final class SwiftBladeTests: XCTestCase {
                 }
             }
         }
-        
+
         wait(for: [expectationCreateToken, expectationAssociateToken, expectationMintToken, expectationTransferNFT], timeout: 120.0)
     }
-    
+
     func testSchedule() {
         let expectation1 = XCTestExpectation(description: "createScheduleTransaction should complete")
         let expectation2 = XCTestExpectation(description: "signScheduleId should complete")
-        
+
         swiftBlade.createScheduleTransaction(
             accountId: accountIdEd25519,
             accountPrivateKey: privateKeyHexEd25519,
@@ -998,10 +998,10 @@ final class SwiftBladeTests: XCTestCase {
         ) { [self] result, error in
             XCTAssertNil(error, "GetAccountInfo should not produce an error")
             XCTAssertNotNil(result, "GetAccountInfo should produce a result")
-            
+
             XCTAssertNil(error, "createScheduleTransaction should not produce an error")
             XCTAssertNotNil(result, "createScheduleTransaction should produce a result")
-            
+
             if let resultData = result {
                 XCTAssertNotNil(resultData.scheduleId, "scheduleId should present")
             } else {
@@ -1010,7 +1010,7 @@ final class SwiftBladeTests: XCTestCase {
 
 
             expectation1.fulfill()
-            
+
             self.swiftBlade.signScheduleId(
                     scheduleId: "result?.scheduleId!",
                     accountId: self.accountId,
@@ -1024,7 +1024,7 @@ final class SwiftBladeTests: XCTestCase {
 
                 }
         }
-        
+
         wait(for: [expectation1, expectation2], timeout: 30.0)
     }
 }
