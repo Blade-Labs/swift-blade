@@ -24,7 +24,7 @@ let package = Package(
             name: "SwiftBlade",
             dependencies: [
                 .product(name: "FingerprintPro", package: "fingerprintjs-pro-ios"),
-//                .product(name: "BigInt", package: "BigInt"),
+                .product(name: "BigInt", package: "BigInt"),
             ],
             exclude: ["JS/JSWrapper.bundle.js.LICENSE.txt"],
             resources: [
