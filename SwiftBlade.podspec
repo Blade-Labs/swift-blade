@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'SwiftBlade'
-  s.version          = '0.6.38'
+  s.version          = '0.6.39'
   s.summary          = 'Swift Blade SDK for iOS Apps'
   s.description      = <<-DESC
                        Swift Blade is Swift library that allows developers to interact with Hedera Hashgraph and Ethereum smart contracts from within a Swift based app such as iOS. It provides a set of methods such as creating accounts, checking balances, transferring tokens, calling smart contracts, and more
@@ -20,7 +20,7 @@ Pod::Spec.new do |s|
 
   s.frameworks = 'Foundation'
 
-  s.dependency 'BigInt', '~> 5.6.0'
+  s.dependency 'BigInt', '~> 5.2.0'
   s.dependency 'FingerprintPro', '~> 2.8.2'
 
 end
