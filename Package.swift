@@ -14,8 +14,8 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/attaswift/BigInt.git", from: "5.6.0"),
-        .package(url: "https://github.com/fingerprintjs/fingerprintjs-pro-ios", from: "2.8.2"),
+        .package(url: "https://github.com/attaswift/BigInt.git", exact: "5.2.0"),
+        .package(url: "https://github.com/fingerprintjs/fingerprintjs-pro-ios", exact: "2.8.2"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
